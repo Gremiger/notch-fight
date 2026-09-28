@@ -17,6 +17,7 @@ final class App: NSObject, NSApplicationDelegate {
     var bags: [String: [Int]] = [:]
     var queue: [[CGImage]] = []
     var theme = "", lastClip: [String: Int] = [:]
+    var clipIndex: [String: (String, Int)] = [:]   // "<theme>__<clip>" -> (theme, index)
     var current: [CGImage] = []
     var idx = 0
     var playTimer: Timer?
@@ -40,9 +41,19 @@ final class App: NSObject, NSApplicationDelegate {
         for (name, imgs) in loadDirs(res.appendingPathComponent("clips")) {
             let t = String(name.split(separator: "_", maxSplits: 1).first ?? "")
             themes[t, default: []].append(imgs)
+            clipIndex[name] = (t, themes[t]!.count - 1)
         }
         transitions = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("transitions")))
         theme = themes.keys.randomElement() ?? ""
+        if let first = forcedFirst() {
+            if let (t, i) = clipIndex[first] {        // a specific clip, e.g. "fn__royale"
+                theme = t; lastClip[t] = i; queue.append(themes[t]![i])
+            } else if themes[first] != nil {          // a whole theme, e.g. "ygo"
+                theme = first
+            } else {
+                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipIndex.keys.sorted())")
+            }
+        }
         enqueueVisit()
         win = NotchPanel(contentRect: rect(height: 0), styleMask: [.borderless, .nonactivatingPanel],
                          backing: .buffered, defer: false)
@@ -105,6 +116,21 @@ final class App: NSObject, NSApplicationDelegate {
         CATransaction.begin(); CATransaction.setDisableActions(true)
         shape.frame = CGRect(origin: .zero, size: size); shape.path = p
         CATransaction.commit()
+    }
+
+    // First clip override, in priority order:
+    //   1. open -g NotchFight.app --args --first <theme__clip|theme>
+    //   2. NOTCH_FIGHT_FIRST env var
+    //   3. ~/.config/notch-fight/config.json  {"first": "<theme__clip|theme>"}
+    func forcedFirst() -> String? {
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--first"), i + 1 < args.count { return args[i + 1] }
+        if let env = ProcessInfo.processInfo.environment["NOTCH_FIGHT_FIRST"], !env.isEmpty { return env }
+        let cfg = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
+        guard let data = try? Data(contentsOf: cfg),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let first = json["first"] as? String, !first.isEmpty else { return nil }
+        return first
     }
 
     func loadDirs(_ root: URL) -> [(String, [CGImage])] {
