@@ -3,10 +3,10 @@ from engine import *
 
 THEME = 'pkm'
 
-PAL.update({'m':(206,196,222),'u':(150,92,176),'U':(120,40,160)})
+PAL.update({'m':(206,196,222),'u':(150,92,176),'I':(120,40,160)})
 ASH=variant(lambda s: overlay(s,["..rrrrrr....",".rrrHHrrr...",".rrrrrrrrrrr"],-1,0))
 MEWTWO=poses(S([
-".....mm.mm........",".....mmmmm........","....mmmmmmm.......","....mmmUmmU.......","....mmmmmmm.......",".....mmmmm........",
+".....mm.mm........",".....mmmmm........","....mmmmmmm.......","....mmmImmI.......","....mmmmmmm.......",".....mmmmm........",
 "......mmm.........","....mmmmmmm.......","...mmmmmmmmm......","..mm.mmmmm.mm.....","..mm.muuum.mm.....","..m..muuum..m.....",
 "uu...muuum........","uu...uuuuu........",".uu.uuu.uuu.......","..uuu...uu........","...mm.....mm......","...mm.....mm......",
 "..mmm.....mmm.....",]),9,'mm',4)

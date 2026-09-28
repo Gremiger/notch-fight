@@ -1,11 +1,19 @@
 """Shared palette: one char per colour, used by every sprite grid ('.' = transparent).
 Theme-only colours are added by each theme with PAL.update(...)."""
 
-PAL = {
+class Palette(dict):
+    """A dict that refuses to silently redefine a colour: two themes sharing a key by accident
+    would recolour each other's sprites (Mewtwo's eye once turned Cell's cheeks purple)."""
+    def update(self, other=(), **kw):
+        for k,v in dict(other, **kw).items():
+            if k in self and self[k]!=v: raise ValueError(f"palette key '{k}' already means {self[k]}, not {v}")
+            self[k]=v
+
+PAL = Palette({
  'O':(217,119,87),'o':(168,80,54),'K':(24,14,12),
  'G':(112,192,84),'g':(52,118,44),'S':(24,34,24),'P':(236,226,206),'U':(146,72,168),
  'B':(38,32,48),'e':(236,64,128),'w':(78,150,66),
-}
+})
 
 # colours shared by several themes
 PAL.update({
