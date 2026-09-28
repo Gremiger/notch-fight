@@ -2,7 +2,7 @@
 # Each THEME has its own neutral "loop keyframe": every clip of a theme starts
 # and ends on it, so clips of the same theme chain seamlessly. Between themes
 # the app plays a pre-rendered asterisk-iris transition.
-import math, random, os, shutil
+import math, random, os, shutil, zlib
 from PIL import Image, ImageDraw, ImageFilter
 import clips as C
 from clips import (W, H, GROUND, CL, CE, PAL, S, draw, spark, lerp, ease, ez, rshake,
@@ -585,7 +585,7 @@ if __name__=='__main__':
     first={}
     for theme,items in THEMES.items():
         for name,fn,n in items:
-            random.seed(hash(name)%1000)
+            random.seed(zlib.crc32(name.encode()))
             if theme=='dbz':
                 frames=[frame(f) for f in range(n)] if name=='beam' else [C.render(fn(f),f) for f in range(n)]
             else: frames=[render(fn(f),f) for f in range(n)]

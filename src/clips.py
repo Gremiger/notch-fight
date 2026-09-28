@@ -1,4 +1,4 @@
-import math, random
+import math, random, zlib
 from PIL import Image, ImageDraw
 W,H,FPS,N = 185,64,20,200   # 185pt = MacBookPro18,3 notch width; 1 art px = 1pt = 2 device px
 GROUND = 58
@@ -689,7 +689,7 @@ if __name__=='__main__':
     shutil.rmtree('clips',ignore_errors=True)
     all_names=['beam']+list(CLIPS)
     for name in all_names:
-        os.makedirs(f'clips/{name}',exist_ok=True); random.seed(hash(name)%1000)
+        os.makedirs(f'clips/{name}',exist_ok=True); random.seed(zlib.crc32(name.encode()))
         if name=='beam': frames=[frame(f) for f in range(200)]
         else:
             fn,n=CLIPS[name]; frames=[render(fn(f),f) for f in range(n)]
