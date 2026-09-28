@@ -58,11 +58,24 @@ Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name
 
 ## Layout
 
-- `src/clips.py` — sprite engine + DBZ clips.
-- `src/themes.py` — YGO/KNY/JJK/Fortnite/Pokémon/SNK/Naruto themes, transitions and the frame export (entry point).
-- `src/single_clip.py` — the original standalone 10 s clip (`--black` for the notch version).
-- `app/main.swift`, `app/Info.plist` — the notch app.
-- `media/` — rendered previews.
+```
+src/
+├── engine/            # shared by every theme
+│   ├── core.py        # canvas constants, sprite drawing (auto outline + aura), sparks, orbs, easing
+│   ├── palette.py     # one char per colour for sprite grids (themes add their own)
+│   ├── claude.py      # Claude's base sprites + tools to dress him up / derive poses
+│   ├── text.py        # 3x5 pixel font
+│   ├── fx.py          # effect registry (@fx('name')) + effects used by several themes
+│   └── render.py      # scene/actor model, backgrounds, render(), clip()
+├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py
+│   └── __init__.py    # auto-discovers every theme module
+├── transitions.py     # asterisk-iris transition between themes
+├── build.py           # entry point used by build.sh
+└── legacy/single_clip.py   # the original standalone 10 s clip (--black for the notch version)
+app/main.swift, app/Info.plist   # the notch app
+media/                           # rendered previews
+```
 
 ## Build
 
@@ -77,6 +90,9 @@ Canvas is 185×64 art pixels = 185×64 pt on a 14" MacBook Pro (1 art px = 2 dev
 
 See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
 
-Write a `clip_<name>(f)` in `src/themes.py` (or `src/clips.py` for DBZ) that starts and ends on
-the theme's neutral pose, register it in `THEMES`, rebuild. A new theme needs its own
-neutral pose; transitions to/from it are generated automatically.
+- **New clip in an existing theme:** add a `clip_<name>(f)` returning a scene to that theme's file
+  and append `clip('<name>', <frames>, clip_<name>)` to its `CLIPS`. It must start and end on the
+  theme's neutral pose.
+- **New theme:** create `src/themes/<id>.py` with `from engine import *`, `THEME = '<id>'`,
+  `register_bg(THEME, ...)`, its sprites/effects (`@fx('name')`) and `CLIPS`. Nothing else to
+  touch: themes are auto-discovered and transitions to/from it are generated.

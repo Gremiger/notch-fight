@@ -1,105 +1,8 @@
-import math, random, zlib
-from PIL import Image, ImageDraw
-W,H,FPS,N = 185,64,20,200   # 185pt = MacBookPro18,3 notch width; 1 art px = 1pt = 2 device px
-GROUND = 58
-random.seed(7)
+"""Dragon Ball Z: Claude vs Cell. (Oldest theme: its own scene model, render_dbz + frame().)"""
+from engine import *
 
-PAL = {
- 'O':(217,119,87),'o':(168,80,54),'K':(24,14,12),
- 'G':(112,192,84),'g':(52,118,44),'S':(24,34,24),'P':(236,226,206),'U':(146,72,168),
- 'B':(38,32,48),'e':(236,64,128),'w':(78,150,66),
-}
-OUT = (18,12,16)
+THEME = 'dbz'
 
-def S(rows): 
-    w = max(len(r) for r in rows); return [r.ljust(w,'.') for r in rows]
-
-CL = {
-'guard':S([
-"...OOOOOOOO....",
-"...OOOOOOOO....",
-"...OOOOKOOK....",
-"...OOOOKOOK.oo.",
-"...OOOOOOOOooo.",
-".ooOOOOOOOO.oo.",
-"ooOOOOOOOOO....",
-"...OOOOOOOO....",
-"...oOOOOOOo....",
-"..oo.....oo....",
-".oo.......oo...",]),
-'guard2':S([
-"...............",
-"...OOOOOOOO....",
-"...OOOOOOOO....",
-"...OOOOKOOK.oo.",
-"...OOOOKOOKooo.",
-".ooOOOOOOOO.oo.",
-"ooOOOOOOOOO....",
-"...OOOOOOOO....",
-"...oOOOOOOo....",
-"..oo.....oo....",
-".oo.......oo...",]),
-'punch':S([
-"...OOOOOOOO......",
-"...OOOOOOOO......",
-"...OOOOKOOK......",
-"...OOOOKOOK......",
-"...OOOOOOOO......",
-".ooOOOOOOOOooooOO",
-"ooOOOOOOOOOooooOO",
-"...OOOOOOOO......",
-"...oOOOOOOo......",
-"..oo.....oo......",
-".oo........oo....",]),
-'dash':S([
-"....OOOOOOOO.....",
-"....OOOOOOOO.....",
-"...OOOOOKOOK.....",
-"...OOOOOKOOK.....",
-"...OOOOOOOO......",
-"ooOOOOOOOOOooooOO",
-".ooOOOOOOOOooooOO",
-"...OOOOOOOO......",
-"..oOOOOOOo.......",
-"oooo..oo.........",
-"......oo.........",]),
-'hurt':S([
-"oo...............",
-".oo.OOOOOOOO..oo.",
-"...OOOOOOOO..oo..",
-"...OKKOOKKOOOo...",
-"...OOOOOOOO......",
-"...OOOOOOOO......",
-"...OOOOOOOO......",
-"...OOOOOOOO......",
-"...oOOOOOOo......",
-"....oo..oo.......",
-"...oo....oo......",]),
-'armsup':S([
-".oo........oo.",
-".oo........oo.",
-"..oOOOOOOOOo..",
-"...OOOOOOOO...",
-"...OOOOKOOK...",
-"...OOOOKOOK...",
-"...OOOOOOOO...",
-"...OOOOOOOO...",
-"...oOOOOOOo...",
-"...oo....oo...",
-"..ooo....ooo..",]),
-'charge':S([
-"...OOOOOOOO.....",
-"...OOOOOOOO.....",
-"...OOOOKOOK.....",
-"...OOOOKOOK.....",
-"...OOOOOOOO.....",
-"...OOOOOOOOooooo",
-"...OOOOOOOOooooo",
-"...OOOOOOOO.....",
-"...oOOOOOOo.....",
-"..oo......oo....",
-".oo........oo...",]),
-}
 CE = {
 'idle':S([
 "......g.g.......",
@@ -218,32 +121,6 @@ CE = {
 "PPP...........PPP.",]),
 }
 
-def bg():
-    im = Image.new('RGB',(W,H)); px = im.load()
-    for y in range(H):
-        for x in range(W):
-            if y < 46:
-                t = y/46; c = (int(96+100*t),int(150+75*t),int(222+18*t))
-                # dither band
-                if (x+y)%2==0 and int(t*8)!=int((y+1)/46*8): c=tuple(v+6 for v in c)
-                px[x,y]=c
-            else:
-                t=(y-46)/18; c=(int(206-30*t),int(172-30*t),int(118-26*t))
-                if (x*7+y*13)%23==0: c=(150,120,84)
-                px[x,y]=c
-    d = ImageDraw.Draw(im)
-    # clouds
-    for cx,cy,r in [(20,8,5),(27,7,6),(34,9,4),(120,5,4),(127,4,6),(135,6,4),(160,14,3),(165,13,4)]:
-        d.ellipse([cx-r,cy-r//2,cx+r,cy+r//2],fill=(236,244,250))
-    # mesas
-    for x0,x1,top,col in [(-5,30,30,(172,128,100)),(40,62,36,(160,118,92)),(95,130,28,(172,128,100)),(150,190,34,(160,118,92)),(70,85,40,(150,110,86))]:
-        d.rectangle([x0,top,x1,47],fill=col); d.rectangle([x0,top,x1,top],fill=(196,152,120))
-        d.rectangle([x0+2,top+4,x0+3,47],fill=tuple(v-20 for v in col))
-    d.rectangle([0,46,W,46],fill=(150,112,80))
-    for x,y in [(12,52),(60,55),(110,51),(170,54),(88,61)]:
-        d.rectangle([x,y,x+3,y+1],fill=(140,108,76)); d.point((x+1,y-1),fill=(170,136,100))
-    return im
-import sys
 BLACK = True
 def bg_black():
     im = Image.new('RGB',(W,H),(0,0,0)); d=ImageDraw.Draw(im)
@@ -251,72 +128,10 @@ def bg_black():
         a=1-abs(x-W/2)/(W/2)
         v=int(10+26*a); d.point((x,GROUND+1),fill=(v,v,v+4))
     return im
-BG = bg_black() if BLACK else bg()
-
-def mask_of(spr,flip):
-    h=len(spr); w=len(spr[0]); out={}
-    for y,row in enumerate(spr):
-        for x,ch in enumerate(row):
-            if ch!='.': out[((w-1-x) if flip else x, y)] = ch
-    return out,w,h
-
-def dilate(pts,r):
-    s=set()
-    for (x,y) in pts:
-        for dx in range(-r,r+1):
-            for dy in range(-r,r+1):
-                if abs(dx)+abs(dy)<=r+ (1 if r>1 else 0): s.add((x+dx,y+dy))
-    return s
-
-def blend(px,x,y,c,a):
-    if 0<=x<W and 0<=y<H:
-        o=px[x,y]; px[x,y]=tuple(int(o[i]*(1-a)+c[i]*a) for i in range(3))
-
-def draw(im,spr,cx,feet,flip,aura=None,alpha=1.0,tint=None,f=0,pal=None):
-    px=im.load(); m,w,h=mask_of(spr,flip)
-    ox=int(round(cx-w/2)); oy=int(round(feet-h))
-    pts=set(m)
-    if aura:
-        col,r=aura
-        ring=dilate(pts,r)-pts
-        for (x,y) in ring:
-            if (x*3+y*5+f)%4!=0 or r<=1:
-                a=0.55 if (x+y+f)%3 else 0.85
-                blend(px,ox+x,oy+y,col,a)
-        # flame tips upward
-        for (x,y) in list(ring):
-            if (x*7+f*3)%5==0: 
-                for k in range(1,3+(f+x)%3): blend(px,ox+x,oy+y-k-r,col,0.5)
-    for (x,y) in dilate(pts,1)-pts:
-        blend(px,ox+x,oy+y,OUT if not tint else tint,alpha)
-    for (x,y),ch in m.items():
-        c=(pal or {}).get(ch) or PAL[ch]
-        if tint: c=tint
-        blend(px,ox+x,oy+y,c,alpha)
-    return ox,oy,w,h
-
-def spark(d,x,y,s,c=(255,240,120)):
-    d.line([x-s,y,x+s,y],fill=c); d.line([x,y-s,x,y+s],fill=c)
-    d.line([x-s//2,y-s//2,x+s//2,y+s//2],fill=(255,255,255)); d.line([x-s//2,y+s//2,x+s//2,y-s//2],fill=(255,255,255))
-    d.rectangle([x-1,y-1,x+1,y+1],fill=(255,255,255))
-
-def ball(d,x,y,r,outer,mid,f):
-    r2 = r + (f%2)
-    d.ellipse([x-r2-1,y-r2-1,x+r2+1,y+r2+1],fill=outer)
-    d.ellipse([x-r2,y-r2,x+r2,y+r2],fill=mid)
-    rc=max(1,r2//2); d.ellipse([x-rc,y-rc,x+rc,y+rc],fill=(255,255,255))
-
-def asterisk(d,x,y,r,c,f):
-    for k in range(8):
-        a=k*math.pi/4 + f*0.15
-        L = r if k%2==0 else r*0.6
-        d.line([x,y,x+math.cos(a)*L,y+math.sin(a)*L],fill=c)
+BG = bg_black()
 
 CL_OR=((255,196,140),(232,120,80))   # claude beam outer/mid
 CE_BL=((140,210,255),(60,140,255))   # cell kamehameha
-
-def lerp(a,b,t): return a+(b-a)*max(0,min(1,t))
-def ease(t): t=max(0,min(1,t)); return t*t*(3-2*t)
 
 def frame(f):
     im=BG.copy(); d=ImageDraw.Draw(im)
@@ -443,12 +258,6 @@ def frame(f):
             im=Image.blend(im,Image.new('RGB',(W,H),(255,255,255)),flash)
     return im
 
-
-# ---------------------------------------------------------------------------
-# Multi-clip system. Every clip starts AND ends in the NEUTRAL stance
-# (Claude guard at x=30, Cell arms-crossed at x=150, no aura, no fx), so any
-# clip can follow any other seamlessly and the app can shuffle them.
-# ---------------------------------------------------------------------------
 AUR_C=(255,210,90); AUR_E=(190,255,150)
 GOLD={'O':(255,214,90),'o':(210,156,40)}
 GOLD_AURA=(255,244,150)
@@ -458,18 +267,15 @@ def base(f):
     ce=dict(x=150,y=GROUND,pose='idle',flip=True,aura=None,pal=None,vis=True)
     return dict(cl=cl,ce=ce,after=[],under=[],fx=[],shake=(0,0),flash=0.0,fc=(93,GROUND-10))
 
-def rshake(n=1): return (random.choice([-n,n]),random.choice([-1,0,1]))
-def ez(a,b,t): return lerp(a,b,ease(t))
-
-def render(s,f):
+def render_dbz(s,f):
     im=BG.copy(); d=ImageDraw.Draw(im)
     for who,x,y,p,fl,tint in s['after']:
         draw(im,(CL if who=='cl' else CE)[p],x,y,fl,alpha=0.35,tint=tint)
-    for e in s['under']: fxdraw(d,e,f)
+    for e in s['under']: draw_fx(d,im,e,f)
     for who in ('cl','ce'):
         c=s[who]
         if c['vis']: draw(im,(CL if who=='cl' else CE)[c['pose']],c['x'],c['y'],c['flip'],aura=c['aura'],f=f,pal=c['pal'])
-    for e in s['fx']: fxdraw(d,e,f)
+    for e in s['fx']: draw_fx(d,im,e,f)
     if s['shake']!=(0,0):
         im2=BG.copy(); im2.paste(im,s['shake']); im=im2
     if s['flash']>0:
@@ -480,46 +286,40 @@ def render(s,f):
         im=Image.composite(Image.new('RGB',(W,H),(255,250,235)),im,m)
     return im
 
-def fxdraw(d,e,f):
-    k=e[0]
-    if k=='spark': spark(d,int(e[1]),int(e[2]),e[3])
-    elif k=='dust': d.rectangle([e[1],e[2],e[1]+1,e[2]+1],fill=(150,130,100))
-    elif k=='rock': d.rectangle([e[1],e[2],e[1]+1,e[2]+1],fill=(120,92,66))
-    elif k=='zip':
-        x,y=int(e[1]),int(e[2])
-        for i in range(3):
-            yy=y+random.randint(-8,2); xx=x+random.randint(-6,6); d.line([xx-4,yy,xx+4,yy],fill=(235,235,255))
-    elif k=='orb':   # small ki blast
-        x,y,c=int(e[1]),int(e[2]),e[3]
-        d.ellipse([x-2,y-2,x+2,y+2],fill=c[0]); d.rectangle([x-1,y-1,x,y],fill=(255,255,255))
-        d.line([x-6*e[4],y,x-2*e[4],y],fill=c[1])
-    elif k=='ring':
-        x,y,r,c=int(e[1]),int(e[2]),int(e[3]),e[4]
-        d.ellipse([x-r,y-r//2,x+r,y+r//2],outline=c,width=1)
-        if r<5: d.ellipse([x-2,y-2,x+2,y+1],fill=(255,240,200))
-    elif k=='smoke':
-        x,y,r,c=int(e[1]),int(e[2]),int(e[3]),e[4]
-        d.ellipse([x-r,y-r,x+r,y+r],fill=c)
-    elif k=='bolt':
-        x,y=e[1],e[2]; pts=[(x,y)]
-        for i in range(4): x+=random.randint(-3,3); y+=random.randint(2,4); pts.append((x,y))
-        d.line(pts,fill=(210,245,255)); d.line(pts[:2],fill=(255,255,255))
-    elif k=='mote': d.point((int(e[1]),int(e[2])),fill=e[3])
-    elif k=='clball': ball(d,int(e[1]),int(e[2]),int(e[3]),*CL_OR,f); asterisk(d,int(e[1]),int(e[2]),int(e[3])+3,(255,150,100),f)
-    elif k=='ceball': ball(d,int(e[1]),int(e[2]),int(e[3]),*CE_BL,f)
-    elif k=='genki':
-        x,y,r=int(e[1]),int(e[2]),int(e[3])
-        d.ellipse([x-r-2,y-r-2,x+r+2,y+r+2],fill=(255,170,110)); d.ellipse([x-r,y-r,x+r,y+r],fill=(240,130,85))
-        d.ellipse([x-r+2,y-r+2,x+r//2,y+r//2],fill=(255,210,160)); d.ellipse([x-r//3-1,y-r//3-1,x,y],fill=(255,255,255))
-        asterisk(d,x,y,r+6,(255,190,130),f)
-    elif k=='beam':
-        _,x0,x1,y,(oc,mc)=e; x0,x1,y=int(x0),int(x1),int(y); wob=f%2
-        d.rectangle([x0,y-3-wob,x1,y+3+wob],fill=oc); d.rectangle([x0,y-2,x1,y+2],fill=mc); d.rectangle([x0,y-1+wob,x1,y],fill=(255,255,255))
-    elif k=='boom':
-        x,y,r=int(e[1]),int(e[2]),int(e[3])
-        d.ellipse([x-r-3,y-r-3,x+r+3,y+r+3],outline=(255,210,120),width=3); d.ellipse([x-r//2,y-r//2,x+r//2,y+r//2],fill=(255,255,255))
-    elif k=='twinkle':
-        x,y,s=int(e[1]),int(e[2]),e[3]; d.line([x-s,y,x+s,y],fill=(255,255,255)); d.line([x,y-s,x,y+s],fill=(255,255,255))
+@fx('zip')
+def _fx_zip(d,im,e,f):
+    x,y=int(e[1]),int(e[2])
+    for i in range(3):
+        yy=y+random.randint(-8,2); xx=x+random.randint(-6,6); d.line([xx-4,yy,xx+4,yy],fill=(235,235,255))
+
+@fx('orb')
+def _fx_orb(d,im,e,f):
+    # small ki blast
+    x,y,c=int(e[1]),int(e[2]),e[3]
+    d.ellipse([x-2,y-2,x+2,y+2],fill=c[0]); d.rectangle([x-1,y-1,x,y],fill=(255,255,255))
+    d.line([x-6*e[4],y,x-2*e[4],y],fill=c[1])
+
+@fx('bolt')
+def _fx_bolt(d,im,e,f):
+    x,y=e[1],e[2]; pts=[(x,y)]
+    for i in range(4): x+=random.randint(-3,3); y+=random.randint(2,4); pts.append((x,y))
+    d.line(pts,fill=(210,245,255)); d.line(pts[:2],fill=(255,255,255))
+
+@fx('clball')
+def _fx_clball(d,im,e,f):
+    ball(d,int(e[1]),int(e[2]),int(e[3]),*CL_OR,f); asterisk(d,int(e[1]),int(e[2]),int(e[3])+3,(255,150,100),f)
+
+@fx('ceball')
+def _fx_ceball(d,im,e,f):
+    ball(d,int(e[1]),int(e[2]),int(e[3]),*CE_BL,f)
+
+@fx('genki')
+def _fx_genki(d,im,e,f):
+    x,y,r=int(e[1]),int(e[2]),int(e[3])
+    d.ellipse([x-r-2,y-r-2,x+r+2,y+r+2],fill=(255,170,110)); d.ellipse([x-r,y-r,x+r,y+r],fill=(240,130,85))
+    d.ellipse([x-r+2,y-r+2,x+r//2,y+r//2],fill=(255,210,160)); d.ellipse([x-r//3-1,y-r//3-1,x,y],fill=(255,255,255))
+    asterisk(d,x,y,r+6,(255,190,130),f)
+
 
 def calm_aura(s,f,t0,t1,who=('cl','ce')):
     """Aura on between t0..t1, so clip edges stay aura-free."""
@@ -681,21 +481,7 @@ def clip_standoff(f):
     if 40<=f<56: ce['aura']=(AUR_E,1)
     return s
 
-CLIPS={'teleport':(clip_teleport,132),'barrage':(clip_barrage,156),'super':(clip_super,168),
-       'genki':(clip_genki,192),'standoff':(clip_standoff,84)}
-
-if __name__=='__main__':
-    import os, shutil, subprocess
-    shutil.rmtree('clips',ignore_errors=True)
-    all_names=['beam']+list(CLIPS)
-    for name in all_names:
-        os.makedirs(f'clips/{name}',exist_ok=True); random.seed(zlib.crc32(name.encode()))
-        if name=='beam': frames=[frame(f) for f in range(200)]
-        else:
-            fn,n=CLIPS[name]; frames=[render(fn(f),f) for f in range(n)]
-        for i,fr in enumerate(frames): fr.save(f'clips/{name}/{i:03d}.png')
-        big=[fr.resize((W*2,H*2),Image.NEAREST) for fr in frames]
-        sh=Image.new('RGB',(W*2*2,H*2*6)); pick=[int(i*(len(big)-1)/11) for i in range(12)]
-        for j,i in enumerate(pick): sh.paste(big[i],((j%2)*W*2,(j//2)*H*2))
-        sh.save(f'sheet_{name}.png')
-        print(name,len(frames),'frames',len(frames)/FPS,'s')
+CLIPS = [('beam', 200, frame)] + [
+    (name, n, (lambda fn: lambda f: render_dbz(fn(f), f))(fn))
+    for name, fn, n in [('teleport', clip_teleport, 132), ('barrage', clip_barrage, 156), ('super', clip_super, 168),
+                        ('genki', clip_genki, 192), ('standoff', clip_standoff, 84)]]

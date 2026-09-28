@@ -10,3 +10,8 @@
   not "new" for the build — then force it: `FIRST=<theme>__<clip>[,...] ./build.sh`. Tell the dev which clip was set first.
 - Regenerate previews with `GIFS=1 ./build.sh` and commit `media/clips/*.gif` with the change.
 - Builds must stay reproducible: seed randomness with `zlib.crc32`, never `hash()`.
+- **One file per theme** in `src/themes/`. Theme-specific sprites, colours (`PAL.update`) and effects
+  (`@fx('name')`) live in that file; only move something to `src/engine/` when a second theme needs it.
+  Effect names are global — registering one twice fails loudly.
+- A refactor that should not change visuals must keep the rendered frames pixel-identical:
+  diff `build/clips` and `build/transitions` against a copy taken before the change.

@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 OUT="$ROOT/build"; APP="$OUT/NotchFight.app"
 mkdir -p "$OUT"
 before="$(ls "$OUT/clips" 2>/dev/null || true)"
-(cd "$OUT" && python3 "$ROOT/src/themes.py")
+(cd "$OUT" && python3 "$ROOT/src/build.py")
 
 # Rule: a newly created clip plays FIRST so the dev sees it right away.
 # All new clips are queued first, in order. FIRST=a__x,b__y ./build.sh forces a list; FIRST=none skips.
