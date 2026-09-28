@@ -29,6 +29,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `fn` | Fortnite default with pickaxe | Geno | royale |
 | `pkm` | Pokémon with Ash's cap | Mewtwo | psychic |
 | `snk` | Survey Corps scout (ODM gear) | 5 titans + the Armored Titan | survey |
+| `nrt` | Naruto (headband, shadow clones, Rasengan) | Madara (Sharingan close-up) | shadowclone |
 
 Playback: pick a random theme, play up to 2 of its clips (shuffle bag, no immediate
 repeat), transition to another random theme, repeat.
@@ -57,7 +58,7 @@ Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name
 ## Layout
 
 - `src/clips.py` — sprite engine + DBZ clips.
-- `src/themes.py` — YGO/KNY/JJK/Fortnite/Pokémon/SNK themes, transitions and the frame export (entry point).
+- `src/themes.py` — YGO/KNY/JJK/Fortnite/Pokémon/SNK/Naruto themes, transitions and the frame export (entry point).
 - `src/single_clip.py` — the original standalone 10 s clip (`--black` for the notch version).
 - `app/main.swift`, `app/Info.plist` — the notch app.
 - `media/` — rendered previews.
