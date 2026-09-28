@@ -69,6 +69,8 @@ Canvas is 185×64 art pixels = 185×64 pt on a 14" MacBook Pro (1 art px = 2 dev
 
 ## Adding a clip
 
+See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
+
 Write a `clip_<name>(f)` in `src/themes.py` (or `src/clips.py` for DBZ) that starts and ends on
 the theme's neutral pose, register it in `THEMES`, rebuild. A new theme needs its own
 neutral pose; transitions to/from it are generated automatically.

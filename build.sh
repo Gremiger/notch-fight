@@ -4,7 +4,19 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 OUT="$ROOT/build"; APP="$OUT/NotchFight.app"
 mkdir -p "$OUT"
+before="$(ls "$OUT/clips" 2>/dev/null || true)"
 (cd "$OUT" && python3 "$ROOT/src/themes.py")
+
+# Rule: a newly created clip plays FIRST so the dev sees it right away.
+# (FIRST=<theme__clip> ./build.sh forces a specific one; FIRST=none skips this.)
+new="$(comm -13 <(echo "$before" | sort) <(ls "$OUT/clips" | sort) | tail -1)"
+[[ -z "$before" ]] && new=""          # first build ever: everything is "new", pick nothing
+FIRST="${FIRST:-$new}"
+if [[ -n "$FIRST" && "$FIRST" != "none" ]]; then
+  mkdir -p "$HOME/.config/notch-fight"
+  printf '{\n  "first": "%s"\n}\n' "$FIRST" > "$HOME/.config/notch-fight/config.json"
+  echo "First clip set to $FIRST (~/.config/notch-fight/config.json)"
+fi
 
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/"
