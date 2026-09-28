@@ -12,12 +12,16 @@ final class App: NSObject, NSApplicationDelegate {
     let art = CALayer()
     // Clips are grouped by theme (dir name "<theme>__<clip>"). Clips of one theme share a
     // loop keyframe and chain seamlessly; switching theme plays transitions/<from>__<to>.
-    var themes: [String: [[CGImage]]] = [:]
+    var clips: [String: [CGImage]] = [:]            // "<theme>__<clip>" -> frames
     var transitions: [String: [CGImage]] = [:]
-    var bags: [String: [Int]] = [:]
     var queue: [[CGImage]] = []
-    var theme = "", lastClip: [String: Int] = [:]
-    var clipIndex: [String: (String, Int)] = [:]   // "<theme>__<clip>" -> (theme, index)
+    var theme = ""
+    // Per-launch shuffle bag: forced clips first, then every other clip in random order;
+    // no clip repeats until all have played, then a new round starts.
+    var remaining: [String] = []
+    var lastPlayed = ""
+    var visitCount = 0                                 // clips played in the current theme visit
+    let maxPerVisit = 2
     var current: [CGImage] = []
     var idx = 0
     var playTimer: Timer?
@@ -38,27 +42,18 @@ final class App: NSObject, NSApplicationDelegate {
             notchH = screen.safeAreaInsets.top
         }
         let res = Bundle.main.resourceURL!
-        for (name, imgs) in loadDirs(res.appendingPathComponent("clips")) {
-            let t = String(name.split(separator: "_", maxSplits: 1).first ?? "")
-            themes[t, default: []].append(imgs)
-            clipIndex[name] = (t, themes[t]!.count - 1)
-        }
+        clips = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("clips")))
         transitions = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("transitions")))
-        theme = themes.keys.randomElement() ?? ""
-        // Forced clips play first, in order; then normal playback resumes from the last one's theme.
+        remaining = Array(clips.keys)
+        // Forced clips play first, in order (and count as played for this round).
         for first in forcedFirst() {
-            if let (t, i) = clipIndex[first] {        // a specific clip, e.g. "fn__royale"
-                theme = t; lastClip[t] = i; queue.append(themes[t]![i])
-            } else if themes[first] != nil {          // a whole theme, e.g. "ygo"
-                theme = first; queue.append(nextClip(in: first))
-            } else {
-                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipIndex.keys.sorted())")
+            let name = clips[first] != nil ? first
+                : (remaining.filter { themeOf($0) == first }.randomElement() ?? clips.keys.filter { themeOf($0) == first }.randomElement())
+            guard let name else {
+                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clips.keys.sorted())"); continue
             }
+            enqueue(name)
         }
-        if !queue.isEmpty, let prev = queue.last, let t = themes.first(where: { $0.value.contains { $0 == prev } })?.key {
-            theme = t
-        }
-        enqueueVisit()
         win = NotchPanel(contentRect: rect(height: 0), styleMask: [.borderless, .nonactivatingPanel],
                          backing: .buffered, defer: false)
         win.level = .screenSaver
@@ -151,32 +146,33 @@ final class App: NSObject, NSApplicationDelegate {
         }
     }
 
-    // Shuffle bag per theme: every clip plays once per round, never twice in a row.
-    func nextClip(in t: String) -> [CGImage] {
-        let clips = themes[t] ?? []
-        if bags[t, default: []].isEmpty {
-            var bag = Array(clips.indices).shuffled()
-            if bag.count > 1, bag.last == lastClip[t] { bag.swapAt(0, bag.count - 1) }
-            bags[t] = bag
-        }
-        let i = bags[t]!.removeLast(); lastClip[t] = i
-        return clips[i]
+    func themeOf(_ name: String) -> String { String(name.split(separator: "_", maxSplits: 1).first ?? "") }
+
+    // Stay in the current theme for up to maxPerVisit clips, then move to another theme;
+    // always drawing from the clips not yet played this round.
+    func pickNext() -> String? {
+        if remaining.isEmpty { remaining = Array(clips.keys) }       // new round
+        var pool = remaining.filter { $0 != lastPlayed }
+        if pool.isEmpty { pool = remaining }
+        let same = pool.filter { themeOf($0) == theme }
+        let other = pool.filter { themeOf($0) != theme }
+        if !same.isEmpty && (visitCount < maxPerVisit || other.isEmpty) { return same.randomElement() }
+        return (other.isEmpty ? same : other).randomElement()
     }
 
-    // One visit = up to 2 clips of the current theme, then a transition to another theme.
-    func enqueueVisit() {
-        guard let clips = themes[theme], !clips.isEmpty else { return }
-        for _ in 0..<min(2, clips.count) { queue.append(nextClip(in: theme)) }
-        let others = themes.keys.filter { $0 != theme }
-        if let next = others.randomElement() {
-            if let tr = transitions["\(theme)__\(next)"] { queue.append(tr) }
-            theme = next
-        }
+    func enqueue(_ name: String) {
+        guard let frames = clips[name] else { return }
+        let t = themeOf(name)
+        if !theme.isEmpty && t != theme, let tr = transitions["\(theme)__\(t)"] { queue.append(tr) }
+        visitCount = (t == theme) ? visitCount + 1 : 1
+        theme = t; lastPlayed = name
+        remaining.removeAll { $0 == name }
+        queue.append(frames)
     }
 
     func tick() {
         if idx >= current.count {
-            if queue.isEmpty { enqueueVisit() }
+            if queue.isEmpty, let next = pickNext() { enqueue(next) }
             guard !queue.isEmpty else { return }
             current = queue.removeFirst(); idx = 0
         }

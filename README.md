@@ -31,8 +31,9 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `snk` | Survey Corps scout (ODM gear) | 5 titans + the Armored Titan | survey |
 | `nrt` | Naruto (headband, shadow clones, Rasengan) | Madara (Sharingan close-up) | shadowclone |
 
-Playback: pick a random theme, play up to 2 of its clips (shuffle bag, no immediate
-repeat), transition to another random theme, repeat.
+Playback (per launch): forced clips first, then every other clip in random order — no clip
+repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
+theme visit to keep transitions few.
 
 ## Forcing the first clip
 
