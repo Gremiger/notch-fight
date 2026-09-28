@@ -5,13 +5,31 @@ Claude (the orange asterisk mascot) is always the protagonist.
 
 ![DBZ beam](media/clips/dbz__beam.gif)
 
+## Install
+
+Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Tools (`swiftc`),
+`python3`. Pillow is installed automatically if missing; `ffmpeg` is optional (GIF previews).
+
+```bash
+git clone <this repo> && cd notch-fight
+./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
+./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
+```
+
+Or just ask Claude Code in this repo: *"install this"* — `CLAUDE.md` tells it what to do.
+
+**Platforms:** the app is macOS-only (Swift/AppKit + the notch API). The clip generator
+(`src/`, Python + Pillow) runs anywhere. On a Mac without a notch the panel hangs from the top
+centre with the default 185 pt width. A Linux port would only need a new player (e.g. a GTK
+always-on-top borderless window) reading the same `build/clips` PNGs.
+
 ## How it works
 
 - `NotchFight.app` hangs a black panel from the notch's bottom edge (width = notch width,
   detected at runtime via `NSScreen.auxiliaryTopLeftArea/RightArea`) and plays the clips.
 - Clicking the panel, or `SIGTERM` (`pkill -x NotchFight`), retracts it into the notch and quits.
-- Claude Code hooks in `~/.claude/settings.json` drive it:
-  - `UserPromptSubmit` → `open -g ~/Workspace/notch-fight/build/NotchFight.app`
+- Claude Code hooks in `~/.claude/settings.json` (added by `./install.sh`) drive it:
+  - `UserPromptSubmit` → `open -g <repo>/build/NotchFight.app`
   - `Stop` / `StopFailure` → `pkill -x NotchFight`
 
 ## Themes and loop keyframes

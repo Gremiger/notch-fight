@@ -1,5 +1,23 @@
 # Notch Fight — rules for agents
 
+## Setup requests ("install this", "set it up", "remove it")
+- Install: run `./install.sh` from the repo root. It checks requirements (macOS, `swiftc`,
+  `python3`, Pillow — auto-installed), builds, and registers the hooks in `~/.claude/settings.json`
+  pointing at this checkout. Idempotent; backs up settings.json. Report its output to the user.
+- If `swiftc` is missing, tell the user to run `xcode-select --install` (interactive, needs them).
+- Not macOS: say the app is macOS-only; the generator still runs (`python3 src/build.py` in `build/`).
+- Uninstall: `./uninstall.sh` (`--purge` also removes `build/` and `~/.config/notch-fight`).
+- Never hand-edit the hooks: `scripts/hooks.py` owns them (it matches entries mentioning `NotchFight`).
+- Hooks added mid-session may need `/hooks` opened once to reload — tell the user.
+
+## Adding content ("add a One Piece fight", "add a clip to DBZ")
+- New theme = new file `src/themes/<id>.py` (see README "Adding a clip"); new clip in an existing
+  theme = new `clip_<name>` + entry in that file's `CLIPS`.
+- Then `GIFS=1 ./build.sh`, look at `build/sheet_<theme>_<clip>.png` to check the frames, and commit
+  the source + `media/clips/*.gif`.
+
+## Rules
+
 - **Claude is always the protagonist** of every clip.
 - **Every clip starts and ends on its theme's neutral pose** (the loop keyframe). Same-theme
   clips chain seamlessly; a new theme needs its own neutral pose (transitions are automatic).
