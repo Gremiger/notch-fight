@@ -48,6 +48,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `pkm` | Pokémon with Ash's cap | Mewtwo | psychic |
 | `snk` | Survey Corps scout (ODM gear) | 5 titans + the Armored Titan | survey |
 | `nrt` | Naruto (headband, shadow clones, Rasengan) | Madara (Sharingan close-up) | shadowclone |
+| `naruto-edo` | Naruto (clones, Rasengan, Rasenshuriken) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up) | edotensei |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
