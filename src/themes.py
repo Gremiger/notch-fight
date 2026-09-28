@@ -106,14 +106,14 @@ def make_bg(kind):
     im=Image.new('RGB',(W,H),(0,0,0)); d=ImageDraw.Draw(im)
     for x in range(0,W,2):
         a=1-abs(x-W/2)/(W/2); v=int(10+26*a)
-        c={'fn':(v//2,v,v//3+4),'dbz':(v,v,v+4),'ygo':(v+8,v//2,v+18),'kny':(v//2,v,v//2+6),'jjk':(v//2+4,v//2,v+14)}[kind]
+        c={'pkm':(v//3,v,v//3),'snk':(v,v-4,v-10),'fn':(v//2,v,v//3+4),'dbz':(v,v,v+4),'ygo':(v+8,v//2,v+18),'kny':(v//2,v,v//2+6),'jjk':(v//2+4,v//2,v+14)}[kind]
         d.point((x,GROUND+1),fill=c)
     if kind=='ygo':
         for x in range(8,W,12): d.point((x,GROUND+3),fill=(40,18,60))
     if kind=='kny':
         d.ellipse([164,3,176,15],fill=(236,228,180)); d.ellipse([167,1,179,13],fill=(0,0,0))
     return im
-BGS={k:make_bg(k) for k in ('dbz','ygo','kny','jjk','fn')}
+BGS={k:make_bg(k) for k in ('dbz','ygo','kny','jjk','fn','pkm','snk')}
 
 def actor(spr,x,y=GROUND,flip=False,**kw):
     a=dict(spr=spr,x=x,y=y,flip=flip,aura=None,pal=None,vis=True,holo=None); a.update(kw); return a
@@ -134,12 +134,13 @@ def draw_holo(im,spr,x,feet,flip,prog,f,alpha=0.85):
 
 def render(s,f):
     im=make_bg(s['kind']) if s['kind'] not in BGS else BGS[s['kind']].copy(); d=ImageDraw.Draw(im)
-    for e in s['under']: fx_fn(d,im,e,f)
+    for e in s['under']: fx_snk(d,im,e,f)
     for a in s['actors']:
         if not a['vis']: continue
         if a['holo'] is not None: draw_holo(im,a['spr'],a['x'],a['y'],a['flip'],a['holo'],f)
         else: draw(im,a['spr'],a['x'],a['y'],a['flip'],aura=a['aura'],f=f,pal=a['pal'],alpha=a.get('alpha',1.0),tint=a.get('tint'))
-    for e in s['fx']: fx_fn(d,im,e,f)
+    if s['kind']=='snk': d.rectangle([0,GROUND+2,W,H],fill=(0,0,0))   # titans sink INTO the ground
+    for e in s['fx']: fx_snk(d,im,e,f)
     if s['shake']!=(0,0):
         im2=BGS[s['kind']].copy(); im2.paste(im,s['shake']); im=im2
     if s['flash']>0:
@@ -553,6 +554,256 @@ def clip_royale(f):
     s['actors']=[cl,gn]
     return s
 
+
+# ---------------------------------------------------------------- shared: full 3x5 font
+FONT.update({
+'A':"010101111101101",'B':"110101110101110",'C':"111100100100111",'D':"110101101101110",'E':"111100110100111",
+'F':"111100110100100",'G':"111100101101111",'H':"101101111101101",'I':"111010010010111",'J':"001001001101111",
+'K':"101101110101101",'L':"100100100100111",'M':"101111111101101",'N':"110101101101101",'O':"111101101101111",
+'P':"111101111100100",'Q':"111101101111001",'R':"110101110101101",'S':"111100111001111",'T':"111010010010010",
+'U':"101101101101111",'V':"101101101101010",'W':"101101111111101",'X':"101101010101101",'Y':"101101010010010",
+'Z':"111001010100111",'!':"010010010000010",':':"000010000010000",'.':"000000000000010"})
+
+# ---------------------------------------------------------------- POKEMON
+PAL.update({'m':(206,196,222),'u':(150,92,176),'U':(120,40,160)})
+ASH=variant(lambda s: overlay(s,["..rrrrrr....",".rrrHHrrr...",".rrrrrrrrrrr"],-1,0))
+MEWTWO=poses(S([
+".....mm.mm........",".....mmmmm........","....mmmmmmm.......","....mmmUmmU.......","....mmmmmmm.......",".....mmmmm........",
+"......mmm.........","....mmmmmmm.......","...mmmmmmmmm......","..mm.mmmmm.mm.....","..mm.muuum.mm.....","..m..muuum..m.....",
+"uu...muuum........","uu...uuuuu........",".uu.uuu.uuu.......","..uuu...uu........","...mm.....mm......","...mm.....mm......",
+"..mmm.....mmm.....",]),9,'mm',4)
+
+def hp_color(v): return (40,210,90) if v>0.5 else (240,200,40) if v>0.2 else (230,50,40)
+
+def fx_pkm(d,im,e,f):
+    k=e[0]
+    if k=='hp':
+        _,x0,name,v=e; text(d,name,x0,1,(240,240,240)); d.rectangle([x0,8,x0+34,9],fill=(40,40,40))
+        if v>0: d.rectangle([x0,8,x0+int(34*v),9],fill=hp_color(v))
+    elif k=='textbox':
+        _,l1,l2=e; d.rectangle([46,10,139,24],fill=(0,0,0),outline=(236,236,236))
+        text(d,l1,49,12,(240,240,240)); text(d,l2,49,18,(240,240,240))
+    elif k=='pball':
+        _,x,y,op=e; x,y=int(x),int(y); o=int(op)
+        d.ellipse([x-3,y-3-o,x+3,y+3-o],fill=(230,40,40)) if o else None
+        d.pieslice([x-3,y-3-o,x+3,y+3-o],180,360,fill=(230,40,40)); d.pieslice([x-3,y-3+o,x+3,y+3+o],0,180,fill=(240,240,240))
+        d.line([x-3,y,x+3,y],fill=(20,20,20)); d.point((x,y),fill=(240,240,240))
+    elif k=='psywave':
+        _,x0,x1,y0,y1=e
+        for j in range(3):
+            pts=[(x,lerp(y0,y1,(x-x0)/max(1,x1-x0))+3*math.sin(x*0.4+f*0.8+j*2)) for x in range(int(min(x0,x1)),int(max(x0,x1)),2)]
+            if len(pts)>1: d.line(pts,fill=(200,120,255) if j%2 else (150,80,230))
+    elif k=='platform':
+        _,x=e; d.ellipse([x-16,GROUND-2,x+16,GROUND+3],outline=(60,90,60))
+    else: fx_fn(d,im,e,f)
+
+def clip_psychic(f):
+    s=scene(f,'pkm'); N=240
+    hov=GROUND-3+round(2*math.sin(2*math.pi*f/24))
+    cl=actor(ASH[guard_pose(f)],30); mw=actor(MEWTWO['idle'],150,y=hov,flip=True)
+    hc=hm=1.0; msg=None
+    s['under']+=[('platform',30),('platform',150)]
+    if 12<=f<48: msg=("CLAUDE USED","QUICK ATTACK!")
+    if 18<=f<30:
+        t=(f-18)/12; cl['x']=lerp(30,134,t); cl['y']=GROUND-int(6*abs(math.sin(t*math.pi*3))); cl['spr']=ASH['dash']
+        cl['aura']=((255,255,255),1)
+        for i in range(3): y=random.randint(30,58); x=random.randint(0,120); s['fx'].append(('tracer',x,x+10,y))
+    if f==30: s['fx'].append(('spark',142,hov-10,7)); s['shake']=rshake(2)
+    if 30<=f<34: cl.update(x=134,spr=ASH['punch']); mw['spr']=MEWTWO['hurt']
+    if f>=30: hm=0.8
+    if 34<=f<46: t=(f-34)/12; cl.update(x=ez(134,30,t),y=GROUND-int(8*math.sin(math.pi*t)))
+    if 48<=f<96:
+        msg=("MEWTWO USED","PSYCHIC!"); mw['spr']=MEWTWO['attack']; mw['aura']=((200,120,255),1+(f%2))
+        if 54<=f<90:
+            lift=ez(0,18,(f-54)/10) if f<86 else ez(18,0,(f-86)/4)
+            cl.update(y=GROUND-int(lift)+random.choice([-1,0,1]),x=30+random.choice([-1,0,1]),spr=ASH['hurt'],aura=((200,120,255),2))
+            s['under'].append(('psywave',40,140,cl['y']-6,hov-10))
+            s['fx'].append(('circle',cl['x'],cl['y']-6,2+(f*2)%10,(200,120,255)))
+            hc=lerp(1,0.55,(f-60)/30) if f>=60 else 1
+        if f==90: s['shake']=rshake(2); s['fx'].append(('spark',30,GROUND-4,6))
+        if 90<=f<96:
+            for i in range(2): s['fx'].append(('dust',30+random.randint(-8,8),GROUND-random.randint(0,3)))
+    if f>=90: hc=0.55
+    if 96<=f<136:
+        msg=("CLAUDE USED","FLAMETHROWER!"); cl['spr']=ASH['charge']; cl['aura']=((255,150,60),1+(f%2))
+        if 102<=f<130:
+            for i in range(16):
+                t=((f*0.09+i/16)%1); x=lerp(42,140,t); y=GROUND-6+lerp(0,hov-10-(GROUND-6),t)+math.sin(i*1.7+f*0.9)*t*4
+                c=[(255,240,160),(255,190,70),(240,110,40),(200,60,30)][min(3,int(t*4))]
+                s['fx'].append(('smoke',x,y,1+int(t*2.5),c))
+        if f>=110: mw['spr']=MEWTWO['hurt']; hm=lerp(0.8,0.25,(f-110)/20)
+    if f>=130: hm=0.25
+    if 136<=f<152:
+        msg=("MEWTWO USED","SHADOW BALL!"); mw['spr']=MEWTWO['attack']
+        if f>=138:
+            x=140-10*(f-138)
+            if x>-10: s['fx'].append(('orbc',x,GROUND-8,3,((90,40,130),(30,10,50))))
+        if 142<=f<154: t=(f-142)/12; cl['y']=GROUND-int(16*math.sin(math.pi*t))
+    if 152<=f<172: msg=("CLAUDE THREW A","POKE BALL!")
+    if 154<=f<160: cl['spr']=ASH['punch']
+    if 156<=f<166:
+        t=(f-156)/10; s['fx'].append(('pball',lerp(38,150,t),lerp(GROUND-10,hov-12,t)-14*math.sin(math.pi*t),0))
+    if 166<=f<172:
+        mw.update(tint=(255,70,70),alpha=1-(f-166)/6); s['fx'].append(('pball',150,hov-12,2))
+        s['fx'].append(('tracer',146,154,hov-12))
+    if 172<=f<200:
+        mw['vis']=False; wob=(1 if f in range(176,180) or f in range(192,196) else -1 if f in range(184,188) else 0)
+        s['fx'].append(('pball',150+wob,GROUND-3,0)); msg=(".  .  .","") if f<188 else (".  .  .  .","")
+    if 200<=f<224:
+        msg=("OH NO!","IT BROKE FREE!")
+        if f<204: s['flash']=0.8; s['fc']=(150,GROUND-8); s['flashc']=(255,255,255)
+        if f<206: s['fx'].append(('pball',150,GROUND-3,3))
+        mw.update(tint=(255,70,70) if f<208 else None,alpha=min(1,(f-200)/6))
+    if 216<=f<232: hc=lerp(0.55,1,(f-216)/16); hm=lerp(0.25,1,(f-216)/16)
+    if f>=232: hc=hm=1.0
+    s['fx']+=[('hp',3,'CLAUDE',hc),('hp',148,'MEWTWO',hm)]
+    if msg: s['fx'].append(('textbox',)+msg)
+    s['actors']=[cl,mw]
+    return s
+
+# ---------------------------------------------------------------- SHINGEKI NO KYOJIN
+PAL.update({'t':(232,186,160),'T':(194,146,122),'z':(208,174,112),'a':(132,100,62)})
+SCOUT=variant(lambda s: recolor_rows(s,
+    lambda x,y,t,l,r,c: ('X' if c in '.o' and x<l else None) if (t+1<=y<=t+8 and l-2<=x<l) else
+                        ('F' if (y==t+6 and l<=x<=r and c=='O') else ('D' if (y==t+7 and x in (l,r)) else None))))
+
+_TCACHE={}
+def titan(h,hair,walk=0,armored=False):
+    key=(h,hair,walk,armored)
+    if key in _TCACHE: return _TCACHE[key]
+    w=max(11,int(h*0.5))|1; cx=w//2; g=[['.']*w for _ in range(h)]
+    sk,sh=('z','a') if armored else ('t','T')
+    hh=max(7,int(h*0.3)); hw=max(5,int(w*0.6))
+    for y in range(hh):
+        for x in range(w):
+            if ((x-cx)/(hw/2))**2+((y-hh/2+0.5)/(hh/2))**2<=1:
+                g[y][x]=hair if (y<hh*0.35 or (y<hh*0.65 and abs(x-cx)>=hw/2-1)) else sk
+    ey=int(hh*0.5); g[ey][cx-2]='K'; g[ey][cx+1]='K'
+    my=int(hh*0.78)
+    for x in range(cx-hw//3,cx+hw//3+1): g[my][x]='H'
+    g[my][cx-hw//3-1]='K'; g[my][cx+hw//3+1]='K'
+    g[hh][cx-1]=g[hh][cx]=g[hh][cx+1]=sk
+    th=int(h*0.33); tw=max(5,int(w*0.62)); t0=hh+1; l=cx-tw//2; r=cx+tw//2
+    for y in range(t0,min(h,t0+th)):
+        for x in range(l,r+1): g[y][x]=sh if x==l else (('a' if (y-t0)%3==0 else sk) if armored else sk)
+    for y in range(t0,min(h,t0+th+3)):
+        sw=walk if y>t0+th//2 else 0
+        for x in (l-2-sw,l-1-sw,r+1+sw,r+2+sw):
+            if 0<=x<w: g[y][x]=sk
+    for y in range(t0+th,h):
+        o=walk if y>t0+th+(h-t0-th)//2 else 0
+        for x in range(l+1,cx):
+            xx=x+o
+            if 0<=xx<w: g[y][xx]=sh if x==l+1 else sk
+        for x in range(cx+1,r):
+            xx=x-o
+            if 0<=xx<w: g[y][xx]=sk
+    out=S([''.join(r) for r in g]); _TCACHE[key]=out; return out
+
+def fx_snk(d,im,e,f):
+    k=e[0]
+    if k=='wire': _,x0,y0,x1,y1=e; d.line([x0,y0,x1,y1],fill=(170,170,180))
+    elif k=='blades':
+        _,x,y,fl=e; s_=-1 if fl else 1
+        d.line([x+6*s_,y-5,x+14*s_,y-8],fill=(220,224,238)); d.line([x+5*s_,y-3,x+13*s_,y-3],fill=(200,206,222))
+    elif k=='spear':
+        _,x0,y0,x1,y1=e; d.line([x0,y0,x1,y1],fill=(120,120,130)); d.point((int(x1),int(y1)),fill=(230,50,40))
+    elif k=='wallbg':
+        for y in range(12,GROUND+1):
+            for x in range(0,8):
+                c=(70,68,64) if (y%4==0 or (x+(y//4)*3)%6==0) else (104,100,94)
+                d.point((x,y),fill=c)
+        for x in range(0,8,3): d.rectangle([x,9,x+1,11],fill=(104,100,94))
+    else: fx_pkm(d,im,e,f)
+
+TITANS=[dict(h=26,hair='q',tx=118,kill=34),dict(h=34,hair='k',tx=146,kill=66),dict(h=30,hair='Y',tx=102,kill=98),
+        dict(h=38,hair='R',tx=156,kill=130),dict(h=24,hair='k',tx=128,kill=160)]
+
+def nape(T,armored=False):
+    h=T['h']; w=max(11,int(h*0.5))|1; hh=max(7,int(h*0.3))
+    return T['x']+w//2-1, GROUND-h+hh+1
+
+def clip_survey(f):
+    s=scene(f,'snk'); N=264
+    s['under'].append(('wallbg',))
+    cl=actor(SCOUT[guard_pose(f)],30); pos=(30.0,float(GROUND)); flip=False; blades=True; pose=None
+    titans=[]
+    for i,T in enumerate(TITANS):
+        enter=T['kill']-34
+        if not (enter<=f<T['kill']+24): continue
+        t=min(1,(f-enter)/26); x=lerp(205,T['tx'],t); walking=t<1
+        y=GROUND-(1 if walking and (f//4)%2 else 0)
+        a=actor(titan(T['h'],T['hair'],walk=((f//4)%2*2-1) if walking else 0),x,y=y)
+        T=dict(T,x=x)
+        if f>=T['kill']+2:
+            k=(f-T['kill']-2)/20; a['y']=GROUND+int(T['h']*0.45*k); a['alpha']=max(0,1-k)
+            rr=random.Random(f//2+i)
+            for j in range(int(8*(1-k)+3)): s['fx'].append(('smoke',x+rr.randint(-8,8),GROUND-rr.randint(4,T['h']),rr.randint(2,4),(236,236,240) if j%2 else (190,190,200)))
+        titans.append(a); TITANS[i]['x']=x
+    # Claude's flight path: launch -> zip to nape -> spin slash -> drop
+    prev=(30,GROUND)
+    for i,T in enumerate(TITANS):
+        tk=T['kill']; nx,ny=nape(dict(T,x=T['tx'])); land=(T['tx']-26,GROUND)
+        if tk-10<=f<tk-2:
+            t=(f-(tk-10))/8; pos=(lerp(prev[0],nx+4,ease(t)),lerp(prev[1],ny,ease(t))-10*math.sin(math.pi*t)); pose='dash'
+            s['fx'].append(('wire',pos[0],pos[1]-5,nx,ny))
+            s['fx'].append(('mote',pos[0]-4,pos[1]-4,(240,240,250)))
+        elif tk-2<=f<tk+4:
+            pos=(nx+4,ny); flip=(f%2==0); pose='punch'
+            s['fx'].append(('circle',pos[0],pos[1]-6,8,(240,240,255)))
+            if f==tk: s['fx'].append(('spark',nx,ny-2,7)); s['shake']=rshake()
+        elif tk+4<=f<tk+14:
+            t=(f-(tk+4))/10; pos=(lerp(nx+4,land[0],t),lerp(ny,GROUND,t*t)); pose='guard'
+        elif i+1<len(TITANS) and tk+14<=f<TITANS[i+1]['kill']-10: pos=land
+        prev=land
+    last=TITANS[-1]; lx=last['tx']-26
+    if 174<=f<200: pos=(lx,GROUND)
+    # --- the Armored Titan
+    AH=46; arm=None
+    if 170<=f<262:
+        if f<196: x=lerp(215,140,(f-170)/26); walking=True
+        elif f<200: x=140; walking=False
+        elif f<210: x=lerp(140,86,ease((f-200)/10)); walking=False
+        else: x=86; walking=False
+        arm=actor(titan(AH,'Y',walk=((f//5)%2*2-1) if walking else 0,armored=True),x)
+        if walking and f%5==0: s['shake']=rshake()
+        if 232<=f<250: arm['y']=GROUND+int(12*ease((f-232)/18))
+        if f>=250: arm['y']=GROUND+12; arm['alpha']=max(0,1-(f-250)/12)
+        if f>=232:
+            rr=random.Random(f//2)
+            for j in range(10): s['fx'].append(('smoke',x+rr.randint(-12,12),GROUND-rr.randint(6,40),rr.randint(2,5),(236,236,240) if j%2 else (190,190,200)))
+        titans.append(arm)
+    AT=dict(h=AH,x=86); anx,any_=nape(AT)
+    if 200<=f<210:
+        t=(f-200)/10; pos=(lerp(lx,48,ease(t)),lerp(GROUND,GROUND-26,ease(t))); pose='dash'; flip=False
+        s['fx'].append(('wire',pos[0],pos[1]-5,6,12))
+    if 210<=f<216:
+        t=(f-210)/6; pos=(lerp(48,anx+4,t),lerp(GROUND-26,any_,t)); pose='dash'
+        s['fx'].append(('wire',pos[0],pos[1]-5,anx,any_))
+    if 216<=f<222:
+        pos=(anx+4,any_); pose='punch'; flip=True; blades=f<217
+        if f==216: s['fx'].append(('spark',anx,any_-2,6)); s['shake']=rshake(2)
+        for j in range(4): s['fx'].append(('shard',anx+random.randint(-6,6)+(f-216)*2,any_-4+random.randint(-4,4)+(f-216),(220,224,238)))
+    if 222<=f<230:
+        t=(f-222)/8; pos=(lerp(anx+4,58,t),lerp(any_,GROUND,t*t)); pose='hurt'; flip=False; blades=False
+    if 228<=f<236:
+        pos=(58,GROUND); pose='charge'; blades=False
+        if f<232:
+            t=(f-228)/4
+            for dy in (0,3): s['fx'].append(('spear',58+8,GROUND-6+dy,lerp(66,anx,t),lerp(GROUND-6+dy,any_+dy,t)))
+        else:
+            for dy in (0,3): s['fx'].append(('spear',anx-6,any_+dy+2,anx,any_+dy))
+    if f==232: s['flash']=0.9; s['fc']=(anx,any_); s['flashc']=(255,190,120); s['shake']=rshake(2)
+    if 232<=f<242: s['fx'].append(('boom',anx,any_,int(4+(f-232)*3)))
+    if 236<=f<256: pos=(ez(58,30,(f-236)/20),GROUND); blades=False
+    if 252<=f<258: s['fx'].append(('twinkle',36,GROUND-7,1+(f%2)))
+    if f>=256: blades=True
+    cl.update(x=pos[0],y=pos[1],flip=flip)
+    if pose: cl['spr']=SCOUT[pose]
+    if blades: s['fx'].append(('blades',cl['x'],cl['y'],flip))
+    s['actors']=titans+[cl]
+    return s
+
 # ---------------------------------------------------------------- transitions
 def asterisk_thick(d,x,y,r,f,c=(217,119,87)):
     for k in range(8):
@@ -578,6 +829,8 @@ THEMES={
  'kny':[('breath',clip_breath,204)],
  'jjk':[('infinity',clip_infinity,216)],
  'fn':[('royale',clip_royale,228)],
+ 'pkm':[('psychic',clip_psychic,240)],
+ 'snk':[('survey',clip_survey,264)],
 }
 
 if __name__=='__main__':

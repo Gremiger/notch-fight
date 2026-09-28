@@ -45,14 +45,18 @@ final class App: NSObject, NSApplicationDelegate {
         }
         transitions = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("transitions")))
         theme = themes.keys.randomElement() ?? ""
-        if let first = forcedFirst() {
+        // Forced clips play first, in order; then normal playback resumes from the last one's theme.
+        for first in forcedFirst() {
             if let (t, i) = clipIndex[first] {        // a specific clip, e.g. "fn__royale"
                 theme = t; lastClip[t] = i; queue.append(themes[t]![i])
             } else if themes[first] != nil {          // a whole theme, e.g. "ygo"
-                theme = first
+                theme = first; queue.append(nextClip(in: first))
             } else {
                 NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipIndex.keys.sorted())")
             }
+        }
+        if !queue.isEmpty, let prev = queue.last, let t = themes.first(where: { $0.value.contains { $0 == prev } })?.key {
+            theme = t
         }
         enqueueVisit()
         win = NotchPanel(contentRect: rect(height: 0), styleMask: [.borderless, .nonactivatingPanel],
@@ -119,18 +123,19 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     // First clip override, in priority order:
-    //   1. open -g NotchFight.app --args --first <theme__clip|theme>
-    //   2. NOTCH_FIGHT_FIRST env var
-    //   3. ~/.config/notch-fight/config.json  {"first": "<theme__clip|theme>"}
-    func forcedFirst() -> String? {
+    //   1. open -g NotchFight.app --args --first <theme__clip|theme>[,<...>]
+    //   2. NOTCH_FIGHT_FIRST env var (same comma-separated format)
+    //   3. ~/.config/notch-fight/config.json  {"first": "<name>"} or {"first": ["<name>", ...]}
+    func forcedFirst() -> [String] {
+        func split(_ s: String) -> [String] { s.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } }
         let args = CommandLine.arguments
-        if let i = args.firstIndex(of: "--first"), i + 1 < args.count { return args[i + 1] }
-        if let env = ProcessInfo.processInfo.environment["NOTCH_FIGHT_FIRST"], !env.isEmpty { return env }
+        if let i = args.firstIndex(of: "--first"), i + 1 < args.count { return split(args[i + 1]) }
+        if let env = ProcessInfo.processInfo.environment["NOTCH_FIGHT_FIRST"], !env.isEmpty { return split(env) }
         let cfg = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
         guard let data = try? Data(contentsOf: cfg),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let first = json["first"] as? String, !first.isEmpty else { return nil }
-        return first
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        if let one = json["first"] as? String { return split(one) }
+        return (json["first"] as? [String]) ?? []
     }
 
     func loadDirs(_ root: URL) -> [(String, [CGImage])] {

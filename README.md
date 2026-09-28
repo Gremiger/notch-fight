@@ -27,6 +27,8 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `kny` | Tanjiro-style swordsman | Akaza | breath |
 | `jjk` | Gojo-style sorcerer | Sukuna | infinity |
 | `fn` | Fortnite default with pickaxe | Geno | royale |
+| `pkm` | Pokémon with Ash's cap | Mewtwo | psychic |
+| `snk` | Survey Corps scout (ODM gear) | 5 titans + the Armored Titan | survey |
 
 Playback: pick a random theme, play up to 2 of its clips (shuffle bag, no immediate
 repeat), transition to another random theme, repeat.
@@ -34,10 +36,12 @@ repeat), transition to another random theme, repeat.
 ## Forcing the first clip
 
 Useful to test a new clip or to show one off. Value is a clip (`<theme>__<clip>`, e.g.
-`fn__royale`) or a whole theme (e.g. `ygo`). After the forced clip, playback continues normally.
+`fn__royale`), a whole theme (e.g. `ygo`), or a comma-separated list / JSON array of them,
+played in order. After the forced clips, playback continues normally.
 
 ```bash
 open -g build/NotchFight.app --args --first fn__royale     # one-off
+open -g build/NotchFight.app --args --first pkm__psychic,snk__survey
 NOTCH_FIGHT_FIRST=jjk ./build/NotchFight.app/Contents/MacOS/NotchFight
 ```
 
@@ -53,7 +57,7 @@ Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name
 ## Layout
 
 - `src/clips.py` — sprite engine + DBZ clips.
-- `src/themes.py` — YGO/KNY/JJK/Fortnite themes, transitions and the frame export (entry point).
+- `src/themes.py` — YGO/KNY/JJK/Fortnite/Pokémon/SNK themes, transitions and the frame export (entry point).
 - `src/single_clip.py` — the original standalone 10 s clip (`--black` for the notch version).
 - `app/main.swift`, `app/Info.plist` — the notch app.
 - `media/` — rendered previews.
