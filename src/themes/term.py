@@ -187,22 +187,19 @@ def _fx_drop(d,im,e,f):
 def _fx_say(d,im,e,f):
     """2x shout that may contain an apostrophe (the font has none): drawn as a 2x4 tick."""
     _,txt,y,c=e; plain=txt.replace("'"," ")
-    FX['big'](d,im,('big',plain,y,c),f)
-    x0=W//2-len(plain)*4
+    x0,*_=big_text(im,plain,y,c)
     for i,ch in enumerate(txt):
         if ch=="'":
             gx=x0+i*8+2; d.rectangle([gx+1,y+1,gx+2,y+4],fill=(0,0,0)); d.rectangle([gx,y,gx+1,y+3],fill=c)
 
 # --- geometry helpers -----------------------------------------------------------------------------
 _HAND={'charge':(15,5),'guard':(13,4),'guard2':(13,5)}
-def _origin(spr,cx,feet=GROUND):
-    return int(round(cx-len(spr[0])/2)),int(round(feet-len(spr)))
 def gun_at(pose,cx,a=0.0):
-    ox,oy=_origin(CL[pose],cx); hx,hy=_HAND[pose]; return ('term_gun',ox+hx-1,oy+hy,a)
+    ox,oy=origin(CL[pose],cx); hx,hy=_HAND[pose]; return ('term_gun',ox+hx-1,oy+hy,a)
 def tip(g):
     _,x,y,a=g; return x+math.cos(a)*14,y+math.sin(a)*14
 def eye_of(spr,cx):
-    ox,oy=_origin(spr,cx)
+    ox,oy=origin(spr,cx)
     for y,row in enumerate(spr):
         if '7' in row: return ox+row.index('7'),oy+y
     return None
@@ -210,7 +207,7 @@ def eye_of(spr,cx):
 # Pre-computed shatter: shards taken from the frozen T-1000's own pixels, then flung with gravity.
 SHATTER_X=142
 def _shards():
-    spr=BLADES[9]; ox,oy=_origin(spr,SHATTER_X); w=len(spr[0]); rr=random.Random(1000)
+    spr=BLADES[9]; ox,oy=origin(spr,SHATTER_X); w=len(spr[0]); rr=random.Random(1000)
     pts=[(ox+(w-1-x),oy+y) for y,row in enumerate(spr) for x,c in enumerate(row) if c!='.']
     out=[]
     for i,(x,y) in enumerate(rr.sample(pts,52)):
@@ -247,7 +244,7 @@ def closeup_eye(t,f):
     if t>0.2:   # dive into the eye
         r=int(ease((t-0.2)/0.1)*200); d.ellipse([123-r,24-r,123+r,24+r],fill=(60,4,3))
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 HUD_LINES=[(0.00,"TARGET ACQUIRED",3,3),(0.08,"THREAT: T-1000",3,10),(0.16,"POLYALLOY: MIMETIC",3,17),
@@ -283,7 +280,7 @@ def closeup_hud(u,f):
             d.polygon([(x-7,y),(x-4,y+2),(x-7,y+4)],fill=(255,236,226))
         text(d,s[:n],x,y,c,shadow=None)
     if u<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,190,180))
+        zoom_lines(d,(255,190,180))
     return im
 
 SHOTS=[(34,(-1,-11)),(48,(3,-14)),(62,(0,-17))]   # frame, hole offset from the T-1000 centre/feet
@@ -358,7 +355,7 @@ def clip_judgment(f):
             tx,ty=tip(gun); s['fx']+=[('term_muzzle',int(tx),int(ty)),('term_line',int(tx)+6,int(ty),SHATTER_X-8,49,(255,236,150))]
             s['flash']=0.45; s['fc']=(SHATTER_X,48); s['flashc']=FROST; s['shake']=rshake(2)
         if 246<=f<258:   # a fresh pair of shades from the jacket to the face
-            ox,oy=_origin(CL[guard_pose(f)],30); u=ease((f-246)/10)
+            ox,oy=origin(CL[guard_pose(f)],30); u=ease((f-246)/10)
             s['fx'].append(('term_shades',lerp(ox+13,ox+8,u),lerp(oy+6,oy+2+(f//6)%2,u),0))
         for i,sh in enumerate(SHARDS):
             u=f-230

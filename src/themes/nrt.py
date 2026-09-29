@@ -59,9 +59,8 @@ def closeup_frame(t,f):
     cw,ch=int(W/sc),int(H/sc); x0,y0=(W-cw)//2,(H-ch)//2
     im=im.crop((x0,y0,x0+cw,y0+ch)).resize((W,H),Image.NEAREST); d=ImageDraw.Draw(im)
     d.rectangle([0,0,W,5],fill=(0,0,0)); d.rectangle([0,58,W,H],fill=(0,0,0))   # letterbox
-    if t<0.1:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
-    if t>0.9: im=Image.blend(im,Image.new('RGB',(W,H),(200,0,20)),0.5*(t-0.9)/0.1)
+    if t<0.1: zoom_lines(d)
+    if t>0.9: im=fade_to(im,(200,0,20),0.5*(t-0.9)/0.1)
     return im
 
 def clip_shadowclone(f):

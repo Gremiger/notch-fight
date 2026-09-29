@@ -64,14 +64,8 @@ BISON_IDLE=S([
 ".....kkk..kkk.....",])
 BISON=poses(BISON_IDLE,12,'ss',4)
 BPAL={'c':(58,12,26)}
-def _rot(spr,cw=True):
-    """Rotate a sprite grid 90 degrees (clockwise: the head ends up on the right)."""
-    cols=[i for i in range(len(spr[0])) if any(r[i]!='.' for r in spr)]
-    g=[''.join(r[i] for i in cols) for r in spr]; h,w=len(g),len(g[0])
-    if cw: return S([''.join(g[h-1-x][y] for x in range(h)) for y in range(w)])
-    return S([''.join(g[x][w-1-y] for x in range(h)) for y in range(w)])
-CRUSH=_rot(BISON_IDLE,True)      # horizontal, fist-first: the Psycho Crusher
-DOWN=_rot(BISON_IDLE,False)      # flat on his back after the K.O.
+CRUSH=rotate90(BISON_IDLE,1,trim=True)  # horizontal, fist-first: the Psycho Crusher
+DOWN=rotate90(BISON_IDLE,3,trim=True)  # flat on his back after the K.O.
 
 HADOU=((120,200,255),(40,110,255))
 PSYCHO=((210,120,255),(120,40,210))
@@ -103,7 +97,7 @@ def _fx_hud(d,im,e,f):
 
 @fx('sf_dim')
 def _fx_dim(d,im,e,f):
-    _,a=e; im.paste(Image.blend(im,Image.new('RGB',(W,H),(0,0,8)),a))
+    _,a=e; im.paste(fade_to(im,(0,0,8),a))
 
 @fx('sf_hadou')
 def _fx_hadou(d,im,e,f):
@@ -147,19 +141,8 @@ def _fx_bolt(d,im,e,f):
 @fx('sf_big')
 def _fx_sfbig(d,im,e,f):
     """Scaled announcer text with a thick coloured outline (K.O., YOU WIN)."""
-    _,txt,y,c,oc,sc=e
-    m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
-    m=m.resize((m.width*sc,m.height*sc),Image.NEAREST); x=W//2-m.width//2
-    for dx,dy in ((-1,0),(1,0),(0,-1),(0,1),(1,1),(2,2)): im.paste(oc if (dx,dy)!=(2,2) else (0,0,0),(x+dx,y+dy),m)
-    im.paste(c,(x,y),m)
+    _,txt,y,c,oc,sc=e; big_text(im,txt,y,c,sc,outline=oc)
 
-def hp(f,marks):
-    """Health from (frame, value) drops, each draining over 4 frames; refills during the reset."""
-    v=1.0
-    for t0,val in marks:
-        if f>=t0: v=lerp(v,val,(f-t0)/4)
-    if f>=260: v=lerp(v,1.0,(f-260)/16)
-    return v
 HP_L=[(78,0.68)]
 HP_R=[(50,0.84),(142,0.6),(216,0.45),(222,0.3),(228,0.15),(234,0.0)]
 
@@ -203,13 +186,13 @@ def closeup_super(t,f):
         r=int(2+(t-0.7)*14); cx,cy=fx0+86,52
         d.ellipse([cx-r,cy-r//2-1,cx+r,cy+r//2+1],fill=(40,110,255)); d.ellipse([cx-r//2,cy-r//4,cx+r//2,cy+r//4],fill=(220,245,255))
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 def clip_hadouken(f):
     s=scene(f,THEME)
     cl=actor(ryu(guard_pose(f),f),30); bi=actor(BISON['idle'],150,flip=True,pal=BPAL)
-    s['fx'].append(('sf_hud',hp(f,HP_L),hp(f,HP_R),timer(f)))
+    s['fx'].append(('sf_hud',track(f,HP_L,refill=(260,276)),track(f,HP_R,refill=(260,276)),timer(f)))
     if 12<=f<24: s['fx'].append(('big',"ROUND 1",26,(250,210,60)))
     if 24<=f<36: s['fx'].append(('big',"FIGHT!",26,(255,70,50)))
     # 1) jump kick

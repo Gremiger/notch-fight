@@ -73,7 +73,7 @@ def closeup_gon(t,f):
         if hollow<0.9: d.rectangle([ex-1,24,ex,26],fill=(255,255,255))
         elif (f//3)%3==0: d.point((ex,32),fill=(120,30,20))
     dark=0.65*ease((t-0.2)/0.4)
-    if dark>0: im=Image.blend(im,Image.new('RGB',(W,H),(20,6,4)),dark); d=ImageDraw.Draw(im)
+    if dark>0: im=fade_to(im,(20,6,4),dark); d=ImageDraw.Draw(im)
     g=ease((t-0.3)/0.5)   # the hair grows: bangs lengthen, side locks run down the frame
     hc,hl=(52,118,44),(78,150,66); base=int(8+6*g)
     pts=[(0,0)]
@@ -90,9 +90,8 @@ def closeup_gon(t,f):
         for _ in range(14):
             x=rr.randint(0,W); y=rr.randint(0,H); d.line([x,y,x,y-rr.randint(3,8)],fill=(255,150,60))
     if t>0.55: text(d,"JAN KEN...",W//2-20,50,(255,190,120))
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
-    if t>0.9: im=Image.blend(im,Image.new('RGB',(W,H),(255,170,90)),0.7*(t-0.9)/0.1)
+    if t<0.06: zoom_lines(d)
+    if t>0.9: im=fade_to(im,(255,170,90),0.7*(t-0.9)/0.1)
     return im
 
 def clip_jajanken(f):

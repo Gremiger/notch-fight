@@ -66,12 +66,6 @@ def vader_pal(f):
 GREEN = ((40, 170, 60), (190, 255, 190))
 RED = ((200, 30, 24), (255, 200, 190))
 
-def hand_at(spr, cx, feet, flip, hx, hy, h=None):
-    """World position of sprite cell (hx,hy); h = the pose's original height (Claude's hood
-    overlay pads rows on top, so y is measured from the feet)."""
-    w = len(spr[0]); h = h or len(spr); ox = int(round(cx - w / 2))
-    return (ox + (w - 1 - hx) if flip else ox + hx), feet - h + hy
-
 def cl_hand(pose, x, y=GROUND):
     return hand_at(JEDI[pose], x, y, False, *C_HAND[pose], h=11)
 
@@ -152,10 +146,6 @@ def seg_cross(a, b):
     return None
 
 # --- close-ups -----------------------------------------------------------------------------
-def _zoomlines(d, t):
-    if t < 0.06:
-        for i in range(10): a = i * 0.63; d.line([W // 2, H // 2, W // 2 + math.cos(a) * 120, H // 2 + math.sin(a) * 60], fill=(255, 255, 255))
-
 def closeup_vader(t, f):
     """Primer plano: the helmet fills the left of the frame, breathing; the line on the right."""
     im = Image.new('RGB', (W, H), (4, 4, 8)); d = ImageDraw.Draw(im)
@@ -186,7 +176,7 @@ def closeup_vader(t, f):
         big(d, im, ('big', "CLAUDE...", 6, (220, 220, 232), 140), f)
         if t >= 0.5: big(d, im, ('big', "I AM YOUR", 26, (230, 60, 50), 140), f)
         if t >= 0.66: big(d, im, ('big', "FATHER.", 46, (230, 60, 50), 140), f)
-    _zoomlines(d, t)
+    if t < 0.06: zoom_lines(d)
     return im
 
 def closeup_no(t, f):
@@ -203,7 +193,7 @@ def closeup_no(t, f):
     d.ellipse([ox + 28, 36 + sy, ox + 48, 60 + sy], fill=(24, 14, 12))              # the scream
     d.ellipse([ox + 33, 50 + sy, ox + 43, 58 + sy], fill=(168, 80, 54))
     FX['big'](d, im, ('big', "NOOOO!", 26 + sy, (255, 226, 90), 140 + sx), f)
-    _zoomlines(d, t)
+    if t < 0.06: zoom_lines(d)
     return im
 
 # --- clip ----------------------------------------------------------------------------------

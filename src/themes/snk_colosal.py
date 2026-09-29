@@ -80,9 +80,8 @@ def closeup_eye(t,f):
         y=int(H-((f*1.5+k*23)%(H+20))); x=(k*37+f)%W
         m=Image.new('L',(W,H),0); ImageDraw.Draw(m).ellipse([x-10,y-5,x+10,y+5],fill=90)
         im.paste((236,236,240),(0,0),m)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
-    if t>0.9: im=Image.blend(im,Image.new('RGB',(W,H),(255,255,255)),0.6*(t-0.9)/0.1)
+    if t<0.06: zoom_lines(d)
+    if t>0.9: im=fade_to(im,(255,255,255),0.6*(t-0.9)/0.1)
     return im
 
 TX=128   # the Colossal's head, behind the Wall

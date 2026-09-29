@@ -63,13 +63,7 @@ def _fx_iceblock(d,im,e,f):
     _,x=e; im.paste(Image.blend(im.crop((x-9,GROUND-15,x+9,GROUND+1)),Image.new('RGB',(18,16),(150,210,255)),0.35),(x-9,GROUND-15))
     d.rectangle([x-9,GROUND-15,x+9,GROUND],outline=(200,240,255)); d.line([x-6,GROUND-12,x-2,GROUND-8],fill=(240,250,255))
 
-def hp(f,marks,full=1.0):
-    """Health from a list of (frame, value) drops, each draining over 4 frames; refills at 262-280."""
-    v=full
-    for t0,val in marks:
-        if f>=t0: v=lerp(v,val,(f-t0)/4)
-    if f>=262: v=lerp(v,1.0,(f-262)/18)
-    return v
+def hp(f,marks,full=1.0): return track(f,marks,full)
 HP_L=[(54,0.85),(72,0.7)]
 HP_R=[(92,0.85),(110,0.65),(136,0.45),(144,0.25),(152,0.05)]
 
@@ -98,7 +92,7 @@ def closeup_mask(t,f):
         for _ in range(30): x,y=rr.randint(0,W),rr.randint(0,H); fd.ellipse([x-4,y-3,x+4,y+3],fill=(255,230,140) if rr.random()<0.4 else (220,60,20))
         im.paste(fire,(0,0),m)
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 def clip_fatality(f):

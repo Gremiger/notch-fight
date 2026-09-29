@@ -1,7 +1,8 @@
 """Effect registry. A scene lists effects as tuples ('name', *args); each theme registers the
 effects it owns with @fx('name'). Effects used by several themes live here."""
 from .core import *
-from .text import text
+from .text import text, big_text
+from .closeup import fade_to
 
 FX={}
 def fx(name):
@@ -94,14 +95,11 @@ def _fx_fire(d,im,e,f):
 @fx('big')
 def _fx_big(d,im,e,f):
     """2x text for announcer lines and shouts (ROUND 1, FATALITY, ZA WARUDO!), centred at x (default: screen)."""
-    _,txt,y,c,*rest=e; cx=rest[0] if rest else W//2
-    m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
-    m=m.resize((m.width*2,m.height*2),Image.NEAREST); x=int(cx-m.width//2)
-    im.paste((0,0,0),(x+1,y+1),m); im.paste(c,(x,y),m)
+    _,txt,y,c,*rest=e; big_text(im,txt,y,c,cx=rest[0] if rest else W//2)
 
 @fx('dim')
 def _fx_dim(d,im,e,f):
-    _,a=e; im.paste(Image.blend(im,Image.new('RGB',(W,H),(0,0,0)),min(1,max(0,a))))
+    _,a=e; im.paste(fade_to(im,(0,0,0),min(1,max(0,a))))
 
 @fx('dizzy')
 def _fx_dizzy(d,im,e,f):

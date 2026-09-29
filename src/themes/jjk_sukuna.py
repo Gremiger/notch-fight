@@ -30,7 +30,7 @@ def _fx_shrine(d,im,e,f):
 
 @fx('redsky')
 def _fx_redsky(d,im,e,f):
-    _,a=e; im.paste(Image.blend(im,Image.new('RGB',(W,H),(70,0,10)),a))
+    _,a=e; im.paste(fade_to(im,(70,0,10),a))
 
 _STARS=[(random.Random(i).randint(0,W-1),random.Random(i*7+1).randint(0,H-1),random.Random(i*3+2).random()) for i in range(90)]
 @fx('void')
@@ -79,8 +79,7 @@ def closeup_eyes(t,f):
     if t>0.5: text(d,"MURYOKUSHO",W//2-20,52,(200,230,255))
     if t>0.72:   # the void swallows the frame from between the eyes
         r=int((t-0.72)/0.28*220); _fx_void(d,im,('void',96,33,r),f)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+    if t<0.06: zoom_lines(d)
     return im
 
 def clip_domain(f):

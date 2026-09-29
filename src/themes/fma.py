@@ -72,8 +72,7 @@ def closeup_snap(t,f):
         fire=Image.new('RGB',(W,H),(255,150,40)); fd=ImageDraw.Draw(fire); rr=random.Random(f)
         for _ in range(40): x,y=rr.randint(0,W),rr.randint(0,H); fd.ellipse([x-4,y-3,x+4,y+3],fill=(255,230,140) if rr.random()<0.4 else (230,70,20))
         im.paste(fire,(0,0),m)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+    if t<0.06: zoom_lines(d)
     return im
 def rand_off(f): return (f*5)%11-5
 

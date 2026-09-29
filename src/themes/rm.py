@@ -126,11 +126,10 @@ def closeup_crom(t,f):
     mh=2 if t<0.3 else (8 if talk else 4)
     d.ellipse([60,56-mh,124,56+mh],fill=(60,10,20),outline=LINE,width=2)
     if mh>3: d.rectangle([66,56-mh+2,118,56-mh+3],fill=(240,240,230))
-    if t>=0.3: _big(im,"DISQUALIFIED!",2,(220,30,40))
+    if t>=0.3: big_text(im,"DISQUALIFIED!",2,(220,30,40))
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
-def _big(im,txt,y,c): FX['big'](ImageDraw.Draw(im),im,('big',txt,y,c),0)
 
 def portal(s,x,y,f,t0,t1,horiz=False,layer='under'):
     """Open over 5 frames from t0, stay, close over 5 frames before t1."""

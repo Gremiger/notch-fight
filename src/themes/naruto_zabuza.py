@@ -108,9 +108,8 @@ def closeup_sharingan(t,f):
     d.rectangle([ex-16,by+2,ex+16,by+17],fill=(186,186,206),outline=(110,110,126))
     d.arc([ex-6,by+4,ex+6,by+15],30,330,fill=(110,110,126)); d.line([ex+2,by+9,ex+8,by+6],fill=(110,110,126))
     if t>0.55: text(d,"SHARINGAN",W//2-18,56,(255,90,90))
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
-    if t>0.9: im=Image.blend(im,Image.new('RGB',(W,H),(200,0,20)),0.5*(t-0.9)/0.1)
+    if t<0.06: zoom_lines(d)
+    if t>0.9: im=fade_to(im,(200,0,20),0.5*(t-0.9)/0.1)
     return im
 
 SEALS=['armsup','charge','guard','punch']

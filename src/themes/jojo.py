@@ -48,7 +48,7 @@ def _fx_zawarudo(d,im,e,f):
     _,mode,cx,cy,r,k=e
     grey=_grey(im)
     if mode=='stop':
-        neg=Image.blend(_neg(im),Image.new('RGB',(W,H),(0,0,0)),0.6)   # dimmed: a white panel under the notch is too loud
+        neg=fade_to(_neg(im),(0,0,0),0.6)   # dimmed: a white panel under the notch is too loud
         inside=Image.blend(neg,grey,k) if k<1 else grey
         im.paste(inside,(0,0),_disc(cx,cy,r))
     else:
@@ -119,9 +119,8 @@ def closeup_dio(t,f):
     for ex,ey in ((63,35),(90,35)): d.rectangle([ex-2,ey,ex+1,ey+2],fill=(220,30,40))
     if t>=0.5:
         d.rectangle([0,55,W,H],fill=(0,0,0)); text(d,"TOKI WO TOMARE!",W//2-30,57,(255,226,90))
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
-    if t>0.9: im=Image.blend(im,Image.new('RGB',(W,H),(0,0,0)),(t-0.9)/0.1*0.6)
+    if t<0.06: zoom_lines(d)
+    if t>0.9: im=fade_to(im,(0,0,0),(t-0.9)/0.1*0.6)
     return im
 
 # debris from the Stand clash: flies from the middle, freezes when time stops, resumes after

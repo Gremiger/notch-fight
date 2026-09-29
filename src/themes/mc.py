@@ -13,16 +13,6 @@ N_ = 300
 MCP = {'a':(84,54,30),'c':(0,168,168),'t':(52,58,170),'u':(34,36,110),'z':(90,90,96),
        'l':(140,98,52),'i':(80,220,210),'I':(190,255,245),'x':(30,90,96)}
 
-def _paint(spr, pts):
-    """Paint (x,y,ch) pixels in the sprite's own coords; grows up / sideways (symmetric, so the
-    sprite stays centred on the same x) when a pixel falls outside."""
-    g=[list(r) for r in spr]; w=len(g[0])
-    padt=max(0,-min(y for _,y,_ in pts)); padr=max(0,max(x for x,_,_ in pts)-(w-1))
-    g=[['.']*w for _ in range(padt)]+g
-    g=[['.']*padr+r+['.']*padr for r in g]
-    for x,y,c in pts: g[y+padt][x+padr]=c
-    return S([''.join(r) for r in g])
-
 def _steveify(spr):
     """Flat-top hair, cyan shirt below the eyes, blue trousers, dark legs and grey shoes."""
     spr=overlay(spr,["aaaaaaaa"],0,0)
@@ -49,7 +39,7 @@ _SW_FWD=[(17,5,'l'),(17,6,'l')]+[(18,y,'x') for y in (4,5,6,7)]+[(x,5,'I') for x
 _BOW=[(16,5,'l'),(16,6,'l'),(16,4,'l'),(16,7,'l'),(15,3,'l'),(15,8,'l'),(14,2,'l'),(14,9,'l'),(13,3,'D'),(13,4,'D'),(13,7,'D'),(13,8,'D')]
 _ARMED={'guard':_SW_UP,'guard2':_SW_UP,'punch':_SW_FWD,'dash':_SW_FWD,'charge':_BOW}
 STEVE0={k:_steveify(v) for k,v in CL.items()}                                   # unarmed (close-up)
-STEVE={k:_steveify(_paint(v,_ARMED[k]) if k in _ARMED else v) for k,v in CL.items()}
+STEVE={k:_steveify(paint(v,_ARMED[k],grow=True) if k in _ARMED else v) for k,v in CL.items()}
 
 _CR_TOP=["GjGGgGjG","GGgGGGGg","GKKGGKKG","gKKgGKKG","GGGKKGGg","GjKKKKGG","GGKGGKGj","gGKGGKGG",
          "..GgGj..","..jGGG..","..GGgG..","..gGGj..","..GjGG..","..GGgG.."]
@@ -316,7 +306,7 @@ def closeup_creeper(t,f):
     FX['big'](d,im,('big',"S"*n+("..." if t>0.7 else ""),3,(210,255,210),128),f)
     if turned: FX['big'](d,im,('big',"!",3,(255,226,90),44),f)
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 # ---------------- the clip ----------------
