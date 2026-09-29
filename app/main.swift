@@ -28,18 +28,43 @@ final class App: NSObject, NSApplicationDelegate {
     var animTimer: Timer?
     let clipH: CGFloat = 64, corner: CGFloat = 12
     // overlap: rises into the notch to cover its rounded bottom corners.
-    // fillet: concave flare where the panel meets the notch's bottom edge.
-    let overlap: CGFloat = 10, fillet: CGFloat = 8
+    // fillet: concave flare where the panel meets the notch's bottom edge. 0 = panel is exactly
+    // notch-wide (the flare showed up as a protruding ledge on some Macs). Config: "fillet".
+    let overlap: CGFloat = 10, fillet: CGFloat = CGFloat(App.cfgNumber("fillet") ?? 0)
+    // stretch: fill the real notch width with the art (true) or keep square pixels, centred (false). Config: "stretch".
+    let stretch: Bool = (App.config["stretch"] as? Bool) ?? true
+
+    // ~/.config/notch-fight/config.json, read once. Keys: "first", "fillet", "stretch", "widthTweak".
+    static let config: [String: Any] = {
+        let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
+        guard let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [:] }
+        return json
+    }()
+    static func cfgNumber(_ key: String) -> Double? { (config[key] as? NSNumber)?.doubleValue }
     let shape = CAShapeLayer()
     var root: CALayer!
-    var notchW: CGFloat = 185, notchH: CGFloat = 32, screen: NSScreen!
+    var notchW: CGFloat = 185, notchH: CGFloat = 32, notchMidX: CGFloat = 0, screen: NSScreen!
+
+    // Per-model width correction (pt): the auxiliary areas can report a notch slightly wider than the
+    // real one. Keyed by `hw.model`; add an entry when a Mac's panel visibly overhangs the notch.
+    static let notchWidthTweak: [String: CGFloat] = ["Mac14,2": -1]
+    static let hwModel: String = {
+        var n = 0; sysctlbyname("hw.model", nil, &n, nil, 0)
+        var b = [CChar](repeating: 0, count: n); sysctlbyname("hw.model", &b, &n, nil, 0)
+        return String(cString: b)
+    }()
 
     func applicationDidFinishLaunching(_ n: Notification) {
         screen = NSScreen.screens.first { $0.auxiliaryTopLeftArea != nil } ?? NSScreen.main!
         let f = screen.frame
+        notchMidX = f.midX
         if let l = screen.auxiliaryTopLeftArea, let r = screen.auxiliaryTopRightArea {
-            notchW = f.width - l.width - r.width
+            // The notch is not always centred on the screen: anchor to its real edges.
+            notchW = r.minX - l.maxX
+            notchMidX = (l.maxX + r.minX) / 2
             notchH = screen.safeAreaInsets.top
+            notchW += CGFloat(Self.cfgNumber("widthTweak") ?? Double(Self.notchWidthTweak[Self.hwModel] ?? 0))
         }
         let res = Bundle.main.resourceURL!
         clips = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("clips")))
@@ -69,7 +94,13 @@ final class App: NSObject, NSApplicationDelegate {
         root.backgroundColor = NSColor.black.cgColor
         root.mask = shape
         art.frame = CGRect(x: fillet, y: 0, width: notchW, height: clipH)
-        art.contentsGravity = .resizeAspect
+        // Art is authored at a fixed W×H canvas (185×64, MacBookPro18,3's notch width) with effects
+        // drawn edge-to-edge. `notchW` varies per Mac (e.g. 209pt on a MacBook Air M2), so `.resizeAspect`
+        // would center the unscaled art and leave dead black margins instead of reaching the real notch
+        // edges. `.resize` stretches horizontally only — clipH always equals the art's native height, so
+        // the vertical scale factor is always 1 and no content is ever cropped.
+        // Config "stretch": false keeps the art at its native width, centred (the black margins blend in).
+        art.contentsGravity = stretch ? .resize : .resizeAspect
         art.magnificationFilter = .nearest
         art.contentsScale = screen.backingScaleFactor
         art.actions = ["contents": NSNull()]
@@ -87,7 +118,7 @@ final class App: NSObject, NSApplicationDelegate {
     func rect(height h: CGFloat) -> NSRect {
         let f = screen.frame
         // Hangs from the notch's bottom edge; never overlaps the notch itself.
-        return NSRect(x: f.midX - notchW / 2 - fillet, y: f.maxY - notchH - h,
+        return NSRect(x: notchMidX - notchW / 2 - fillet, y: f.maxY - notchH - h,
                       width: notchW + 2 * fillet, height: h + overlap)
     }
 
@@ -126,9 +157,7 @@ final class App: NSObject, NSApplicationDelegate {
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--first"), i + 1 < args.count { return split(args[i + 1]) }
         if let env = ProcessInfo.processInfo.environment["NOTCH_FIGHT_FIRST"], !env.isEmpty { return split(env) }
-        let cfg = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
-        guard let data = try? Data(contentsOf: cfg),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        let json = Self.config
         if let one = json["first"] as? String { return split(one) }
         return (json["first"] as? [String]) ?? []
     }

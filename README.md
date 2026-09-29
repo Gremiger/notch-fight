@@ -83,6 +83,21 @@ mkdir -p ~/.config/notch-fight && cp config.example.json ~/.config/notch-fight/c
 Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name is logged
 (with the list of valid names) and ignored. Clip names = folder names under `build/clips/`.
 
+## Panel shape
+
+The panel takes its size and position from the real notch of each Mac. Two looks can be tuned in
+`~/.config/notch-fight/config.json` (defaults shown; `./build.sh` only rewrites `"first"`):
+
+| Key | Default | Effect |
+|---|---|---|
+| `fillet` | `0` | Concave flare (pt) where the panel meets the notch. `8` gives the rounded "grows out of the notch" look; on some Macs it sticks out as a ledge. |
+| `stretch` | `true` | Stretch the art to the notch width. `false` keeps square pixels, centred at 185pt (the black margins blend in). |
+| `widthTweak` | per model | Width correction (pt) when the panel overhangs by a hair. Built-in: `Mac14,2` → `-1`. |
+
+```json
+{ "fillet": 8, "stretch": false }
+```
+
 ## Layout
 
 ```
