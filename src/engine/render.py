@@ -30,13 +30,13 @@ def actor(spr,x,y=GROUND,flip=False,**kw):
 def scene(f,kind):
     return dict(kind=kind,actors=[],under=[],fx=[],shake=(0,0),flash=0.0,fc=(93,GROUND-10),flashc=(255,250,235))
 
-def draw_holo(im,spr,x,feet,flip,prog,f,alpha=0.85):
+def draw_holo(im,spr,x,feet,flip,prog,f,alpha=0.85,pal=None):
     """Hologram: reveal from the feet up, scanline flicker."""
     h=len(spr); cut=int(h*(1-prog))
     full=prog>=1
     rows=[(r if (i>=cut and (full or (i+f)%3)) else '.'*len(r)) for i,r in enumerate(spr)]
     if full and f%9==0: rows=[r if i%2 else '.'*len(r) for i,r in enumerate(rows)]
-    draw(im,S(rows),x,feet,flip,alpha=alpha,f=f)
+    draw(im,S(rows),x,feet,flip,alpha=alpha,f=f,pal=pal)
     if 0<prog<1:
         y=int(feet-h+cut); w=len(spr[0])
         ImageDraw.Draw(im).line([x-w//2-1,y,x+w//2+1,y],fill=(200,160,255))
@@ -47,7 +47,7 @@ def render(s,f):
     for e in s['under']: draw_fx(d,im,e,f)
     for a in s['actors']:
         if not a['vis']: continue
-        if a['holo'] is not None: draw_holo(im,a['spr'],a['x'],a['y'],a['flip'],a['holo'],f)
+        if a['holo'] is not None: draw_holo(im,a['spr'],a['x'],a['y'],a['flip'],a['holo'],f,pal=a['pal'])
         else: draw(im,a['spr'],a['x'],a['y'],a['flip'],aura=a['aura'],f=f,pal=a['pal'],alpha=a.get('alpha',1.0),tint=a.get('tint'))
     if s['kind'] in GROUND_CLIP: d.rectangle([0,GROUND+2,W,H],fill=(0,0,0))
     for e in s['fx']: draw_fx(d,im,e,f)

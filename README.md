@@ -56,6 +56,10 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `fma` | Colonel Mustang (glove snap close-up, flame alchemy) | Envy (disguised as Claude, burned to his true form) | flame |
 | `dbz-jiren` | Claude in Ultra Instinct (silver hair, afterimages) | Jiren (instant hits from behind) | ultra |
 | `mk` | Claudepion (Scorpion: spear, Toasty fatality) | Sub-Zero, with the arcade HUD | fatality |
+| `apex` | a Legend with jump pack and grapple (kill-leader banner close-up) | Wraith (Into the Void, Dimensional Rift) | champion |
+| `cs` | Counter-Terrorist (AWP scope close-up, defuse) | Phoenix Terrorist, with the 1.6 HUD | defuse |
+| `hl` | Gordon Freeman in the HEV suit (crowbar, Gravity Gun) | headcrabs + a Combine soldier (G-Man close-up) | lambda |
+| `rm` | Rick with the portal gun | a Cromulon (SHOW ME WHAT YOU GOT!) | schwifty |
 | `snk-colosal` | Survey Corps scout (ODM gear) | the Colossal Titan behind the Wall (eye close-up) | colossal |
 | `jojo` | Jotaro-style Stand user (ORA ORA barrage, moves in stopped time) | DIO and The World (ZA WARUDO, clock close-up) | theworld |
 
@@ -112,7 +116,7 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py
 │   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
