@@ -98,3 +98,12 @@ def _fx_big(d,im,e,f):
     m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
     m=m.resize((m.width*2,m.height*2),Image.NEAREST); x=int(cx-m.width//2)
     im.paste((0,0,0),(x+1,y+1),m); im.paste(c,(x,y),m)
+
+@fx('dim')
+def _fx_dim(d,im,e,f):
+    _,a=e; im.paste(Image.blend(im,Image.new('RGB',(W,H),(0,0,0)),min(1,max(0,a))))
+
+@fx('dizzy')
+def _fx_dizzy(d,im,e,f):
+    _,x,y=e
+    for k in range(3): a=f*0.4+k*2.1; d.point((x+math.cos(a)*6,y+math.sin(a)*2),fill=(255,230,90))

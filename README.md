@@ -61,6 +61,14 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `hl` | Gordon Freeman in the HEV suit (crowbar, Gravity Gun) | headcrabs + a Combine soldier (G-Man close-up) | lambda |
 | `rm` | Rick with the portal gun | a Cromulon (SHOW ME WHAT YOU GOT!) | schwifty |
 | `inv` | Invincible (Mark) | Omni-Man: the train, then PIENSA CLAUDE! (close-up) and the beatdown | train |
+| `sf` | Ryu (Hadouken, Shoryuken, Shinku Hadouken close-up) | M. Bison, with the SF2 HUD | hadouken |
+| `mario` | Mario (? blocks, Super Star close-up, the axe) | Bowser on the castle bridge | castle |
+| `mc` | Steve (pillar, bow, diamond sword) | a Creeper (close-up) and the Ender Dragon | enderdragon |
+| `ds` | a Sun knight (roll, Estus, PRAISE THE SUN, fake YOU DIED) | Malenia | felled |
+| `sw` | a Jedi | Darth Vader (I AM YOUR FATHER close-up) | father |
+| `matrix` | Neo (bullet time, NO.) | Agent Smith and his clones | bullettime |
+| `term` | the T-800 (red HUD close-up) | the T-1000 (frozen and shattered) | judgment |
+| `bb` | Heisenberg (SAY MY NAME: CLAUDENBERG) | Tuco | saymyname |
 | `snk-colosal` | Survey Corps scout (ODM gear) | the Colossal Titan behind the Wall (eye close-up) | colossal |
 | `jojo` | Jotaro-style Stand user (ORA ORA barrage, moves in stopped time) | DIO and The World (ZA WARUDO, clock close-up) | theworld |
 
@@ -118,6 +126,7 @@ src/
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py
+│   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
 │   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes

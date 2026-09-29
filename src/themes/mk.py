@@ -63,15 +63,6 @@ def _fx_iceblock(d,im,e,f):
     _,x=e; im.paste(Image.blend(im.crop((x-9,GROUND-15,x+9,GROUND+1)),Image.new('RGB',(18,16),(150,210,255)),0.35),(x-9,GROUND-15))
     d.rectangle([x-9,GROUND-15,x+9,GROUND],outline=(200,240,255)); d.line([x-6,GROUND-12,x-2,GROUND-8],fill=(240,250,255))
 
-@fx('dim')
-def _fx_dim(d,im,e,f):
-    _,a=e; im.paste(Image.blend(im,Image.new('RGB',(W,H),(0,0,0)),a))
-
-@fx('dizzy')
-def _fx_dizzy(d,im,e,f):
-    _,x,y=e
-    for k in range(3): a=f*0.4+k*2.1; d.point((x+math.cos(a)*6,y+math.sin(a)*2),fill=(255,230,90))
-
 def hp(f,marks,full=1.0):
     """Health from a list of (frame, value) drops, each draining over 4 frames; refills at 262-280."""
     v=full
