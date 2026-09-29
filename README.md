@@ -51,6 +51,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `naruto-edo` | Naruto (clones, Rasengan, Rasenshuriken) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up) | edotensei |
 | `dbz-buu` | Claude, then Clodex (fusion dance with Codex) | Kid Buu (regenerates) | fusion |
 | `jjk-sukuna` | Gojo-style sorcerer (Unlimited Void, eye close-up, Black Flash) | Sukuna (Malevolent Shrine) | domain |
+| `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
 | `snk-colosal` | Survey Corps scout (ODM gear) | the Colossal Titan behind the Wall (eye close-up) | colossal |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
@@ -91,7 +92,7 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py
 │   ├── naruto_edo.py  dbz_buu.py  jjk_sukuna.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
