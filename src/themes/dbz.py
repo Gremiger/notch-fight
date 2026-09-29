@@ -1,10 +1,63 @@
-"""Dragon Ball Z: Claude vs Cell. (Oldest theme: its own scene model, render_dbz + frame().)"""
+"""Dragon Ball Z: Claude vs Perfect Cell at the Cell Games, on the white tiled ring in the rocky
+wasteland. The stare-down, a clash that shakes the ring, a rush barrage that blinks up into the sky
+and back, Cell's knee — Instant Transmission: Claude vanishes and slams down on Cell from above.
+KAMEHAMEHA vs KAMEHAMEHA: the beam struggle goes Cell's way until the close-up — Claude screams and
+goes SUPER SAIYAN, the golden beam blows straight through. Cell crawls out of the smoke (I AM
+PERFECT!), Claude raises the GENKI DAMA and buries him with it. Cell regenerates from a scrap,
+Claude powers down, back to the stare-down."""
 from engine import *
 
 THEME = 'dbz'
+N_ = 456
+CX, EX = 30, 150                                                    # the loop keyframe positions
 
-CE = {
-'idle':S([
+# ---- local glyphs: a wider M and W (the 3x5 font's read as H) ------------------------------------
+_GLYPH = {'M':(5,"10001"+"11011"+"10101"+"10001"+"10001"), 'W':(5,"10001"+"10001"+"10101"+"11011"+"10001")}
+
+def _mask(txt):
+    gl=[_GLYPH.get(ch) or (3,''.join(FONT.get(ch,FONT[' '])[j*3:j*3+3] for j in range(5))) for ch in txt]
+    m=Image.new('L',(sum(w+1 for w,_ in gl)-1,5),0); md=ImageDraw.Draw(m); x=0
+    for w,bits in gl:
+        for j,b in enumerate(bits):
+            if b=='1': md.point((x+j%w,j//w),fill=255)
+        x+=w+1
+    return m
+
+def say(im,txt,y,c,scale=1,cx=W//2,outline=None,shadow=(0,0,0)):
+    """Like big_text, with the local glyphs; scale=1 gives a normal callout."""
+    m=_mask(txt); m=m.resize((m.width*scale,m.height*scale),Image.NEAREST); x=int(cx-m.width//2)
+    if outline is not None:
+        for dx,dy in ((-1,0),(1,0),(0,-1),(0,1),(1,1)): im.paste(outline,(x+dx,y+dy),m)
+        if shadow is not None: im.paste(shadow,(x+2,y+2),m)
+    elif shadow is not None: im.paste(shadow,(x+1,y+1),m)
+    im.paste(c,(x,y),m)
+
+@fx('dbzc_say')
+def _fx_say(d,im,e,f):
+    _,txt,y,c,*rest=e; say(im,txt,y,c,*rest)
+
+def shout(s,txt,c,y=2,scale=1,cx=W//2,outline=None):
+    s['fx'].append(('dbzc_say',txt,y,c,scale,cx,outline))
+
+# ---- Claude: Goku's spiky hair and a blue belt on the orange gi; Super Saiyan = golden spikes -----
+def _gi(x,y,t,l,r,c):
+    return 'L' if (c=='O' and y==t+7 and l<=x<=r) else None
+BASE=variant(lambda s: overlay(recolor_rows(s,_gi),["..k..k.k.....",".kkk.kkkkk...","kkkkkkkkkkk.."],-2,0,
+                               bangs="..kk.k.kk"))
+SSJ=variant(lambda s: overlay(recolor_rows(s,_gi),["...Y...Y.....","..YY..YY.Y...",".YyYYYYyYYY..","YYYYYYYYYYYY."],-2,0,
+                              bangs="..YY.Y.YY"))
+SSJPAL={'Y':(255,234,90),'y':(222,168,36)}
+AURA_W=(236,240,255)                                                # base-form ki: white
+AURA_G=(255,226,90)                                                 # Super Saiyan: gold
+KI=((255,196,140),(232,120,80))                                     # Claude's Kamehameha
+KI_SSJ=((255,244,180),(255,196,60))
+CELL_KI=((140,210,255),(60,140,255))
+CELL_AURA=(190,255,150)
+
+def spin(spr,f): return rotate90(spr,(f//2)%4)                      # a backflip, 2 frames per quarter
+
+# ---- Perfect Cell: green armour, black spots, pale face with the pink cheek marks, wings, crown ---
+_CE_IDLE=S([
 "......g.g.......",
 ".....gGgGg......",
 "....gGSGGSg.....",
@@ -26,8 +79,8 @@ CE = {
 ".....BB..BB.....",
 ".....GS..GS.....",
 ".....GG...GG....",
-"....PPP...PPP...",]),
-'guard':S([
+"....PPP...PPP...",])
+_CE_GUARD=S([
 "......g.g.......",
 ".....gGgGg......",
 "....gGSGGSg.....",
@@ -49,8 +102,8 @@ CE = {
 "....BB....BB....",
 "...GS......GS...",
 "...GG......GG...",
-"..PPP......PPP..",]),
-'punch':S([
+"..PPP......PPP..",])
+_CE_PUNCH=S([
 "......g.g...........",
 ".....gGgGg..........",
 "....gGSGGSg.........",
@@ -72,8 +125,8 @@ CE = {
 "..BB........BB......",
 "..GS........GS......",
 ".GG..........GG.....",
-"PPP...........PPP...",]),
-'hurt':S([
+"PPP...........PPP...",])
+_CE_HURT=S([
 "...g.g..........",
 "..gGgGg.........",
 ".gGSGGSg........",
@@ -95,8 +148,8 @@ CE = {
 "....BB.....BB...",
 "....GS.....GS...",
 "...GG.......GG..",
-"..PPP.......PPP.",]),
-'charge':S([
+"..PPP.......PPP.",])
+_CE_CHARGE=S([
 "......g.g.........",
 ".....gGgGg........",
 "....gGSGGSg.......",
@@ -118,370 +171,353 @@ CE = {
 "..BB........BB....",
 "..GS........GS....",
 ".GG..........GG...",
-"PPP...........PPP.",]),
-}
+"PPP...........PPP.",])
+# the wings flare out when he powers up
+_CE_FLARE=S(["w"+r if 8<=i<=14 else "."+r for i,r in enumerate(_CE_GUARD)])
+CE={'idle':_CE_IDLE,'guard':_CE_GUARD,'punch':_CE_PUNCH,'hurt':_CE_HURT,'charge':_CE_CHARGE,'flare':_CE_FLARE}
+CE_BURNT={'G':(86,140,64),'g':(40,86,34),'P':(196,184,164),'w':(58,110,50)}   # after the golden beam
 
-BLACK = True
-def bg_black():
-    im = Image.new('RGB',(W,H),(0,0,0)); d=ImageDraw.Draw(im)
-    for x in range(0,W,2):
-        a=1-abs(x-W/2)/(W/2)
-        v=int(10+26*a); d.point((x,GROUND+1),fill=(v,v,v+4))
-    return im
-BG = bg_black()
+# ---- background: the Cell Games ring in the wasteland -------------------------------------------
+RING_Y=50                                                           # back edge of the ring's top
+def _arena(d):
+    for y in range(RING_Y):                                         # the sky, deep blue to haze
+        k=y/(RING_Y-1); d.line([0,y,W,y],fill=(int(62+100*k),int(118+86*k),int(210+34*k)))
+    haze=(150,152,186)                                              # far range, lost in the haze
+    d.polygon([(0,40),(14,32),(30,34),(44,28),(70,33),(98,30),(118,34),(140,27),(160,31),(185,29),(185,44),(0,44)],fill=haze)
+    rock,shade,strata=(178,124,82),(140,92,60),(198,150,104)
+    for poly in ([(0,46),(0,24),(9,21),(27,21),(31,27),(40,29),(46,46)],   # the mesas and a spire
+                 [(56,46),(59,18),(62,15),(65,17),(67,46)],
+                 [(118,46),(124,27),(132,21),(158,21),(164,28),(185,30),(185,46)],
+                 [(84,46),(88,36),(96,35),(100,46)]):
+        d.polygon(poly,fill=rock)
+    for y in (26,32,38):                                            # strata lines
+        d.line([2,y,34,y],fill=strata); d.line([126,y-1,176,y-1],fill=strata)
+    d.polygon([(27,21),(31,27),(40,29),(46,46),(36,46)],fill=shade)    # shaded flanks
+    d.polygon([(158,21),(164,28),(185,30),(185,46),(166,46)],fill=shade)
+    d.line([64,17,66,46],fill=shade); d.line([96,35,99,46],fill=shade)
+    d.rectangle([0,44,W,H],fill=(200,170,118))               # the wasteland floor
+    rr=random.Random(4242)
+    for _ in range(40): d.point((rr.randint(0,W-1),rr.randint(44,RING_Y)),fill=rr.choice([(170,140,96),(222,196,146)]))
+    x0b,x1b,x0f,x1f=12,172,4,180                                    # the ring: tiled top in perspective
+    d.polygon([(x0b,RING_Y),(x1b,RING_Y),(x1f,GROUND+1),(x0f,GROUND+1)],fill=(232,230,220))
+    for y in (52,55): d.line([lerp(x0b,x0f,(y-RING_Y)/9),y,lerp(x1b,x1f,(y-RING_Y)/9),y],fill=(196,194,184))
+    for i in range(-7,8):
+        d.line([92+i*11,RING_Y,92+i*12.5,GROUND],fill=(196,194,184))
+    d.line([x0b,RING_Y,x1b,RING_Y],fill=(250,250,244))
+    d.rectangle([x0f,GROUND+1,x1f,H],fill=(176,174,166))           # the front face, stone blocks
+    d.line([x0f,GROUND+1,x1f,GROUND+1],fill=(246,246,238))
+    for x in range(x0f+8,x1f,14): d.line([x,GROUND+2,x,H],fill=(140,138,132))
+    d.line([x0f,GROUND+4,x1f,GROUND+4],fill=(150,148,140))
+    for x in (x0b,x1b-2):                                           # corner posts
+        d.rectangle([x,RING_Y-5,x+2,RING_Y],fill=(244,244,236)); d.point((x+2,RING_Y-4),fill=(190,188,180))
+register_bg(THEME, lambda v: (v+120,v+120,v+112), decor=_arena)
 
-CL_OR=((255,196,140),(232,120,80))   # claude beam outer/mid
-CE_BL=((140,210,255),(60,140,255))   # cell kamehameha
+# ---- effects -----------------------------------------------------------------------------------
+CLOUDS=[(0,5,1.0),(70,11,0.7),(128,3,0.85),(190,9,0.6)]             # (x, y, size) — a 225px loop
+@fx('dbzc_clouds')
+def _fx_clouds(d,im,e,f):
+    """Clouds drifting right; exactly one lap per clip, so the loop is seamless."""
+    o=f*225//N_
+    for x0,y,k in CLOUDS:
+        x=(x0+o)%225-20; w=int(22*k)
+        for dx,dy,r in ((0,3,4),(6,1,5),(13,2,4),(18,4,3)):
+            rr_=max(2,int(r*k)); cx=x+dx*k
+            d.ellipse([cx-rr_,y+dy-rr_,cx+rr_,y+dy+rr_//2+1],fill=(246,248,255))
+        d.line([x-3,y+5,x+w,y+5],fill=(206,220,242))
 
-def frame(f):
-    im=BG.copy(); d=ImageDraw.Draw(im)
-    shake=(0,0); flash=0.0
-    clx,cly,clp = 30,GROUND,'guard'
-    cex,cey,cep = 150,GROUND,'idle'
-    claura=ceaura=None; after=[]; fx=[]
-    bob = 1 if (f//6)%2 else 0
-    AUR_C=(255,210,90); AUR_E=(190,255,150)
-    if f<30:                       # stare-down / power-up
-        clp='guard' if bob==0 else 'guard2'
-        if f>=12: claura=(AUR_C,1 if f<22 else 2); ceaura=(AUR_E,1 if f<22 else 2)
-        if f>=20: cep='guard'
-    elif f<40:                     # dash
-        t=ease((f-30)/10); clx=lerp(30,82,t); cex=lerp(150,104,t)
-        clp='dash'; cep='punch'; claura=(AUR_C,2); ceaura=(AUR_E,2)
-        after=[('cl',clx-6,clp),('cl',clx-12,clp),('ce',cex+7,cep),('ce',cex+14,cep)]
-        for i in range(6):
-            y=random.randint(30,60); x=random.randint(0,W-20); d.line([x,y,x+random.randint(8,20),y],fill=(250,250,250))
-    elif f<90:                     # flurry, partly airborne
-        k=(f-40)
-        air = 0
-        if 52<=f<80: air = int(14*math.sin(math.pi*(f-52)/28))
-        clx=82+random.choice([-1,0,1]); cex=104+random.choice([-1,0,1])
-        cly=cey=GROUND-air
-        ph=(k//3)%4
-        clp=['punch','guard','hurt','punch'][ph]; cep=['hurt','punch','punch','guard'][ph]
-        if ph==2: cex-=2
-        claura=(AUR_C,1+(f%2)); ceaura=(AUR_E,1+(f%2))
-        if k%3==0:
-            sy=cly-6+random.randint(-3,3); sx=93+random.randint(-2,2)
-            fx.append(('spark',sx,sy,4+random.randint(0,2))); shake=(random.choice([-1,1]),random.choice([-1,0,1]))
-        if f==40: flash=0.7; boomx=93; fx.append(('spark',93,GROUND-8,8))
-    elif f<104:                    # Cell knocks Claude back
-        t=ease((f-90)/10)
-        clx=lerp(82,32,t); clp='hurt'; cep='punch' if f<96 else 'guard'
-        cex=lerp(104,150,ease((f-94)/10)); cly=GROUND-int(6*math.sin(math.pi*min(1,(f-90)/10)))
-        ceaura=(AUR_E,2)
-        if f==90: fx.append(('spark',92,GROUND-8,9)); shake=(2,1); flash=0.4; boomx=92
-        if f>=97: 
-            for i in range(3): fx.append(('dust',clx-6+random.randint(-3,3),GROUND-random.randint(0,3)))
-        after=[('cl',clx+6,'hurt')] if f<100 else []
-    elif f<130:                    # charge beams
-        t=(f-104)/26
-        clx,cex=32,150; clp='charge'; cep='charge'
-        claura=(AUR_C,2+(f%3==0)); ceaura=(AUR_E,2+(f%3==0))
-        r=int(1+4*t)
-        fx.append(('clball',clx+9,GROUND-6,r)); fx.append(('ceball',cex-10,GROUND-11,r))
-        if f%4==0:
-            for i in range(2): fx.append(('rock',random.randint(10,175),GROUND-random.randint(0,int(20*t))))
-        if f>=118: shake=(random.choice([-1,0,1]),0)
-    elif f<172:                    # beam struggle
-        clx,cex=32,150; clp='charge'; cep='charge'
-        claura=(AUR_C,3); ceaura=(AUR_E,3)
-        t=(f-130)
-        mid = 92 + 10*math.sin(t*0.35) + (lerp(0,26,(f-158)/12) if f>158 else 0)
-        mid=int(mid)
-        fx.append(('beam',clx+9,mid,GROUND-6,CL_OR,f,True))
-        fx.append(('beam',mid,cex-10,GROUND-11,CE_BL,f,False))
-        fx.append(('clash',mid,GROUND-8,f))
-        shake=(random.choice([-2,-1,1,2]),random.choice([-1,0,1]))
-        if f%2==0: fx.append(('rock',random.randint(mid-30,mid+30),GROUND-random.randint(0,25)))
-    elif f<182:                    # explosion
-        t=(f-172)/10
-        clx,cex=32,150; clp='charge'; cep='charge'
-        fx.append(('boom',120,GROUND-10,int(6+70*t)))
-        boomx=120; flash = 1.0 if f<177 else lerp(1,0.35,(f-177)/5)
-        shake=(random.choice([-2,2]),random.choice([-1,1]))
-    else:                          # reset to stare-down (loops into f=0)
-        t=(f-182)/18
-        clp='guard' if bob==0 else 'guard2'; cep='guard' if f<190 else 'idle'
-        boomx=120; flash = lerp(0.35,0,t*2)
-        if f<192:
-            for i in range(2): fx.append(('dust',random.randint(80,150),GROUND-random.randint(0,6)))
+@fx('dbzc_speed')
+def _fx_speed(d,im,e,f):
+    """Horizontal speed streaks across the frame."""
+    rr=random.Random(f*7)
+    for _ in range(8):
+        y=rr.randint(10,GROUND-2); x=rr.randint(0,W-20); d.line([x,y,x+rr.randint(10,24),y],fill=(255,255,255))
 
-    # afterimages
-    for who,x,p in after:
-        if who=='cl': draw(im,CL[p],x,cly,False,alpha=0.35,tint=(255,220,190))
-        else: draw(im,CE[p],x,cey,True,alpha=0.35,tint=(210,255,200))
-    # beams under characters' hands
-    for e in fx:
-        if e[0]=='beam':
-            _,x0,x1,y,(oc,mc),ff,isc = e
-            wob=(ff%2)
-            d.rectangle([x0,y-3-wob,x1,y+3+wob],fill=oc); d.rectangle([x0,y-2,x1,y+2],fill=mc); d.rectangle([x0,y-1+wob,x1,y],fill=(255,255,255))
-            for i in range(3):
-                xx=random.randint(min(x0,x1),max(x0,x1)); d.point((xx,y-4-wob),fill=oc); d.point((xx,y+4+wob),fill=oc)
-    draw(im,CL[clp],clx,cly,False,aura=claura,f=f)
-    draw(im,CE[cep],cex,cey,True,aura=ceaura,f=f)
-    for e in fx:
-        k=e[0]
-        if k=='spark': spark(d,e[1],e[2],e[3])
-        elif k=='dust': d.rectangle([e[1],e[2],e[1]+1,e[2]+1],fill=(222,196,150))
-        elif k=='rock': d.rectangle([e[1],e[2],e[1]+1,e[2]+1],fill=(120,92,66))
-        elif k=='clball': ball(d,e[1],e[2],e[3],*CL_OR,f); asterisk(d,e[1],e[2],e[3]+3,(255,150,100),f)
-        elif k=='ceball': ball(d,e[1],e[2],e[3],*CE_BL,f)
-        elif k=='clash':
-            x,y,ff=e[1],e[2],e[3]; r=6+(ff%3)
-            d.ellipse([x-r-2,y-r-2,x+r+2,y+r+2],fill=(255,236,170)); d.ellipse([x-r,y-r,x+r,y+r],fill=(255,255,255))
-            asterisk(d,x,y,r+5,(255,200,120),ff)
-            for i in range(4):
-                a=random.random()*6.28; L=random.randint(r+2,r+10); d.point((int(x+math.cos(a)*L),int(y+math.sin(a)*L)),fill=(255,255,200))
-        elif k=='boom':
-            x,y,r=e[1],e[2],e[3]
-            d.ellipse([x-r-3,y-r-3,x+r+3,y+r+3],outline=(255,210,120),width=3)
-            d.ellipse([x-r//2,y-r//2,x+r//2,y+r//2],fill=(255,255,255))
-    if shake!=(0,0):
-        im2=Image.new('RGB',(W,H),(0,0,0)); im2.paste(im,shake); 
-        # fill exposed edge with original to avoid black bars
-        base=im.copy(); base.paste(im2.crop((0,0,W,H)),(0,0)); im=im2
-        px=im.load(); src=BG.load()
-        for x in range(W):
-            for y in range(H):
-                if px[x,y]==(0,0,0): px[x,y]=src[x,y]
-    if flash>0:
-        if BLACK:
-            from PIL import ImageFilter
-            m=Image.new('L',(W,H),0); md=ImageDraw.Draw(m); r=int(20+90*flash)
-            cx=boomx if 'boomx' in dir() else 93
-            md.ellipse([cx-r,GROUND-10-r//2,cx+r,GROUND-10+r//2],fill=int(255*flash))
-            m=m.filter(ImageFilter.GaussianBlur(8))
-            im=Image.composite(Image.new('RGB',(W,H),(255,250,235)),im,m)
-        else:
-            im=fade_to(im,(255,255,255),flash)
-    return im
-
-AUR_C=(255,210,90); AUR_E=(190,255,150)
-GOLD={'O':(255,214,90),'o':(210,156,40)}
-GOLD_AURA=(255,244,150)
-
-def base(f):
-    cl=dict(x=30,y=GROUND,pose='guard' if (f//6)%2==0 else 'guard2',flip=False,aura=None,pal=None,vis=True)
-    ce=dict(x=150,y=GROUND,pose='idle',flip=True,aura=None,pal=None,vis=True)
-    return dict(cl=cl,ce=ce,after=[],under=[],fx=[],shake=(0,0),flash=0.0,fc=(93,GROUND-10))
-
-def render_dbz(s,f):
-    im=BG.copy(); d=ImageDraw.Draw(im)
-    for who,x,y,p,fl,tint in s['after']:
-        draw(im,(CL if who=='cl' else CE)[p],x,y,fl,alpha=0.35,tint=tint)
-    for e in s['under']: draw_fx(d,im,e,f)
-    for who in ('cl','ce'):
-        c=s[who]
-        if c['vis']: draw(im,(CL if who=='cl' else CE)[c['pose']],c['x'],c['y'],c['flip'],aura=c['aura'],f=f,pal=c['pal'])
-    for e in s['fx']: draw_fx(d,im,e,f)
-    if s['shake']!=(0,0):
-        im2=BG.copy(); im2.paste(im,s['shake']); im=im2
-    if s['flash']>0:
-        from PIL import ImageFilter
-        m=Image.new('L',(W,H),0); md=ImageDraw.Draw(m); r=int(20+90*s['flash']); cx,cy=s['fc']
-        md.ellipse([cx-r,cy-r//2,cx+r,cy+r//2],fill=int(255*min(1,s['flash'])))
-        m=m.filter(ImageFilter.GaussianBlur(8))
-        im=Image.composite(Image.new('RGB',(W,H),(255,250,235)),im,m)
-    return im
-
-@fx('zip')
+@fx('dbzc_zip')
 def _fx_zip(d,im,e,f):
-    x,y=int(e[1]),int(e[2])
-    for i in range(3):
-        yy=y+random.randint(-8,2); xx=x+random.randint(-6,6); d.line([xx-4,yy,xx+4,yy],fill=(235,235,255))
+    """Instant Transmission: the flicker lines left behind."""
+    _,x,y=e; rr=random.Random(f*3+int(x))
+    for _ in range(4):
+        yy=y+rr.randint(-10,2); xx=x+rr.randint(-6,6); d.line([xx-5,yy,xx+5,yy],fill=(255,255,255))
+        d.line([xx-3,yy+1,xx+3,yy+1],fill=(150,180,255))
 
-@fx('orb')
-def _fx_orb(d,im,e,f):
-    # small ki blast
-    x,y,c=int(e[1]),int(e[2]),e[3]
-    d.ellipse([x-2,y-2,x+2,y+2],fill=c[0]); d.rectangle([x-1,y-1,x,y],fill=(255,255,255))
-    d.line([x-6*e[4],y,x-2*e[4],y],fill=c[1])
+@fx('dbzc_ball')
+def _fx_ball(d,im,e,f):
+    """A ki ball in the hands: x,y,r,(outer,mid), with a spiky corona."""
+    _,x,y,r,(oc,mc)=e; ball(d,int(x),int(y),int(r),oc,mc,f); asterisk(d,int(x),int(y),int(r)+3,oc,f)
 
-@fx('bolt')
+@fx('dbzc_clash')
+def _fx_clash(d,im,e,f):
+    """Where the two beams meet: a white-hot knot throwing sparks."""
+    _,x,y,big=e; r=6+(f%3)+big; rr=random.Random(f)
+    d.ellipse([x-r-2,y-r-2,x+r+2,y+r+2],fill=(255,236,170)); d.ellipse([x-r,y-r,x+r,y+r],fill=(255,255,255))
+    asterisk(d,x,y,r+5,(255,200,120),f)
+    for _ in range(6):
+        a=rr.random()*6.28; L=rr.randint(r+2,r+12); d.point((int(x+math.cos(a)*L),int(y+math.sin(a)*L*0.7)),fill=(255,255,200))
+
+@fx('dbzc_bolt')
 def _fx_bolt(d,im,e,f):
-    x,y=e[1],e[2]; pts=[(x,y)]
-    for i in range(4): x+=random.randint(-3,3); y+=random.randint(2,4); pts.append((x,y))
-    d.line(pts,fill=(210,245,255)); d.line(pts[:2],fill=(255,255,255))
+    """A little lightning crackle in the aura."""
+    _,x,y=e; rr=random.Random(f*11+int(x)); pts=[(x,y)]
+    for _ in range(4): x+=rr.randint(-3,3); y+=rr.randint(2,4); pts.append((x,y))
+    d.line(pts,fill=(210,245,255)); d.point(pts[0],fill=(255,255,255))
 
-@fx('clball')
-def _fx_clball(d,im,e,f):
-    ball(d,int(e[1]),int(e[2]),int(e[3]),*CL_OR,f); asterisk(d,int(e[1]),int(e[2]),int(e[3])+3,(255,150,100),f)
-
-@fx('ceball')
-def _fx_ceball(d,im,e,f):
-    ball(d,int(e[1]),int(e[2]),int(e[3]),*CE_BL,f)
-
-@fx('genki')
+@fx('dbzc_genki')
 def _fx_genki(d,im,e,f):
-    x,y,r=int(e[1]),int(e[2]),int(e[3])
-    d.ellipse([x-r-2,y-r-2,x+r+2,y+r+2],fill=(255,170,110)); d.ellipse([x-r,y-r,x+r,y+r],fill=(240,130,85))
-    d.ellipse([x-r+2,y-r+2,x+r//2,y+r//2],fill=(255,210,160)); d.ellipse([x-r//3-1,y-r//3-1,x,y],fill=(255,255,255))
-    asterisk(d,x,y,r+6,(255,190,130),f)
+    """The Spirit Bomb: a blue-white sun with a flickering corona."""
+    _,x,y,r=e; x,y,r=int(x),int(y),int(r)
+    glow=Image.new('L',(W,H),0); ImageDraw.Draw(glow).ellipse([x-r-6,y-r-6,x+r+6,y+r+6],fill=120)
+    im.paste((170,220,255),(0,0),glow.filter(ImageFilter.GaussianBlur(3))); d=ImageDraw.Draw(im)
+    d.ellipse([x-r-1,y-r-1,x+r+1,y+r+1],fill=(120,190,255)); d.ellipse([x-r,y-r,x+r,y+r],fill=(190,232,255))
+    d.ellipse([x-r+2,y-r+2,x+r//3,y+r//3],fill=(236,248,255)); d.ellipse([x-r//2,y-r//2,x,y],fill=(255,255,255))
+    asterisk(d,x,y,r+5,(200,236,255),f)
 
+@fx('dbzc_shard')
+def _fx_shard(d,im,e,f):
+    """A chip of the white ring tiles flying off."""
+    _,x,y=e; d.rectangle([x,y,x+1,y],fill=(246,246,238)); d.point((x,y+1),fill=(150,148,140))
 
-def calm_aura(s,f,t0,t1,who=('cl','ce')):
-    """Aura on between t0..t1, so clip edges stay aura-free."""
-    if t0<=f<t1:
-        if 'cl' in who: s['cl']['aura']=(AUR_C,1+(f%2))
-        if 'ce' in who: s['ce']['aura']=(AUR_E,1+(f%2))
+@fx('dbzc_regen')
+def _fx_regen(d,im,e,f):
+    """Cell regenerating: a writhing green mass that swells up out of one scrap (t 0..1)."""
+    _,x,t=e; rr=random.Random(f%6)
+    h=int(2+18*ease(t)); w=int(2+7*ease(t))
+    for _ in range(int(6+22*t)):
+        yy=GROUND-rr.randint(0,h); xx=x+rr.randint(-w,w)*(1-(GROUND-yy)/(h+8)); r=rr.randint(1,3)
+        d.ellipse([xx-r,yy-r,xx+r,yy+r],fill=(112,192,84) if rr.random()<0.6 else (52,118,44))
+    for _ in range(3): d.point((x+rr.randint(-w,w),GROUND-rr.randint(0,h)),fill=(24,34,24))
 
-# --- clip: instant-transmission zig-zag across the sky ---------------------
-SPOTS=[(62,40,0),(128,28,1),(96,50,0),(44,26,1),(146,44,0),(100,32,1)]
-def clip_teleport(f):
-    s=base(f); cl,ce=s['cl'],s['ce']; calm_aura(s,f,8,110)
-    if 12<=f<18:
-        cl['vis']=ce['vis']=(f%2==0 and f<16)
-        if f>=14: s['fx']+= [('zip',30,GROUND-4),('zip',150,GROUND-10)]
-    elif 18<=f<84:
-        i=(f-18)//11; k=(f-18)%11; x,y,side=SPOTS[i]
-        if k<2 or k>=9:
-            cl['vis']=ce['vis']=False; s['fx'].append(('zip',x,y))
-        else:
-            cl.update(x=x-8 if side==0 else x+8,y=y,flip=(side==1))
-            ce.update(x=x+10 if side==0 else x-10,y=y+6,flip=(side==0))
-            if k<5: cl['pose'],ce['pose']='punch','hurt'
-            elif k<7: cl['pose'],ce['pose']='hurt','punch'
-            else: cl['pose'],ce['pose']='punch','punch'
-            if k in (3,5,7): s['fx'].append(('spark',x+random.randint(-1,1),y-7,5)); s['shake']=rshake()
-    elif 84<=f<96:
-        k=f-84
-        if k<3:
-            cl.update(x=84,pose='punch'); ce.update(x=102,pose='punch')
-            if k==0: s['fx'].append(('spark',93,GROUND-8,9)); s['flash']=0.5; s['fc']=(93,GROUND-8)
-            s['shake']=rshake(2)
-        else:
-            t=(k-3)/9; cl.update(x=ez(84,30,t),pose='hurt'); ce.update(x=ez(102,150,t),pose='hurt')
-            for _ in range(2): s['fx'].append(('dust',cl['x']+random.randint(2,8),GROUND-random.randint(0,3))); s['fx'].append(('dust',ce['x']-random.randint(2,8),GROUND-random.randint(0,3)))
-    elif 96<=f<112: ce['pose']='guard'
-    return s
+# ---- close-up: Super Saiyan ---------------------------------------------------------------------
+_HAIR_BASE=[(40,58,26,8),(50,70,54,0),(62,84,82,2),(76,98,106,8),(90,102,114,20),(40,50,24,22)]
+_HAIR_GOLD=[(40,58,30,-6),(50,70,56,-10),(62,84,80,-10),(76,98,104,-4),(90,102,118,6),(40,50,22,8)]
+_BANGS=[(50,62,56,40),(60,72,64,36),(78,90,86,38)]
+def _hair(d,gold,sway):
+    col,edge=((255,226,80),(200,140,20)) if gold else ((30,28,40),(120,130,190))
+    for x0,x1,tx,ty in (_HAIR_GOLD if gold else _HAIR_BASE):
+        d.polygon([(x0,30),(x1,30),(tx+sway,ty)],fill=col,outline=edge)
+    d.rectangle([40,22,104,30],fill=col)
+    for x0,x1,tx,ty in _BANGS: d.polygon([(x0,28),(x1,28),(tx,ty)],fill=col)
+    if gold:
+        for x0,x1,tx,ty in _HAIR_GOLD[1:4]: d.line([(x0+x1)//2,28,tx+sway,ty+6],fill=(255,248,190))
 
-# --- clip: ki barrage, Cell shrugs it off and returns one ------------------
-def clip_barrage(f):
-    s=base(f); cl,ce=s['cl'],s['ce']; calm_aura(s,f,10,70,('cl',)); calm_aura(s,f,20,120,('ce',))
-    if 12<=f<72: cl['pose']='charge' if f<24 else ('punch' if (f//2)%2 else 'charge')
-    if 24<=f<72: ce['pose']='guard'
-    HIT=138
-    for k in range(16):
-        t0=24+3*k
-        if f<t0: continue
-        x=40+6*(f-t0)
-        if x<HIT: s['fx'].append(('orb',x,GROUND-6,CL_OR,1))
-        else:
-            dt=f-t0-(HIT-40)//6
-            if dt<2: s['fx'].append(('spark',HIT,GROUND-8+random.randint(-3,3),3))
-            gx=HIT+8+(k*29)%34
-            if 1<=dt<7: s['fx'].append(('ring',gx,GROUND,dt*2,(255,200,120)))
-            if dt==1: s['shake']=rshake()
-    if 40<=f<96:   # smoke builds over Cell, then clears
-        dens=min(1,(f-40)/12)*(1 if f<80 else max(0,(96-f)/16))
+def closeup_ssj(t,f):
+    """Primer plano: Claude strains, lightning, the hair flashes gold — SUPER SAIYAN!"""
+    gold=t>=0.4 or (0.3<=t<0.4 and f%2==0)
+    im=Image.new('RGB',(W,H),(110,70,10) if gold else (44,50,96)); d=ImageDraw.Draw(im)
+    if gold:                                                        # a hot glow behind the head
+        g=Image.new('L',(W,H),0); ImageDraw.Draw(g).ellipse([10,-20,136,80],fill=150)
+        im.paste((255,200,60),(0,0),g.filter(ImageFilter.GaussianBlur(10))); d=ImageDraw.Draw(im)
+    rr=random.Random(f)
+    for _ in range(64 if gold else 24):                             # aura flames behind him
+        x=rr.randint(12,134); h=rr.randint(8,36); y=rr.randint(20,66)
+        c=((255,214,70) if rr.random()<0.6 else (255,246,190)) if gold else ((190,196,230) if rr.random()<0.5 else (90,96,140))
+        d.line([x,y,x+rr.randint(-2,2),y-h],fill=c)
+    jx=((f%3)-1)*(2 if t<0.4 else 0)
+    ox=jx
+    _hair(d,gold,(f%2)*(1 if gold else 0))
+    d.rectangle([44+ox,30,100+ox,64],fill=(217,119,87)); d.rectangle([44+ox,30,50+ox,64],fill=(176,92,66))
+    for x0,x1,tx,ty in _BANGS:
+        d.polygon([(x0+ox,29),(x1+ox,29),(tx+ox,ty)],fill=(255,226,80) if gold else (30,28,40))
+    if not gold:                                                    # eyes squeezed shut, straining
+        for ex in (60,82):
+            d.line([ex-3+ox,44,ex+3+ox,47],fill=(24,14,12)); d.line([ex-3+ox,50,ex+3+ox,47],fill=(24,14,12))
+        d.rectangle([62+ox,55,84+ox,61],fill=(24,14,12)); d.rectangle([63+ox,56,83+ox,60],fill=(246,240,230))   # gritted teeth
+        d.line([63+ox,58,83+ox,58],fill=(150,140,130))
+    else:                                                           # teal Super Saiyan eyes
+        for ex in (60,82):
+            d.rectangle([ex-2,40,ex+3,52],fill=(24,14,12)); d.rectangle([ex-1,42,ex+2,50],fill=(60,200,176))
+            d.rectangle([ex,43,ex+1,45],fill=(230,255,250))
+        d.line([56,38,66,40],fill=(24,14,12)); d.line([78,40,88,38],fill=(24,14,12))   # the scowl
+        d.line([66,58,78,57],fill=(120,50,36))                     # a hard set mouth
+    for k in range(3 if not gold else 5):                           # lightning in the aura
+        x=rr.randint(20,130); y=rr.randint(4,30); pts=[(x,y)]
+        for _ in range(5): x+=rr.randint(-4,4); y+=rr.randint(3,6); pts.append((x,y))
+        d.line(pts,fill=(220,240,255))
+    if t<0.3: say(im,"HAAAAA",26,(236,240,255),scale=2,cx=144+jx,outline=(40,40,90))
+    if 0.4<=t<0.46:
+        im=fade_to(im,(255,250,220),1-(t-0.4)/0.06); d=ImageDraw.Draw(im); zoom_lines(d,(255,236,120))
+    if t>=0.48:
+        jj=(f%3)-1 if t<0.58 else 0
+        say(im,"SUPER",10,(255,244,160),scale=3,cx=146+jj,outline=(120,70,0))
+        say(im,"SAIYAN!",34,(255,255,255),scale=2,cx=146+jj,outline=(120,70,0))
+    if t<0.06: zoom_lines(d,(236,240,255))
+    if t>0.9: im=fade_to(im,(255,240,170),(t-0.9)/0.1*0.7)
+    return im
+
+# ---- the clip ----------------------------------------------------------------------------------
+def ghost(spr,x,y=GROUND,flip=False,tint=(255,236,200),a=0.35):
+    return actor(spr,x,y,flip=flip,alpha=a,tint=tint)
+
+def clip_cellgames(f):
+    s=scene(f,THEME)
+    s['under'].append(('dbzc_clouds',))
+    ssj=292<=f<404 or (404<=f<424 and (f//2)%2==0)                  # powers down with a flicker
+    FORM=SSJ if ssj else BASE
+    cl=actor(FORM[guard_pose(f)],CX,pal=SSJPAL if ssj else None)
+    ce=actor(CE['idle'],EX,flip=True)
+    extra=[]; aura_c=AURA_G if ssj else AURA_W
+    def pose(p): cl['spr']=FORM[p]
+    # 1) the stare-down: CELL GAMES, the wind, both power up
+    if 8<=f<40:
+        say_y=6 if f>=12 else 6-(12-f)
+        s['fx'].append(('dbzc_say',"CELL GAMES",say_y,(255,255,255),2,W//2,(60,120,40)))
+    if 10<=f<44:
+        for i in range(8): s['fx'].append(('dust',(i*29+(f-10)*4)%W,GROUND-(i*5)%6))
+    if 24<=f<44: ce['spr']=CE['guard']
+    if 30<=f<44: cl['aura']=(AURA_W,1+(f%2)); ce['aura']=(CELL_AURA,1+(f%2))
+    if 34<=f<44 and f%3==0: s['fx'].append(('rock',random.randint(10,175),GROUND-random.randint(0,12)))
+    # 2) the clash in the middle of the ring
+    if 44<=f<54:
+        t=(f-44)/10; cl.update(x=ez(CX,84,t),aura=(AURA_W,2)); pose('dash')
+        ce.update(spr=CE['punch'],x=ez(EX,104,t),aura=(CELL_AURA,2))
+        extra+=[ghost(FORM['dash'],cl['x']-7),ghost(FORM['dash'],cl['x']-14,a=0.2),
+                ghost(CE['punch'],ce['x']+8,flip=True,tint=(210,255,200)),ghost(CE['punch'],ce['x']+16,flip=True,tint=(210,255,200),a=0.2)]
+        s['fx'].append(('dbzc_speed',))
+    if 54<=f<62:
+        cl['x']=84; ce.update(x=104,spr=CE['punch']); pose('punch')
+        if f==54: s['flash']=0.9; s['fc']=(94,GROUND-8)
+        for j in range(2): s['fx'].append(('ring',94,GROUND-8,(f-54)*6+j*5,(255,255,255)))
+        s['fx'].append(('spark',94,GROUND-8,8-(f-54))); s['shake']=rshake(2)
+        if f<58:
+            for j in range(4): s['fx'].append(('dbzc_shard',random.randint(60,130),GROUND-random.randint(0,14)))
+    # 3) the rush barrage, blinking up into the sky and back
+    if 62<=f<96:
+        k=f-62; ph=(k//3)%4
+        cp,ep=[('punch','hurt'),('guard','punch'),('hurt','punch'),('punch','guard')][ph]
+        air=0; cx,ex=84,104
+        if 72<=f<76 or 86<=f<88:                                    # both vanish...
+            cl['vis']=ce['vis']=False
+            s['fx']+=[('dbzc_zip',84 if f<80 else 64,GROUND-6 if f<80 else GROUND-28),('dbzc_zip',104 if f<80 else 86,GROUND-6 if f<80 else GROUND-28)]
+        elif 76<=f<86:                                              # ...and trade blows in the sky
+            air=24; cx,ex=64,86
+        cl.update(x=cx+random.choice([-1,0,1]),y=GROUND-air,aura=(AURA_W,1+(f%2))); pose(cp)
+        ce.update(x=ex+random.choice([-1,0,1])-(2 if ep=='hurt' else 0),y=GROUND-air,spr=CE[ep],aura=(CELL_AURA,1+(f%2)))
+        if k%3==0 and cl['vis']:
+            s['fx'].append(('spark',(cx+ex)//2+random.randint(-2,2),GROUND-air-8+random.randint(-3,3),4+random.randint(0,2)))
+            s['shake']=rshake()
+        if k%12==0: s['fx'].append(('ring',(cx+ex)//2,GROUND-air-8,8,(255,255,255)))
+        s['fx'].append(('dbzc_speed',))
+    # 4) Cell's knee sends Claude skidding back
+    if 96<=f<112:
+        ce.update(spr=CE['punch'] if f<100 else CE['guard'],x=104 if f<100 else ez(104,EX,(f-100)/12),aura=(CELL_AURA,1))
+        t=(f-96)/10; cl.update(x=ez(84,24,t),y=GROUND-int(8*math.sin(math.pi*min(1,t)))); pose('hurt')
+        if f==96: s['fx'].append(('spark',93,GROUND-8,10)); s['flash']=0.5; s['fc']=(93,GROUND-8); s['shake']=rshake(2)
+        if f>=104:
+            for _ in range(2): s['fx'].append(('dust',cl['x']+random.randint(2,9),GROUND-random.randint(0,3)))
+    # 5) Instant Transmission: gone, and down on him from above
+    if 112<=f<124:
+        cl['x']=24; pose('guard'); s['fx'].append(('twinkle',32,GROUND-8,1+(f%2)))
+        shout(s,"INSTANT TRANSMISSION",(255,236,150))
+    if 112<=f<144: ce.update(spr=CE['guard'],x=EX)
+    if 122<=f<124: s['fx'].append(('dbzc_zip',24,GROUND-4)); cl['vis']=(f%2==0)
+    if 124<=f<136:
+        cl['vis']=False
+        ce['flip']=not (128<=f<133)                                 # he looks around
+        if f>=126: s['fx'].append(('dmg',"?",EX-1,GROUND-30,(255,255,255)))
+    if 136<=f<144:
+        drop=0 if f<140 else (f-140)/3
+        cl.update(x=EX-2,y=int(lerp(GROUND-30,GROUND-22,drop)),vis=True); pose('armsup')
+        if f<138: s['fx'].append(('dbzc_zip',EX,GROUND-36))
+        s['fx'].append(('dmg',"!",EX+12,GROUND-30,(255,90,60)))
+    if 143<=f<150:                                                  # the slam
+        ce.update(spr=CE['hurt'],x=EX,y=GROUND+(2 if f<147 else 1))
+        cl.update(x=EX-2,y=GROUND-21,vis=True); pose('armsup')
+        if f==143: s['flash']=0.6; s['fc']=(EX,GROUND-14)
+        s['fx'].append(('ring',EX,GROUND,(f-143)*6+4,(255,255,255))); s['shake']=rshake(2)
+        s['fx'].append(('spark',EX,GROUND-22,9-(f-143)))
+        for j in range(4): s['fx'].append(('dbzc_shard',EX+random.randint(-22,22),GROUND-random.randint(0,12)))
+        for j in range(3): s['fx'].append(('dust',EX+random.randint(-16,16),GROUND-random.randint(0,4)))
+    if 150<=f<164:                                                  # Claude backflips home
+        t=(f-150)/14; cl.update(x=ez(EX-2,CX,t),y=int(ez(GROUND-21,GROUND,t)-18*math.sin(math.pi*t)),vis=True)
+        cl['spr']=spin(FORM['guard'],f) if t<0.85 else FORM['guard']
+        ce.update(spr=CE['hurt'],x=EX)
+    if 158<=f<172:
+        ce.update(spr=CE['flare'],x=EX,aura=(CELL_AURA,2+(f%2))); s['shake']=rshake() if f%2 else (0,0)
+        shout(s,"ENOUGH!",(190,255,150),cx=EX-10)
+    # 6) KAMEHAMEHA vs KAMEHAMEHA
+    if 172<=f<250:
+        ce.update(spr=CE['charge'],x=EX,aura=(CELL_AURA,2+(f%3==0)))
+        cl.update(x=CX,aura=(aura_c,2+(f%3==0))); pose('charge')
+    if 172<=f<200:
+        t=(f-172)/28
+        s['fx'].append(('dbzc_ball',142,GROUND-11,1+4*t,CELL_KI))
+        if f>=180: s['fx'].append(('dbzc_ball',38,GROUND-6,1+4*(f-180)/20,KI))
+        if f%3==0: s['fx'].append(('rock',random.randint(10,175),GROUND-random.randint(0,int(24*t))))
+        if f>=188: s['shake']=rshake()
+        shout(s,"KAMEHAMEHA!",(150,210,255),cx=138)
+        if f>=180: shout(s,"KAMEHAMEHA!",(255,200,150),y=10,cx=46)
+    if 200<=f<250:
+        t=f-200
+        mid=int(94+8*math.sin(t*0.35)-(ez(0,34,(f-220)/28) if f>=220 else 0))
+        s['fx']+=[('beam',38,mid,GROUND-6,KI),('beam',mid,141,GROUND-11,CELL_KI),('dbzc_clash',mid,GROUND-8,0)]
+        s['shake']=rshake(2 if f>=230 else 1)
+        if f%2==0: s['fx'].append(('rock',random.randint(mid-30,mid+30),GROUND-random.randint(0,25)))
+        if f>=232: cl['x']=CX+random.choice([-1,0]); shout(s,"GIVE UP!",(190,255,150),cx=EX-8)
+        if f<206: s['flash']=0.5*(1-(f-200)/6); s['fc']=(94,GROUND-8)
+    # 7) close-up: SUPER SAIYAN
+    if 250<=f<292: s['image']=closeup_ssj((f-250)/42,f); return s
+    # 8) the golden Kamehameha blows through
+    if 292<=f<316:
+        ce.update(spr=CE['charge'] if f<304 else CE['hurt'],x=EX,aura=(CELL_AURA,2) if f<304 else None)
+        cl.update(x=CX,aura=(AURA_G,3)); pose('charge')
+        if f%2==0: s['fx'].append(('dbzc_bolt',CX+random.randint(-8,8),GROUND-18))
+        if f<304:
+            mid=int(ez(60,141,(f-292)/12))
+            s['fx']+=[('beam',38,mid,GROUND-6,KI_SSJ),('beam',mid,141,GROUND-11,CELL_KI),('dbzc_clash',mid,GROUND-8,2)]
+        elif f<312: s['fx'].append(('beam',38,200,GROUND-7,KI_SSJ))
+        if f==292: s['flash']=0.9; s['fc']=(CX,GROUND-8); s['flashc']=(255,240,170)
+        if f==304: s['flash']=1.0; s['fc']=(EX,GROUND-10)
+        if f>=304: s['fx'].append(('boom',EX,GROUND-10,(f-304)*5+4)); ce['vis']=f<306
+        s['shake']=rshake(2); shout(s,"HAAAAA!",(255,236,120),cx=46)
+    if 312<=f<332:                                                  # the smoke clears: Cell, burnt
+        dens=1 if f<320 else max(0,(332-f)/12)
         rr=random.Random(f//2)
-        for i in range(int(18*dens)):
-            px=150+rr.randint(-16,18); py=GROUND-4-rr.randint(0,18)
-            c=(70,68,72) if i%2 else (110,106,108)
-            s['fx'].append(('smoke',px,py,rr.randint(2,5),c))
-    if 72<=f<96: ce['pose']='idle'
-    if 96<=f<102:
-        ce['pose']='charge'; s['fx'].append(('ceball',140,GROUND-11,1+(f-96)//2))
-    if 100<=f<117:
-        ce['pose']='charge' if f<104 else 'idle'
-        x=140-6*(f-100); s['fx'].append(('ceball',x,GROUND-10,3))
-    if 112<=f<120: cl['pose']='punch'
-    if f==116: s['fx'].append(('spark',46,GROUND-9,7)); s['shake']=rshake(2)
-    if 116<=f<126: dt=f-116; s['fx'].append(('ceball',44+3*dt,GROUND-10-6*dt,3))
-    if 128<=f<134: s['fx'].append(('twinkle',78,3,1+(f-128)%3))
-    return s
-
-# --- clip: Solar Flare, then Claude goes Super -----------------------------
-def clip_super(f):
-    s=base(f); cl,ce=s['cl'],s['ce']
-    if 12<=f<22:
-        ce['pose']='guard'
-        if f>=17: s['fx'].append(('spark',146,GROUND-17,2+(f%2)))
-    if 22<=f<30: s['flash']=max(0,1-(f-22)/8); s['fc']=(146,GROUND-17)
-    if 26<=f<48:
-        cl['pose']='hurt'; cl['x']=30+random.choice([-1,0,1])
-    if 28<=f<36: ce.update(x=ez(150,46,(f-28)/8),pose='punch'); s['after'].append(('ce',ce['x']+8,GROUND,'punch',True,(210,255,200)))
-    if 36<=f<48:
-        ce.update(x=46,pose='punch' if (f//2)%2 else 'guard'); cl['x']=ez(30,24,(f-36)/12)
-        if f%2==0: s['fx'].append(('spark',38,GROUND-7+random.randint(-2,2),4)); s['shake']=rshake()
-    if 48<=f<60:
-        t=(f-48)/12; ce.update(x=ez(46,112,t),y=GROUND-int(8*math.sin(math.pi*t)),pose='guard')
-    if 60<=f<120: ce.update(x=112,pose='idle')
-    if 48<=f<60: cl.update(x=24,pose='guard')
-    if 60<=f<72:
-        cl.update(x=ez(24,30,(f-60)/12)); cl['aura']=(AUR_C,1+(f-60)//6); s['shake']=rshake() if f%3==0 else (0,0)
-        if f%2==0: s['fx'].append(('rock',random.randint(14,48),GROUND-random.randint(0,(f-60)*2)))
-    if 72<=f<120:
-        cl['pal']=GOLD; cl['aura']=(GOLD_AURA,3 if f<108 else 2)
-        if f==72: s['flash']=0.6; s['fc']=(30,GROUND-6)
-        if f<100:
-            s['fx']+= [('bolt',random.randint(20,40),GROUND-18)]; s['shake']=rshake() if f%2 else (0,0)
-            s['fx'].append(('rock',random.randint(10,52),GROUND-random.randint(0,30)))
-    if 96<=f<104:
-        t=(f-96)/8; cl.update(x=ez(30,100,t),pose='dash')
-        s['after']+= [('cl',cl['x']-7,GROUND,'dash',False,(255,236,150)),('cl',cl['x']-14,GROUND,'dash',False,(255,236,150))]
-    if 104<=f<108: cl.update(x=100,pose='punch')
-    if f==104: s['fx'].append(('spark',108,GROUND-8,10)); s['shake']=rshake(2); s['flash']=0.4; s['fc']=(108,GROUND-8)
-    if 104<=f<116:
-        t=(f-104)/12; ce.update(x=ez(112,170,t),y=GROUND-int(7*math.sin(math.pi*t)),pose='hurt')
-        if f>=112: s['fx'].append(('dust',ce['x']-5+random.randint(-3,3),GROUND-random.randint(0,4)))
-    if 116<=f<140: ce.update(x=ez(170,150,(f-116)/20),pose='guard')
-    if 108<=f<120: cl.update(x=ez(100,30,(f-108)/12),y=GROUND-int(6*math.sin(math.pi*(f-108)/12)),pose='guard')
-    if 120<=f<132:
-        cl['pal']=GOLD if f%2==0 and f<128 else None; cl['aura']=(GOLD_AURA,1) if f<126 else None
-    return s
-
-# --- clip: Spirit Bomb (Claude's giant asterisk) vs Kamehameha -------------
-def clip_genki(f):
-    s=base(f); cl,ce=s['cl'],s['ce']
-    C=(30,12)
-    if 12<=f<84:
-        cl['pose']='armsup'; cl['aura']=(AUR_C,1)
-        r=2+10*(f-12)/72; s['under'].append(('genki',C[0],C[1],r))
-        for i in range(14):
-            a=i*2.39996; ph=((f*0.035+i*0.137)%1)
-            L=(1-ph)*140
-            s['fx'].append(('mote',C[0]+math.cos(a)*L,C[1]+math.sin(a)*L*0.45,(255,200,150) if i%2 else (255,240,210)))
-        if f>60 and f%3==0: s['shake']=rshake()
-    if 40<=f<96:
-        ce.update(pose='charge'); ce['aura']=(AUR_E,2); s['fx'].append(('ceball',140,GROUND-11,min(4,1+(f-40)//10)))
-    if 84<=f<96:
-        t=(f-84)/12; cl['pose']='charge'
-        bx=lerp(30,96,t); by=lerp(12,GROUND-14,t)-10*math.sin(math.pi*t)
-        s['under'].append(('genki',bx,by,12))
-    if 96<=f<144:
-        cl['pose']='charge'; cl['aura']=(AUR_C,2); ce['pose']='charge'; ce['aura']=(AUR_E,3)
-        bx=96+6*math.sin((f-96)*0.3)
-        s['under'].append(('beam',bx+12,140,GROUND-11,CE_BL)); s['under'].append(('genki',bx,GROUND-14,12+(f%2)))
-        s['fx'].append(('spark',bx+13,GROUND-11+random.randint(-4,4),4)); s['shake']=rshake()
-        if f%2==0: s['fx'].append(('rock',random.randint(70,130),GROUND-random.randint(0,20)))
-    if 144<=f<152:
-        t=(f-144)/8; bx=lerp(96,146,t); cl['pose']='charge'; ce['pose']='hurt'
-        s['under'].append(('beam',bx+12,140,GROUND-11,CE_BL)) if bx+12<140 else None
-        s['under'].append(('genki',bx,GROUND-14,12)); s['shake']=rshake(2)
-    if 152<=f<166:
-        t=(f-152)/14; ce['vis']=False
-        s['fx'].append(('boom',150,GROUND-12,int(6+60*t))); s['flash']=1.0 if f<157 else max(0,1-(f-157)/9); s['fc']=(150,GROUND-12); s['shake']=rshake(2)
-    if 166<=f<192:
-        ce['pose']='hurt' if f<176 else ('guard' if f<184 else 'idle')
-        if f<182:
+        for i in range(int(20*dens)):
+            s['fx'].append(('smoke',EX+rr.randint(-16,16),GROUND-2-rr.randint(0,20),rr.randint(2,5),(90,86,90) if i%2 else (130,126,128)))
+        ce.update(spr=CE['hurt'],x=EX,pal=CE_BURNT,vis=f>=318)
+    if 316<=f<340: cl.update(x=CX,aura=(AURA_G,1+(f%2)))
+    if 332<=f<346:
+        ce.update(spr=CE['flare'],x=EX,pal=CE_BURNT,aura=(CELL_AURA,2+(f%2)))
+        shout(s,"I AM PERFECT!",(190,255,150),cx=EX-18); s['shake']=rshake() if f%2 else (0,0)
+    # 9) GENKI DAMA
+    GC=lambda r: (CX,GROUND-12-r)
+    if 340<=f<372:
+        t=(f-340)/32; r=2+12*ease(t)
+        s['under'].append(('dim',0.35*min(1,(f-340)/8)))
+        cl.update(x=CX,aura=(AURA_G,1)); pose('armsup')
+        x,y=GC(r); s['under'].append(('dbzc_genki',x,y,r))
+        for i in range(16):                                         # the energy pours in from the sky
+            a=i*2.39996; ph=((f*0.04+i*0.137)%1); L=(1-ph)*150
+            s['fx'].append(('mote',x+math.cos(a)*L,y-abs(math.sin(a))*L*0.4,(200,236,255) if i%2 else (255,255,255)))
+        if f>=356 and f%3==0: s['shake']=rshake()
+        shout(s,"GENKI DAMA!",(200,236,255))
+    if 346<=f<388: ce.update(spr=CE['charge'],x=EX,pal=CE_BURNT,aura=(CELL_AURA,2))
+    if 356<=f<372: s['fx'].append(('dbzc_ball',142,GROUND-11,1+(f-356)//4,CELL_KI))
+    if 372<=f<388:
+        s['under'].append(('dim',0.35))
+        pose('punch'); cl.update(x=CX,aura=(AURA_G,1))
+        x0,y0=GC(14)
+        if f<380: t=(f-372)/8; bx=lerp(x0,122,ease(t)); by=lerp(y0,GROUND-16,t)-8*math.sin(math.pi*t)
+        else: bx=lerp(122,EX-8,(f-380)/8); by=GROUND-16
+        s['under'].append(('dbzc_genki',bx,by,14))
+        if f>=378 and int(bx)+12<141: s['under'].append(('beam',int(bx)+12,141,GROUND-11,CELL_KI)); s['fx'].append(('spark',int(bx)+13,GROUND-11+random.randint(-4,4),4))
+        if f>=380: s['shake']=rshake(2); ce['spr']=CE['hurt']; shout(s,"NO!",(190,255,150),cx=EX)
+    if 388<=f<404:
+        ce['vis']=False; t=(f-388)/16
+        s['fx'].append(('boom',EX,GROUND-12,int(6+64*t)))
+        for j in range(2): s['fx'].append(('ring',EX,GROUND-8,int(10+80*t)+j*8,(200,236,255)))
+        s['flash']=1.0 if f<394 else max(0,1-(f-394)/10); s['fc']=(EX,GROUND-12); s['flashc']=(236,248,255); s['shake']=rshake(2)
+        cl.update(x=CX,aura=(AURA_G,1)); pose('guard')
+    # 10) the aftermath: Claude powers down, Cell grows back from one scrap
+    if 404<=f<432:
+        ce['vis']=False
+        if f<420:
             rr=random.Random(f//2)
-            for i in range(int(10*(182-f)/16)): s['fx'].append(('smoke',150+rr.randint(-14,14),GROUND-rr.randint(2,20),rr.randint(2,4),(80,76,80)))
+            for i in range(int(12*(420-f)/16)): s['fx'].append(('smoke',EX+rr.randint(-14,14),GROUND-rr.randint(2,20),rr.randint(2,4),(96,92,96)))
+        if f>=412: s['under'].append(('dbzc_regen',EX,(f-412)/20))
+    if 404<=f<424: cl['aura']=(aura_c,1) if f%4<2 else None
+    if 432<=f<446:
+        ce.update(spr=CE['hurt'] if f<440 else CE['guard'],tint=(112,192,84) if f<436 else None)
+    s['actors']=extra+[cl,ce]
     return s
 
-# --- clip: short standoff / taunt (breathing room between big fights) ------
-def clip_standoff(f):
-    s=base(f); cl,ce=s['cl'],s['ce']
-    for i in range(10): s['fx'].append(('dust',(i*41-f*3)%W,GROUND-(i*7)%5))
-    if 20<=f<52: ce['pose']='guard'
-    if 28<=f<60:
-        cl['pose']='guard' if (f//3)%2 else 'guard2'; cl['aura']=(AUR_C,1+(f%2)) if 32<=f<56 else None
-    if 40<=f<56: ce['aura']=(AUR_E,1)
-    return s
-
-CLIPS = [('beam', 200, frame)] + [
-    (name, n, (lambda fn: lambda f: render_dbz(fn(f), f))(fn))
-    for name, fn, n in [('teleport', clip_teleport, 132), ('barrage', clip_barrage, 156), ('super', clip_super, 168),
-                        ('genki', clip_genki, 192), ('standoff', clip_standoff, 84)]]
+CLIPS = [clip('cellgames', N_, clip_cellgames)]

@@ -3,7 +3,7 @@
 Pixel-art anime fights that drop out of the MacBook Pro notch while Claude Code is working.
 Claude (the orange asterisk mascot) is always the protagonist.
 
-![DBZ beam](media/clips/dbz__beam.gif)
+![DBZ Cell Games](media/clips/dbz__cellgames.gif)
 
 ## Install
 
@@ -46,7 +46,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 
 | Theme | Claude as | Opponent | Clips |
 |---|---|---|---|
-| `dbz` | Claude | Cell | beam, teleport, barrage, super, genki, standoff |
+| `dbz` | Claude (goes Super Saiyan) | Perfect Cell, on the Cell Games ring | cellgames |
 | `ygo` | Yugi-style duelist | Kaiba | duel |
 | `kny` | Tanjiro-style swordsman | Akaza | breath |
 | `jjk` | Gojo-style sorcerer | Sukuna | infinity |
