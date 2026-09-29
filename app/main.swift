@@ -33,6 +33,10 @@ final class App: NSObject, NSApplicationDelegate {
     let overlap: CGFloat = 10, fillet: CGFloat = CGFloat(App.cfgNumber("fillet") ?? 0)
     // stretch: fill the real notch width with the art (true) or keep square pixels, centred (false). Config: "stretch".
     let stretch: Bool = (App.config["stretch"] as? Bool) ?? true
+    // scale: grow the panel below the notch, keeping the art's proportions and staying centred. Config: "scale".
+    let scale: CGFloat = max(1, CGFloat(App.cfgNumber("scale") ?? 1))
+    var bodyW: CGFloat { notchW * scale }   // panel body (the art area); the notch-wide stem rises into the notch
+    var bodyH: CGFloat { clipH * scale }
 
     // ~/.config/notch-fight/config.json, read once. Keys: "first", "fillet", "stretch", "widthTweak".
     static let config: [String: Any] = {
@@ -93,7 +97,7 @@ final class App: NSObject, NSApplicationDelegate {
         root = v.layer!
         root.backgroundColor = NSColor.black.cgColor
         root.mask = shape
-        art.frame = CGRect(x: fillet, y: 0, width: notchW, height: clipH)
+        art.frame = CGRect(x: fillet, y: 0, width: bodyW, height: bodyH)
         // Art is authored at a fixed W×H canvas (185×64, MacBookPro18,3's notch width) with effects
         // drawn edge-to-edge. `notchW` varies per Mac (e.g. 209pt on a MacBook Air M2), so `.resizeAspect`
         // would center the unscaled art and leave dead black margins instead of reaching the real notch
@@ -112,34 +116,48 @@ final class App: NSObject, NSApplicationDelegate {
         win.orderFrontRegardless()
 
         playTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in self?.tick() }
-        animate(to: clipH, duration: 0.55, spring: true)
+        animate(to: bodyH, duration: 0.55, spring: true)
     }
 
     func rect(height h: CGFloat) -> NSRect {
         let f = screen.frame
         // Hangs from the notch's bottom edge; never overlaps the notch itself.
-        return NSRect(x: notchMidX - notchW / 2 - fillet, y: f.maxY - notchH - h,
-                      width: notchW + 2 * fillet, height: h + overlap)
+        return NSRect(x: notchMidX - bodyW / 2 - fillet, y: f.maxY - notchH - h,
+                      width: bodyW + 2 * fillet, height: h + overlap)
     }
 
     // Body = notch width with rounded bottom; top flares concavely into the notch edge.
+    // When scaled up, the body is wider than the notch: its top corners round off convexly under the
+    // menu bar and only a notch-wide stem rises into the notch.
     func updateMask() {
         let size = win.frame.size, h = size.height - overlap
         let cb = min(corner, h / 2), fr = min(fillet, h / 2)
-        let l = fillet, r = fillet + notchW, w = size.width
+        let l = fillet, r = fillet + bodyW, w = size.width
         let p = CGMutablePath()
         p.move(to: CGPoint(x: l + cb, y: 0))
         p.addLine(to: CGPoint(x: r - cb, y: 0))
         p.addQuadCurve(to: CGPoint(x: r, y: cb), control: CGPoint(x: r, y: 0))
-        p.addLine(to: CGPoint(x: r, y: h - fr))
-        p.addQuadCurve(to: CGPoint(x: r + fr, y: h), control: CGPoint(x: r, y: h))
-        p.addLine(to: CGPoint(x: min(w, r + fr), y: h))
-        p.addLine(to: CGPoint(x: r, y: h))
-        p.addLine(to: CGPoint(x: r, y: size.height))
-        p.addLine(to: CGPoint(x: l, y: size.height))
-        p.addLine(to: CGPoint(x: l, y: h))
-        p.addLine(to: CGPoint(x: l - fr, y: h))
-        p.addQuadCurve(to: CGPoint(x: l, y: h - fr), control: CGPoint(x: l, y: h))
+        if scale > 1 {
+            let sl = fillet + (bodyW - notchW) / 2, sr = sl + notchW, ct = min(corner, h / 2, (bodyW - notchW) / 2)
+            p.addLine(to: CGPoint(x: r, y: h - ct))
+            p.addQuadCurve(to: CGPoint(x: r - ct, y: h), control: CGPoint(x: r, y: h))
+            p.addLine(to: CGPoint(x: sr, y: h))
+            p.addLine(to: CGPoint(x: sr, y: size.height))
+            p.addLine(to: CGPoint(x: sl, y: size.height))
+            p.addLine(to: CGPoint(x: sl, y: h))
+            p.addLine(to: CGPoint(x: l + ct, y: h))
+            p.addQuadCurve(to: CGPoint(x: l, y: h - ct), control: CGPoint(x: l, y: h))
+        } else {
+            p.addLine(to: CGPoint(x: r, y: h - fr))
+            p.addQuadCurve(to: CGPoint(x: r + fr, y: h), control: CGPoint(x: r, y: h))
+            p.addLine(to: CGPoint(x: min(w, r + fr), y: h))
+            p.addLine(to: CGPoint(x: r, y: h))
+            p.addLine(to: CGPoint(x: r, y: size.height))
+            p.addLine(to: CGPoint(x: l, y: size.height))
+            p.addLine(to: CGPoint(x: l, y: h))
+            p.addLine(to: CGPoint(x: l - fr, y: h))
+            p.addQuadCurve(to: CGPoint(x: l, y: h - fr), control: CGPoint(x: l, y: h))
+        }
         p.addLine(to: CGPoint(x: l, y: cb))
         p.addQuadCurve(to: CGPoint(x: l + cb, y: 0), control: CGPoint(x: l, y: 0))
         p.closeSubpath()
