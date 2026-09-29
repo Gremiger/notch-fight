@@ -52,13 +52,6 @@ def _fx_hud(d,im,e,f):
             else: d.rectangle([x0+1,3,x0+w,5],fill=(40,200,60))
         text(d,name,x0+79-len(name)*4 if right else x0,9,(230,200,90))
 
-@fx('big')
-def _fx_big(d,im,e,f):
-    """2x text for the announcer lines (ROUND 1, FIGHT!, FINISH HIM!, FATALITY)."""
-    _,txt,y,c=e; m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
-    m=m.resize((m.width*2,m.height*2),Image.NEAREST); x=W//2-m.width//2
-    im.paste((0,0,0),(x+1,y+1),m); im.paste(c,(x,y),m)
-
 @fx('kunai')
 def _fx_kunai(d,im,e,f):
     _,x0,y0,x1,y1=e

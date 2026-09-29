@@ -90,3 +90,11 @@ def _fx_fire(d,im,e,f):
         up=rr.random()**0.7; yy=feet-up*sz*3; xx=x+rr.uniform(-1,1)*sz*(1-up*0.6); r=max(1,int(sz*(1-up)*0.7+rr.randint(0,2)))
         c=(255,245,170) if up<0.25 else ((255,160,40) if up<0.6 else (220,60,20))
         d.ellipse([xx-r,yy-r,xx+r,yy+r],fill=c)
+
+@fx('big')
+def _fx_big(d,im,e,f):
+    """2x text for announcer lines and shouts (ROUND 1, FATALITY, ZA WARUDO!), centred at x (default: screen)."""
+    _,txt,y,c,*rest=e; cx=rest[0] if rest else W//2
+    m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
+    m=m.resize((m.width*2,m.height*2),Image.NEAREST); x=int(cx-m.width//2)
+    im.paste((0,0,0),(x+1,y+1),m); im.paste(c,(x,y),m)
