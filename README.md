@@ -47,8 +47,8 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | Theme | Claude as | Opponent | Clips |
 |---|---|---|---|
 | `dbz` | Claude (goes Super Saiyan) | Perfect Cell, on the Cell Games ring | cellgames |
-| `ygo` | Yugi-style duelist | Kaiba | duel |
-| `kny` | Tanjiro-style swordsman | Akaza | breath |
+| `ygo` | Yugi-style duelist (D-D-D-DUEL and Heart of the Cards close-ups, Dark Magician card reveal, Mirror Force) | Kaiba + Blue-Eyes White Dragon hologram, in the Kaiba Corp stadium (life points 8000 to 0) | duel |
+| `kny` | Tanjiro-style swordsman (Water Breathing dragon and Hinokami Kagura close-ups) | Akaza (kanji-eye close-up), on the Mugen Train roof; beheaded, crumbles to ash | breath |
 | `jjk` | Gojo at the Shibuya crossing on 10.31 (Infinity stops Dismantle and the lunge — MUGEN, blindfold-off SIX EYES close-up, Blue, Red, HOLLOW PURPLE close-up erases the street) | Sukuna (Dismantle slashes, blown into the 109 tower, reforms from cursed motes) | infinity |
 | `fn` | Fortnite default with pickaxe | Geno | royale |
 | `pkm` | Pokémon with Ash's cap | Mewtwo | psychic |
