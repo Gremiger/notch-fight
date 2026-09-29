@@ -28,7 +28,8 @@ fi
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/"
 cp -R "$OUT/clips" "$OUT/transitions" "$APP/Contents/Resources/"
-swiftc -O "$ROOT/app/main.swift" -o "$APP/Contents/MacOS/NotchFight"
+# pin the deployment target: some toolchains default to a macOS newer than the running one (LaunchServices error -10825)
+swiftc -O -target "$(uname -m)-apple-macos13.0" "$ROOT/app/main.swift" -o "$APP/Contents/MacOS/NotchFight"
 codesign -s - --force "$APP" >/dev/null 2>&1
 
 if [[ "${GIFS:-0}" == "1" ]]; then   # GIFS=1 ./build.sh refreshes media/clips previews
