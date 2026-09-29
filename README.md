@@ -14,6 +14,7 @@ Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Too
 git clone <this repo> && cd notch-fight
 ./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
 ./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
+# several Claude profiles? NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh (same for uninstall)
 ```
 
 Or just ask Claude Code in this repo: *"install this"* — `CLAUDE.md` tells it what to do.
@@ -28,9 +29,14 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
 - `NotchFight.app` hangs a black panel from the notch's bottom edge (width = notch width,
   detected at runtime via `NSScreen.auxiliaryTopLeftArea/RightArea`) and plays the clips.
 - Clicking the panel, or `SIGTERM` (`pkill -x NotchFight`), retracts it into the notch and quits.
-- Claude Code hooks in `~/.claude/settings.json` (added by `./install.sh`) drive it:
-  - `UserPromptSubmit` → `open -g <repo>/build/NotchFight.app`
-  - `Stop` / `StopFailure` → `pkill -x NotchFight`
+- Claude Code hooks in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude`; for several profiles: `NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh`) drive it:
+  - `UserPromptSubmit` → `scripts/notch-hook.sh start` (marks the session as working, opens the app)
+  - `Stop` / `StopFailure` / `SessionEnd` → `scripts/notch-hook.sh stop`
+- Several sessions can work at once (even across profiles): each one leaves a marker in
+  `~/.config/notch-fight/sessions/` with its `claude` PID, and the panel retracts only when the
+  last one stops. The app also drops markers of dead PIDs (e.g. a closed terminal never fires
+  `Stop`). An interrupted turn (Esc) doesn't fire `Stop` either: the panel stays until that
+  session's next turn ends, or click it.
 
 ## Themes and loop keyframes
 
