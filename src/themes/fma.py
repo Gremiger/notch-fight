@@ -21,15 +21,6 @@ CHAR=[None,{'s':(170,110,84),'g':(40,70,34),'S':(20,26,20)},{'s':(110,66,50),'g'
 
 register_bg(THEME, lambda v: (v,v//2+8,v//3))
 
-@fx('fire')
-def _fx_fire(d,im,e,f):
-    """A column of flame: white-hot core, orange body, red tips, flickering."""
-    _,x,feet,sz=e; rr=random.Random(f*13+int(x))
-    for j in range(int(10+sz*3)):
-        up=rr.random()**0.7; yy=feet-up*sz*3; xx=x+rr.uniform(-1,1)*sz*(1-up*0.6); r=max(1,int(sz*(1-up)*0.7+rr.randint(0,2)))
-        c=(255,245,170) if up<0.25 else ((255,160,40) if up<0.6 else (220,60,20))
-        d.ellipse([xx-r,yy-r,xx+r,yy+r],fill=c)
-
 @fx('snapspark')
 def _fx_snapspark(d,im,e,f):
     """The spark racing through the air from the glove to the target (drawn up to progress p)."""
