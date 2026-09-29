@@ -12,8 +12,12 @@ final class App: NSObject, NSApplicationDelegate {
     let art = CALayer()
     // Clips are grouped by theme (dir name "<theme>__<clip>"). Clips of one theme share a
     // loop keyframe and chain seamlessly; switching theme plays transitions/<from>__<to>.
-    var clips: [String: [CGImage]] = [:]            // "<theme>__<clip>" -> frames
-    var transitions: [String: [CGImage]] = [:]
+    // Frames load lazily: only the directory names are read at launch (tens of thousands of PNGs
+    // would delay the drop by seconds); a clip's frames are read when it is queued, and a background
+    // pass warms the cache for the clips.
+    var clipDirs: [String: URL] = [:]               // "<theme>__<clip>" -> frames directory
+    var transDirs: [String: URL] = [:]              // "<from>__<to>" -> frames directory
+    var cache: [String: [CGImage]] = [:]            // "c:<clip>" / "t:<transition>" -> frames
     var queue: [[CGImage]] = []
     var theme = ""
     // Per-launch shuffle bag: forced clips first, then every other clip in random order;
@@ -71,15 +75,15 @@ final class App: NSObject, NSApplicationDelegate {
             notchW += CGFloat(Self.cfgNumber("widthTweak") ?? Double(Self.notchWidthTweak[Self.hwModel] ?? 0))
         }
         let res = Bundle.main.resourceURL!
-        clips = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("clips")))
-        transitions = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("transitions")))
-        remaining = Array(clips.keys)
+        clipDirs = Self.subdirs(res.appendingPathComponent("clips"))
+        transDirs = Self.subdirs(res.appendingPathComponent("transitions"))
+        remaining = Array(clipDirs.keys)
         // Forced clips play first, in order (and count as played for this round).
         for first in forcedFirst() {
-            let name = clips[first] != nil ? first
-                : (remaining.filter { themeOf($0) == first }.randomElement() ?? clips.keys.filter { themeOf($0) == first }.randomElement())
+            let name = clipDirs[first] != nil ? first
+                : (remaining.filter { themeOf($0) == first }.randomElement() ?? clipDirs.keys.filter { themeOf($0) == first }.randomElement())
             guard let name else {
-                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clips.keys.sorted())"); continue
+                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipDirs.keys.sorted())"); continue
             }
             enqueue(name)
         }
@@ -117,6 +121,25 @@ final class App: NSObject, NSApplicationDelegate {
 
         playTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in self?.tick() }
         animate(to: bodyH, duration: 0.55, spring: true)
+        preload()
+    }
+
+    // Warm the cache with every clip in the background (transitions stay on demand: they are many and short).
+    func preload() {
+        let todo = clipDirs.filter { cache["c:" + $0.key] == nil }
+        DispatchQueue.global(qos: .utility).async {
+            for (name, dir) in todo {
+                let f = Self.loadFrames(dir)
+                DispatchQueue.main.async { if self.cache["c:" + name] == nil { self.cache["c:" + name] = f } }
+            }
+        }
+    }
+
+    func frames(_ key: String, _ dir: URL?) -> [CGImage]? {
+        if let c = cache[key] { return c.isEmpty ? nil : c }
+        guard let dir else { return nil }
+        let f = Self.loadFrames(dir); cache[key] = f
+        return f.isEmpty ? nil : f
     }
 
     func rect(height h: CGFloat) -> NSRect {
@@ -180,16 +203,16 @@ final class App: NSObject, NSApplicationDelegate {
         return (json["first"] as? [String]) ?? []
     }
 
-    func loadDirs(_ root: URL) -> [(String, [CGImage])] {
-        let fm = FileManager.default
-        return ((try? fm.contentsOfDirectory(atPath: root.path)) ?? []).sorted().compactMap { name in
-            let dir = root.appendingPathComponent(name)
-            let files = ((try? fm.contentsOfDirectory(atPath: dir.path)) ?? []).filter { $0.hasSuffix(".png") }.sorted()
-            let imgs = files.compactMap { f -> CGImage? in
-                guard let src = CGImageSourceCreateWithURL(dir.appendingPathComponent(f) as CFURL, nil) else { return nil }
-                return CGImageSourceCreateImageAtIndex(src, 0, nil)
-            }
-            return imgs.isEmpty ? nil : (name, imgs)
+    static func subdirs(_ root: URL) -> [String: URL] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? []
+        return Dictionary(uniqueKeysWithValues: names.filter { !$0.hasPrefix(".") }.map { ($0, root.appendingPathComponent($0)) })
+    }
+
+    static func loadFrames(_ dir: URL) -> [CGImage] {
+        let files = ((try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []).filter { $0.hasSuffix(".png") }.sorted()
+        return files.compactMap { f -> CGImage? in
+            guard let src = CGImageSourceCreateWithURL(dir.appendingPathComponent(f) as CFURL, nil) else { return nil }
+            return CGImageSourceCreateImageAtIndex(src, 0, nil)
         }
     }
 
@@ -198,7 +221,7 @@ final class App: NSObject, NSApplicationDelegate {
     // Stay in the current theme for up to maxPerVisit clips, then move to another theme;
     // always drawing from the clips not yet played this round.
     func pickNext() -> String? {
-        if remaining.isEmpty { remaining = Array(clips.keys) }       // new round
+        if remaining.isEmpty { remaining = Array(clipDirs.keys) }       // new round
         var pool = remaining.filter { $0 != lastPlayed }
         if pool.isEmpty { pool = remaining }
         let same = pool.filter { themeOf($0) == theme }
@@ -208,13 +231,13 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     func enqueue(_ name: String) {
-        guard let frames = clips[name] else { return }
-        let t = themeOf(name)
-        if !theme.isEmpty && t != theme, let tr = transitions["\(theme)__\(t)"] { queue.append(tr) }
+        guard let clipFrames = frames("c:" + name, clipDirs[name]) else { return }
+        let t = themeOf(name), tk = "\(theme)__\(t)"
+        if !theme.isEmpty && t != theme, let tr = frames("t:" + tk, transDirs[tk]) { queue.append(tr) }
         visitCount = (t == theme) ? visitCount + 1 : 1
         theme = t; lastPlayed = name
         remaining.removeAll { $0 == name }
-        queue.append(frames)
+        queue.append(clipFrames)
     }
 
     func tick() {
