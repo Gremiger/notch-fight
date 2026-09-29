@@ -4,6 +4,8 @@
 - Install: run `./install.sh` from the repo root. It checks requirements (macOS, `swiftc`,
   `python3`, Pillow — auto-installed), builds, and registers the hooks in `~/.claude/settings.json`
   pointing at this checkout. Idempotent; backs up settings.json. Report its output to the user.
+- If the user has Vorssaint (a notch app with a wider bar), `install.sh` sets `"scale": 1.5` in
+  `~/.config/notch-fight/config.json` unless a scale is already set; mention it in the report.
 - If `swiftc` is missing, tell the user to run `xcode-select --install` (interactive, needs them).
 - Not macOS: say the app is macOS-only; the generator still runs (`python3 src/build.py` in `build/`).
 - Uninstall: `./uninstall.sh` (`--purge` also removes `build/` and `~/.config/notch-fight`).

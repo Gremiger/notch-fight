@@ -106,7 +106,7 @@ The panel takes its size and position from the real notch of each Mac. Two looks
 |---|---|---|
 | `fillet` | `0` | Concave flare (pt) where the panel meets the notch. `8` gives the rounded "grows out of the notch" look; on some Macs it sticks out as a ledge. |
 | `stretch` | `true` | Stretch the art to the notch width. `false` keeps square pixels, centred at 185pt (the black margins blend in). |
-| `scale` | `1` | Make the panel bigger than the notch (e.g. `1.5`), keeping the art's proportions and staying centred under it. |
+| `scale` | `1` | Make the panel bigger than the notch (e.g. `1.5`), keeping the art's proportions and staying centred under it. `install.sh` sets `1.5` when Vorssaint is installed (its bar is wider than the notch), unless you already chose a scale. |
 | `widthTweak` | per model | Width correction (pt) when the panel overhangs by a hair. Built-in: `Mac14,2` → `-1`. |
 
 ```json

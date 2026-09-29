@@ -28,6 +28,22 @@ PY
 echo "Building"
 FIRST=none "$ROOT/build.sh" | tail -1
 
+# Vorssaint draws its own wider bar around the notch: a 1.5x panel matches it better.
+# Applied only when the user has not chosen a scale yet.
+if [[ -d /Applications/Vorssaint.app || -d "$HOME/Applications/Vorssaint.app" ]] || pgrep -xq Vorssaint; then
+  python3 - "$HOME/.config/notch-fight/config.json" <<'PY'
+import json, os, sys
+path = sys.argv[1]; os.makedirs(os.path.dirname(path), exist_ok=True)
+cfg = json.load(open(path)) if os.path.exists(path) else {}
+if 'scale' in cfg:
+    print(f"  - Vorssaint detected; keeping your scale {cfg['scale']}")
+else:
+    cfg['scale'] = 1.5
+    open(path, 'w').write(json.dumps(cfg, indent=2) + '\n')
+    print("  ✓ Vorssaint detected: panel scale set to 1.5 (change \"scale\" in ~/.config/notch-fight/config.json)")
+PY
+fi
+
 echo "Registering Claude Code hooks"
 python3 "$ROOT/scripts/hooks.py" install "$ROOT/build/NotchFight.app"
 
