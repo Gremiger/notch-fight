@@ -21,3 +21,16 @@ def text(d,txt,x,y,c,shadow=(0,0,0)):
                 px,py=x+i*4+j%3,y+j//3
                 if shadow: d.point((px+1,py+1),fill=shadow)
                 d.point((px,py),fill=c)
+
+def big_text(im,txt,y,c,scale=2,cx=W//2,shadow=(0,0,0),outline=None):
+    """Scaled text pasted onto im, centred at cx, with a drop shadow at +1,+1 (None: no shadow).
+    outline: a colour pasted at the 4 neighbours and +1,+1, the shadow then goes to +2,+2.
+    Returns the text box (x, y, w, h). Unknown chars render as spaces."""
+    m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
+    m=m.resize((m.width*scale,m.height*scale),Image.NEAREST); x=int(cx-m.width//2)
+    if outline is not None:
+        for dx,dy in ((-1,0),(1,0),(0,-1),(0,1),(1,1)): im.paste(outline,(x+dx,y+dy),m)
+        if shadow is not None: im.paste(shadow,(x+2,y+2),m)
+    elif shadow is not None: im.paste(shadow,(x+1,y+1),m)
+    im.paste(c,(x,y),m)
+    return x,y,m.width,m.height

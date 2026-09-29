@@ -155,7 +155,7 @@ def closeup_name(t,f):
     for i,(x,y) in enumerate(((12,30),(90,52),(16,56),(96,22))):
         if (f//2+i*3)%8<4: _fx_sparkle(d,im,('bb_sparkle',x,y,f//2+i),f)
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 HAND=(39,GROUND-6)   # the end of Claude's extended arm ('punch' pose at x=30)

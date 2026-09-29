@@ -90,9 +90,8 @@ def closeup_coffins(t,f):
             ly=int(6+60*ease(p)); d.rectangle([cx-16,ly,cx+16,ly+52],fill=(118,78,42),outline=(160,112,64))
             d.line([cx,ly+10,cx,ly+34],fill=(60,36,20),width=2); d.line([cx-8,ly+18,cx+8,ly+18],fill=(60,36,20),width=2)
             d.rectangle([cx-6,ly+26,cx+6,ly+30],outline=(60,36,20))
-    if t<0.08:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
-    if t>0.9: im=Image.blend(im,Image.new('RGB',(W,H),(60,0,90)),0.5*(t-0.9)/0.1)
+    if t<0.08: zoom_lines(d)
+    if t>0.9: im=fade_to(im,(60,0,90),0.5*(t-0.9)/0.1)
     return im
 
 CX=[96,118,140]   # coffin / creature spots

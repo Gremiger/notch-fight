@@ -154,13 +154,6 @@ def holo(spr,prog,f):
     cut=int(len(spr)*(1-prog)); full=prog>=1
     return S([r if (i>=cut and (full or (i+f)%3)) else '.'*len(r) for i,r in enumerate(spr)])
 
-def track(f,marks,refill=(256,276)):
-    """A bar value from (frame, value) drops, each draining over 4 frames; refills for the loop."""
-    v=1.0
-    for t0,val in marks:
-        if f>=t0: v=lerp(v,val,(f-t0)/4)
-    if f>=refill[0]: v=lerp(v,1.0,(f-refill[0])/(refill[1]-refill[0]))
-    return v
 SH_C=[(100,0.5),(104,0.0)]; HP_C=[(108,0.62)]
 SH_W=[(64,0.75),(68,0.5),(72,0.25),(76,0.0)]; HP_W=[(142,0.35),(146,0.0)]
 
@@ -194,7 +187,7 @@ def closeup_banner(t,f):
         text(d,"DAMAGE "+str(int(4012*k)),6,46,(200,200,210))
     if t>0.4 and t<0.5: spark(d,fx0+22,4,6)
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 HAND_Y=GROUND-6
@@ -292,8 +285,8 @@ def clip_champion(f):
         wr.update(spr=holo(WRAITH['idle'],min(1,(f-258)/10),f),x=150,pal=WPAL,aura=None,alpha=0.85 if f<268 else 1.0); ebar=f>=268
     if 250<=f<272: cl.update(spr=LEGEND[guard_pose(f)],x=ez(140,30,(f-250)/20),y=GROUND)
     if ebar and wr['vis']:
-        s['fx'].append(('apex_ebar',wr['x'],GROUND-len(WRAITH['idle'])-5,track(f,SH_W),track(f,HP_W)))
-    s['fx'].append(('apex_hud',track(f,SH_C),track(f,HP_C),closing,squads))
+        s['fx'].append(('apex_ebar',wr['x'],GROUND-len(WRAITH['idle'])-5,track(f,SH_W,refill=(256,276)),track(f,HP_W,refill=(256,276))))
+    s['fx'].append(('apex_hud',track(f,SH_C,refill=(256,276)),track(f,HP_C,refill=(256,276)),closing,squads))
     s['actors']=[wr,cl]
     return s
 

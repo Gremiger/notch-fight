@@ -153,12 +153,12 @@ def _fx_nade(d,im,e,f):
 @fx('cs_white')
 def _fx_white(d,im,e,f):
     _,a=e
-    if a>0: im.paste(Image.blend(im,Image.new('RGB',(W,H),(255,255,255)),min(1,a)))
+    if a>0: im.paste(fade_to(im,(255,255,255),min(1,a)))
 
 @fx('cs_fade')
 def _fx_fade(d,im,e,f):
     _,a=e
-    if a>0: im.paste(Image.blend(im,Image.new('RGB',(W,H),(0,0,0)),min(1,a)))
+    if a>0: im.paste(fade_to(im,(0,0,0),min(1,a)))
 
 @fx('cs_line')
 def _fx_line(d,im,e,f):
@@ -192,7 +192,7 @@ def closeup_scope(t,f):
         d.rectangle([0,0,W,H],fill=(255,255,255))
 
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 def _hp(f,marks,base=100):

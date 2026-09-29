@@ -9,23 +9,14 @@ THEME = 'ds'
 N_ = 288
 
 # ---- sprites ---------------------------------------------------------------------------------
-def _paint(spr, items, top=0, right=0, bottom=0):
-    """Pad a sprite grid and paint `items` = [(x, y, chars)] in the ORIGINAL coordinates."""
-    w=len(spr[0])+right
-    g=[['.']*w for _ in range(top)]+[list(r.ljust(w,'.')) for r in spr]+[['.']*w for _ in range(bottom)]
-    for x,y,chars in items:
-        for i,ch in enumerate(chars):
-            if ch!='.': g[y+top][x+i]=ch
-    return S([''.join(r) for r in g])
-
 def _col(x,y0,y1,ch): return [(x,y,ch) for y in range(y0,y1+1)]
 def _shield(y): return [(0,y,'qqq'),(0,y+1,'qYq'),(0,y+2,'YYY'),(0,y+3,'qYq'),(0,y+4,'qqq')]
 
 _ARMED={
- 'guard':  lambda s: _paint(s,_col(13,-6,1,'H')+[(12,2,'YYY')]+_shield(4),top=6),
- 'guard2': lambda s: _paint(s,_col(13,-5,2,'H')+[(12,3,'YYY')]+_shield(5),top=5),
- 'punch':  lambda s: _paint(s,[(17,5,'HHHHHHH'),(17,6,'hhhhhhh'),(17,4,'Y'),(17,7,'Y')]+_shield(3),right=8),
- 'dash':   lambda s: _paint(s,[(17,5,'HHHHHHH'),(17,6,'hhhhhhh'),(17,4,'Y'),(17,7,'Y')]+_shield(3),right=8),
+ 'guard':  lambda s: paint(s,_col(13,-6,1,'H')+[(12,2,'YYY')]+_shield(4),top=6),
+ 'guard2': lambda s: paint(s,_col(13,-5,2,'H')+[(12,3,'YYY')]+_shield(5),top=5),
+ 'punch':  lambda s: paint(s,[(17,5,'HHHHHHH'),(17,6,'hhhhhhh'),(17,4,'Y'),(17,7,'Y')]+_shield(3),right=8),
+ 'dash':   lambda s: paint(s,[(17,5,'HHHHHHH'),(17,6,'hhhhhhh'),(17,4,'Y'),(17,7,'Y')]+_shield(3),right=8),
 }
 def _knight_colors(x,y,t,l,r,c):
     if c=='.' or not (l<=x<=r) or c!='O': return None
@@ -37,15 +28,11 @@ def _knight(name, s):
     s=_ARMED.get(name,lambda z: z)(s)
     return overlay(recolor_rows(s,_knight_colors),_HELM,0,0)
 KN={k:_knight(k,v) for k,v in CL.items()}
-KN['plunge']=overlay(recolor_rows(_paint(CL['armsup'],_col(6,11,17,'H')+[(5,10,'YYY')],bottom=7),
+KN['plunge']=overlay(recolor_rows(paint(CL['armsup'],_col(6,11,17,'H')+[(5,10,'YYY')],bottom=7),
                                   _knight_colors),_HELM,0,0)   # sword pointing down: feet = the tip
 
-def _rot(spr,k):
-    g=[list(r) for r in spr]
-    for _ in range(k%4): g=[list(r) for r in zip(*g[::-1])]
-    return S([''.join(r) for r in g])
-ROLL=[_rot(KN['guard2'],k) for k in range(4)]
-LYING=_rot(KN['hurt'],1)
+ROLL=[rotate90(KN['guard2'],k) for k in range(4)]
+LYING=rotate90(KN['hurt'],1)
 
 _MAL=S([
 "....y......y......",
@@ -174,14 +161,6 @@ def _fx_fogwall(d,im,e,f):
     m=Image.new('L',(W,H),0); wall(ImageDraw.Draw(m)); m=m.filter(ImageFilter.GaussianBlur(2)).point(lambda v: int(v*0.4*a))
     im.paste((140,140,160),(0,0),m)
 
-def big_text(im, txt, y, c, scale=2, cx=W//2, shadow=(0,0,0)):
-    """Scaled 3x5 text (FX['big'] is 2x only) with a drop shadow; returns its mask box."""
-    m=Image.new('L',(len(txt)*4,6),0); text(ImageDraw.Draw(m),txt,0,0,255,shadow=None)
-    m=m.resize((m.width*scale,m.height*scale),Image.NEAREST); x=int(cx-m.width//2)
-    if shadow is not None: im.paste(shadow,(x+1,y+1),m)
-    im.paste(c,(x,y),m)
-    return x,y,m.width,m.height
-
 @fx('ds_big')
 def _fx_big(d,im,e,f):
     _,txt,y,c,sc=e; big_text(im,txt,y,c,sc)
@@ -238,7 +217,7 @@ def closeup_died(t,f):
             sx=rr.randint(x,x+w); sy=rr.randint(y,y+h); a=rr.random()*6.28; v=rr.uniform(10,40)
             d.point((sx+math.cos(a)*v*s,sy+math.sin(a)*v*s*0.6),fill=(255,200,80) if rr.random()<0.5 else (170,20,20))
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(120,110,110))
+        zoom_lines(d,(120,110,110))
     return im
 
 # ---- the clip --------------------------------------------------------------------------------

@@ -211,7 +211,7 @@ def closeup_glasses(t,f):
     if code: FX['big'](d,im,('big',"HE IS THE ONE",47,(120,255,150)),f)
     else: d.line([80,54,106,54],fill=(140,62,40))   # mouth
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(200,255,210))
+        zoom_lines(d,(200,255,210))
     return im
 
 # --- the clip ---------------------------------------------------------------------------------

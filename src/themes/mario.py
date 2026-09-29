@@ -180,8 +180,7 @@ def closeup_block(t,f):
     d.rectangle([x0+1,y0+1,x0+23,y0+1],fill=(252,200,120) if not used else (180,110,50))
     for cx,cy in ((x0+2,y0+2),(x0+21,y0+2),(x0+2,y0+21),(x0+21,y0+21)): d.rectangle([cx,cy,cx+1,cy+1],fill=(70,30,6))
     if not used:
-        m=Image.new('L',(3,5),0); text(ImageDraw.Draw(m),"?",0,0,255,shadow=None)
-        m=m.resize((9,15),Image.NEAREST); im.paste((110,40,0),(x0+8,y0+5),m)
+        big_text(im,"?",y0+5,(110,40,0),scale=3,cx=x0+14,shadow=None)
     # Mario's cap punching up from below, then dropping away
     cy=int(lerp(70,y0+25,t/hit)) if t<hit else int(lerp(y0+25,76,(t-hit)/0.2))
     if cy<64:
@@ -194,8 +193,7 @@ def closeup_block(t,f):
         for _ in range(4):
             a=rr.random()*6.28; r=rr.randint(16,24); FX['twinkle'](d,im,('twinkle',92+math.cos(a)*r*1.4,20+math.sin(a)*r*0.6,2),f)
         text(d,"SUPER",130,16,(252,216,60)); text(d,"STAR!",134,23,(252,216,60))
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+    if t<0.06: zoom_lines(d)
     return im
 
 def intro_screen(f):

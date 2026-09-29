@@ -255,7 +255,7 @@ def frame(f):
             m=m.filter(ImageFilter.GaussianBlur(8))
             im=Image.composite(Image.new('RGB',(W,H),(255,250,235)),im,m)
         else:
-            im=Image.blend(im,Image.new('RGB',(W,H),(255,255,255)),flash)
+            im=fade_to(im,(255,255,255),flash)
     return im
 
 AUR_C=(255,210,90); AUR_E=(190,255,150)

@@ -27,8 +27,7 @@ GORDON=variant(_gordon)
 
 # hand position (col,row) of each base pose, measured from the base CL grids (feet-anchored)
 _HAND={'guard':(13,4),'guard2':(13,5),'punch':(16,5),'dash':(16,5),'charge':(15,5),'armsup':(11,0),'hurt':(14,2)}
-def hand(pose,x):
-    c,r=_HAND[pose]; w=len(CL[pose][0]); return int(round(x-w/2))+c, GROUND-len(CL[pose])+r
+def hand(pose,x): return hand_at(CL[pose],x,GROUND,False,*_HAND[pose])
 
 # --- Opponents ----------------------------------------------------------------------------------
 SOLDIER_PAL={'c':(62,72,84),'i':(150,225,255)}
@@ -204,7 +203,7 @@ def closeup_gman(t,f):
     d.line([60,40,64,40],fill=(186,150,124))
     for j,s in enumerate(lines): text(d,s.replace(',',''),118,20+j*10,(196,214,188))
     if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        zoom_lines(d)
     return im
 
 # --- The clip -----------------------------------------------------------------------------------

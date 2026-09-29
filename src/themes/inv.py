@@ -83,11 +83,9 @@ def closeup_think(t,f):
         d.line([x0,y0,x0+1,y0+L],fill=(170,20,24),width=2)
     d.rectangle([0,58,W,H],fill=(6,6,14))
     if t>0.25:
-        m=Image.new('L',(len("PIENSA CLAUDE!")*4,6),0); text(ImageDraw.Draw(m),"PIENSA CLAUDE!",0,0,255,shadow=None)
-        m=m.resize((m.width*2,m.height*2),Image.NEAREST); jx=(f%3)-1 if shout else 0
-        im.paste((0,0,0),(W//2-m.width//2+1+jx,51),m); im.paste((255,230,90),(W//2-m.width//2+jx,50),m)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+        jx=(f%3)-1 if shout else 0
+        big_text(im,"PIENSA CLAUDE!",50,(255,230,90),cx=W//2+jx)
+    if t<0.06: zoom_lines(d)
     return im
 
 def clip_train(f):
