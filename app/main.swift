@@ -69,7 +69,12 @@ final class App: NSObject, NSApplicationDelegate {
         root.backgroundColor = NSColor.black.cgColor
         root.mask = shape
         art.frame = CGRect(x: fillet, y: 0, width: notchW, height: clipH)
-        art.contentsGravity = .resizeAspect
+        // Art is authored at a fixed W×H canvas (185×64, MacBookPro18,3's notch width) with effects
+        // drawn edge-to-edge. `notchW` varies per Mac (e.g. 209pt on a MacBook Air M2), so `.resizeAspect`
+        // would center the unscaled art and leave dead black margins instead of reaching the real notch
+        // edges. `.resize` stretches horizontally only — clipH always equals the art's native height, so
+        // the vertical scale factor is always 1 and no content is ever cropped.
+        art.contentsGravity = .resize
         art.magnificationFilter = .nearest
         art.contentsScale = screen.backingScaleFactor
         art.actions = ["contents": NSNull()]
