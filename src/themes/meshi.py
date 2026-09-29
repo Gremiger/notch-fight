@@ -65,8 +65,7 @@ def laios(s,pose,x,y=GROUND,flip=False,sword=True):
     """Laios actor; adds his sword (drawn over him) for the poses that hold it."""
     spr=LAIOS[pose]; a=actor(spr,x,y,flip=flip,pal=LPAL)
     if sword and pose in GRIP:
-        col,row,ang=GRIP[pose]; w=len(spr[0]); ox=int(round(x-w/2))
-        hx=ox+((w-1-col) if flip else col); hy=y-(11-row)
+        col,row,ang=GRIP[pose]; hx,hy=hand_at(spr,x,y,flip,col,row,h=11)
         s['fx'].append(('meshi_sword',hx,hy,(180-ang) if flip else ang,12))
     return a
 
@@ -121,7 +120,7 @@ def _fx_dragon(d,im,e,f):
     if lying<0.5: dd.rectangle([hx+11,hy+3,hx+12,hy+3],fill=eye)
     else: dd.line([hx+10,hy+4,hx+13,hy+4],fill=dark)                                   # closed
     if tint:
-        rgb=Image.blend(L.convert('RGB'),Image.new('RGB',(W,H),tint),0.55); rgb.putalpha(L.getchannel('A')); L=rgb
+        rgb=fade_to(L.convert('RGB'),tint,0.55); rgb.putalpha(L.getchannel('A')); L=rgb
     if keep<1:
         a=L.getchannel('A'); pa=a.load()
         for y in range(H):
@@ -189,8 +188,7 @@ def closeup_taste(t,f):
     lines=("I WONDER","HOW IT","TASTES...")
     for j,w in enumerate(lines):
         if t>=0.12+j*0.18: FX['big'](d,im,('big',w,8+j*17,GOLD if j==2 else (236,236,244),138),f)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+    if t<0.06: zoom_lines(d)
     return im
 
 DX=150               # the dragon's body centre once it has walked in

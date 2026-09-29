@@ -60,7 +60,7 @@ register_bg(THEME, lambda v: (v,v*3//4,v//2), decor=_estate)
 
 @fx('maki_red')
 def _fx_red(d,im,e,f):
-    _,a=e; im.paste(Image.blend(im,Image.new('RGB',(W,H),(90,20,8)),min(1,max(0,a))))
+    _,a=e; im.paste(fade_to(im,(90,20,8),min(1,max(0,a))))
 
 @fx('maki_katana')
 def _fx_katana(d,im,e,f):
@@ -79,8 +79,7 @@ def _fx_cut(d,im,e,f):
 GRIP = {'guard':(13,4,-60), 'guard2':(13,4,-60), 'punch':(16,5,0), 'charge':(15,5,-30), 'dash':(16,5,10)}
 def katana_fx(s,pose,x,y,flip):
     if pose not in GRIP: return
-    col,row,ang=GRIP[pose]; spr=MAKI[pose]; w=len(spr[0]); ox=int(round(x-w/2))
-    hx=ox+((w-1-col) if flip else col); hy=y-(11-row)
+    col,row,ang=GRIP[pose]; hx,hy=hand_at(MAKI[pose],x,y,flip,col,row,h=11)
     s['fx'].append(('maki_katana',hx,hy,(180-ang) if flip else ang,14))
 
 def closeup_glasses(t,f):
@@ -112,8 +111,7 @@ def closeup_glasses(t,f):
             x=34+i*4+math.sin(i)*3; y=30+k*40+i%3*3; d.line([x,y,x+1,y+2],fill=(200,220,240))
     for j,w in enumerate(("I WILL","DESTROY","IT ALL")):
         if t>=0.45+j*0.14: FX['big'](d,im,('big',w,6+j*18,RED if j==1 else (236,236,244),138),f)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+    if t<0.06: zoom_lines(d)
     return im
 
 FOES=((112,14),(134,18),(156,22))           # (spot, frame they finish walking in by +)

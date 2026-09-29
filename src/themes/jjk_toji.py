@@ -87,8 +87,7 @@ def _fx_glass(d,im,e,f):
 
 GRIP = {'guard':(13,4), 'guard2':(13,4), 'punch':(16,5), 'charge':(15,5), 'dash':(16,5)}
 def hand_of(pose,x,y,flip=False):
-    col,row=GRIP[pose]; w=len(TOJI[pose][0]); ox=int(round(x-w/2))
-    return ox+((w-1-col) if flip else col), y-(11-row)
+    col,row=GRIP[pose]; return hand_at(TOJI[pose],x,y,flip,col,row,h=11)
 
 def closeup_grin(t,f):
     """Primer plano: Toji's face, the scar pulling a grin, green eyes; SORCERER / KILLER."""
@@ -109,8 +108,7 @@ def closeup_grin(t,f):
     d.line([64,44,62,55],fill=TPAL['c']); d.line([65,44,63,55],fill=TPAL['c'])              # the scar across the lip
     for j,w in enumerate(("SORCERER","KILLER")):
         if t>=0.2+j*0.25: FX['big'](d,im,('big',w,14+j*18,(236,236,244) if j==0 else (255,80,80),138),f)
-    if t<0.06:
-        for i in range(10): a=i*0.63; d.line([W//2,H//2,W//2+math.cos(a)*120,H//2+math.sin(a)*60],fill=(255,255,255))
+    if t<0.06: zoom_lines(d)
     return im
 
 GX=150            # Gojo's spot

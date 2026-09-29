@@ -263,7 +263,7 @@ def _fx_beam(d,im,e,f):
 
 GRIP = {'guard':(13,4,-60), 'guard2':(13,4,-60), 'punch':(16,5,0), 'armsup':(12,0,-90), 'charge':(15,5,-30)}
 def hand_of(pose,x,y):
-    col,row,ang=GRIP[pose]; w=len(TERR[pose][0]); return int(round(x-w/2))+col, y-(11-row), ang
+    col,row,ang=GRIP[pose]; return (*hand_at(TERR[pose],x,y,False,col,row,h=11), ang)
 
 def clip_melee(f):
     s=scene_base(f,M_HITS1,M_HITS2)
