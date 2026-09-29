@@ -58,6 +58,8 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `naruto-zabuza` | Kakashi (Sharingan close-up, copied jutsu) | Zabuza on the lake (Water Dragons clash, Great Waterfall) | waterdragon |
 | `dbz-buu` | Claude, then Clodex (fusion dance with Codex) | Kid Buu (regenerates) | fusion |
 | `jjk-sukuna` | Gojo-style sorcerer (Unlimited Void, eye close-up, Black Flash) | Sukuna (Malevolent Shrine) | domain |
+| `jjk-toji` | Toji (Inventory curse, Inverted Spear of Heaven, SORCERER KILLER close-up) | young Gojo: the spear shatters his Infinity | sakahoko |
+| `jjk-maki` | Maki, awakened (glasses crack close-up, afterimage cuts) | the Zen'in clan, then her father Ogi | zenin |
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
 | `fma` | Colonel Mustang (glove snap close-up, flame alchemy) | Envy (disguised as Claude, burned to his true form) | flame |
 | `dbz-jiren` | Claude in Ultra Instinct (silver hair, afterimages) | Jiren (instant hits from behind) | ultra |
@@ -136,7 +138,7 @@ src/
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  snk_colosal.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
