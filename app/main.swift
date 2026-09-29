@@ -28,18 +28,32 @@ final class App: NSObject, NSApplicationDelegate {
     var animTimer: Timer?
     let clipH: CGFloat = 64, corner: CGFloat = 12
     // overlap: rises into the notch to cover its rounded bottom corners.
-    // fillet: concave flare where the panel meets the notch's bottom edge.
-    let overlap: CGFloat = 10, fillet: CGFloat = 8
+    // fillet: concave flare where the panel meets the notch's bottom edge. 0 = panel is exactly
+    // notch-wide (the flare showed up as a protruding ledge on some Macs).
+    let overlap: CGFloat = 10, fillet: CGFloat = 0
     let shape = CAShapeLayer()
     var root: CALayer!
-    var notchW: CGFloat = 185, notchH: CGFloat = 32, screen: NSScreen!
+    var notchW: CGFloat = 185, notchH: CGFloat = 32, notchMidX: CGFloat = 0, screen: NSScreen!
+
+    // Per-model width correction (pt): the auxiliary areas can report a notch slightly wider than the
+    // real one. Keyed by `hw.model`; add an entry when a Mac's panel visibly overhangs the notch.
+    static let notchWidthTweak: [String: CGFloat] = ["Mac14,2": -1]
+    static let hwModel: String = {
+        var n = 0; sysctlbyname("hw.model", nil, &n, nil, 0)
+        var b = [CChar](repeating: 0, count: n); sysctlbyname("hw.model", &b, &n, nil, 0)
+        return String(cString: b)
+    }()
 
     func applicationDidFinishLaunching(_ n: Notification) {
         screen = NSScreen.screens.first { $0.auxiliaryTopLeftArea != nil } ?? NSScreen.main!
         let f = screen.frame
+        notchMidX = f.midX
         if let l = screen.auxiliaryTopLeftArea, let r = screen.auxiliaryTopRightArea {
-            notchW = f.width - l.width - r.width
+            // The notch is not always centred on the screen: anchor to its real edges.
+            notchW = r.minX - l.maxX
+            notchMidX = (l.maxX + r.minX) / 2
             notchH = screen.safeAreaInsets.top
+            notchW += Self.notchWidthTweak[Self.hwModel] ?? 0
         }
         let res = Bundle.main.resourceURL!
         clips = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("clips")))
@@ -92,7 +106,7 @@ final class App: NSObject, NSApplicationDelegate {
     func rect(height h: CGFloat) -> NSRect {
         let f = screen.frame
         // Hangs from the notch's bottom edge; never overlaps the notch itself.
-        return NSRect(x: f.midX - notchW / 2 - fillet, y: f.maxY - notchH - h,
+        return NSRect(x: notchMidX - notchW / 2 - fillet, y: f.maxY - notchH - h,
                       width: notchW + 2 * fillet, height: h + overlap)
     }
 
