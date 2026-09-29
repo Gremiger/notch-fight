@@ -28,7 +28,7 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
 - `NotchFight.app` hangs a black panel from the notch's bottom edge (width = notch width,
   detected at runtime via `NSScreen.auxiliaryTopLeftArea/RightArea`) and plays the clips.
 - Clicking the panel, or `SIGTERM` (`pkill -x NotchFight`), retracts it into the notch and quits.
-- Claude Code hooks in `~/.claude/settings.json` (added by `./install.sh`) drive it:
+- Claude Code hooks in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude`; for several profiles: `NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh`) drive it:
   - `UserPromptSubmit` → `open -g <repo>/build/NotchFight.app`
   - `Stop` / `StopFailure` → `pkill -x NotchFight`
 
