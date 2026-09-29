@@ -2,7 +2,7 @@
 
 ## Setup requests ("install this", "set it up", "remove it")
 - Install: run `./install.sh` from the repo root. It checks requirements (macOS, `swiftc`,
-  `python3`, Pillow — auto-installed), builds, and registers the hooks in `~/.claude/settings.json`
+  `python3`, Pillow — auto-installed), builds, and registers the hooks in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude`; several dirs via `NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal`)
   pointing at this checkout. Idempotent; backs up settings.json. Report its output to the user.
 - If the user has Vorssaint (a notch app with a wider bar), `install.sh` sets `"scale": 1.5` in
   `~/.config/notch-fight/config.json` unless a scale is already set; mention it in the report.

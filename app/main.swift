@@ -120,6 +120,8 @@ final class App: NSObject, NSApplicationDelegate {
         win.orderFrontRegardless()
 
         playTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in self?.tick() }
+        watchSessions()
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.watchSessions() }
         animate(to: bodyH, duration: 0.55, spring: true)
         preload()
     }
@@ -262,6 +264,28 @@ final class App: NSObject, NSApplicationDelegate {
             self.updateMask()
             if p >= 1 { t.invalidate(); done?() }
         }
+    }
+
+    // Session watchdog: ~/.config/notch-fight/sessions/<id> holds the PID of each working Claude
+    // session (written by scripts/notch-hook.sh). Markers of dead PIDs are pruned (a closed terminal
+    // never fires Stop); once every session is gone the panel retracts. Launches without any marker
+    // (manual `open --args --first ...`) are left alone.
+    var sawSession = false
+    func watchSessions() {
+        let fm = FileManager.default
+        let dir = fm.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/sessions")
+        let files = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        var alive = 0
+        for f in files where !f.lastPathComponent.hasPrefix(".") {
+            let raw = (try? String(contentsOf: f, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if let pid = pid_t(raw) {
+                if kill(pid, 0) == 0 || errno == EPERM { alive += 1 } else { try? fm.removeItem(at: f) }
+            } else {   // no PID recorded: trust the marker for 2 h, like notch-hook.sh
+                let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+                if Date().timeIntervalSince(m) < 7200 { alive += 1 } else { try? fm.removeItem(at: f) }
+            }
+        }
+        if alive > 0 { sawSession = true } else if sawSession { close() }
     }
 
     var closing = false
