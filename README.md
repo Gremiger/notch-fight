@@ -49,6 +49,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `snk` | Survey Corps scout (ODM gear) | 5 titans + the Armored Titan | survey |
 | `nrt` | Naruto (headband, shadow clones, Rasengan) | Madara (Sharingan close-up) | shadowclone |
 | `naruto-edo` | Naruto (clones, Rasengan, Rasenshuriken) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up) | edotensei |
+| `naruto-zabuza` | Kakashi (Sharingan close-up, copied jutsu) | Zabuza on the lake (Water Dragons clash, Great Waterfall) | waterdragon |
 | `dbz-buu` | Claude, then Clodex (fusion dance with Codex) | Kid Buu (regenerates) | fusion |
 | `jjk-sukuna` | Gojo-style sorcerer (Unlimited Void, eye close-up, Black Flash) | Sukuna (Malevolent Shrine) | domain |
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
@@ -96,7 +97,7 @@ src/
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py
-│   ├── naruto_edo.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  snk_colosal.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
