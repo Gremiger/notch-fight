@@ -14,8 +14,14 @@ new="$(comm -13 <(echo "$before" | sort) <(ls "$OUT/clips" | sort) | paste -sd, 
 FIRST="${FIRST:-$new}"
 if [[ -n "$FIRST" && "$FIRST" != "none" ]]; then
   mkdir -p "$HOME/.config/notch-fight"
-  list="$(echo "$FIRST" | tr ',' '\n' | sed 's/.*/"&"/' | paste -sd, - | sed 's/,/, /g')"
-  printf '{\n  "first": [%s]\n}\n' "$list" > "$HOME/.config/notch-fight/config.json"
+  # update only "first": the panel-shape keys (fillet, stretch, widthTweak) are the user's
+  python3 - "$FIRST" "$HOME/.config/notch-fight/config.json" <<'PY'
+import json, sys, os
+names, path = sys.argv[1].split(','), sys.argv[2]
+cfg = json.load(open(path)) if os.path.exists(path) else {}
+cfg['first'] = names
+open(path, 'w').write(json.dumps(cfg, indent=2) + '\n')
+PY
   echo "First clip set to $FIRST (~/.config/notch-fight/config.json)"
 fi
 

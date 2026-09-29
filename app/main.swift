@@ -29,8 +29,19 @@ final class App: NSObject, NSApplicationDelegate {
     let clipH: CGFloat = 64, corner: CGFloat = 12
     // overlap: rises into the notch to cover its rounded bottom corners.
     // fillet: concave flare where the panel meets the notch's bottom edge. 0 = panel is exactly
-    // notch-wide (the flare showed up as a protruding ledge on some Macs).
-    let overlap: CGFloat = 10, fillet: CGFloat = 0
+    // notch-wide (the flare showed up as a protruding ledge on some Macs). Config: "fillet".
+    let overlap: CGFloat = 10, fillet: CGFloat = CGFloat(App.cfgNumber("fillet") ?? 0)
+    // stretch: fill the real notch width with the art (true) or keep square pixels, centred (false). Config: "stretch".
+    let stretch: Bool = (App.config["stretch"] as? Bool) ?? true
+
+    // ~/.config/notch-fight/config.json, read once. Keys: "first", "fillet", "stretch", "widthTweak".
+    static let config: [String: Any] = {
+        let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
+        guard let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [:] }
+        return json
+    }()
+    static func cfgNumber(_ key: String) -> Double? { (config[key] as? NSNumber)?.doubleValue }
     let shape = CAShapeLayer()
     var root: CALayer!
     var notchW: CGFloat = 185, notchH: CGFloat = 32, notchMidX: CGFloat = 0, screen: NSScreen!
@@ -53,7 +64,7 @@ final class App: NSObject, NSApplicationDelegate {
             notchW = r.minX - l.maxX
             notchMidX = (l.maxX + r.minX) / 2
             notchH = screen.safeAreaInsets.top
-            notchW += Self.notchWidthTweak[Self.hwModel] ?? 0
+            notchW += CGFloat(Self.cfgNumber("widthTweak") ?? Double(Self.notchWidthTweak[Self.hwModel] ?? 0))
         }
         let res = Bundle.main.resourceURL!
         clips = Dictionary(uniqueKeysWithValues: loadDirs(res.appendingPathComponent("clips")))
@@ -88,7 +99,8 @@ final class App: NSObject, NSApplicationDelegate {
         // would center the unscaled art and leave dead black margins instead of reaching the real notch
         // edges. `.resize` stretches horizontally only — clipH always equals the art's native height, so
         // the vertical scale factor is always 1 and no content is ever cropped.
-        art.contentsGravity = .resize
+        // Config "stretch": false keeps the art at its native width, centred (the black margins blend in).
+        art.contentsGravity = stretch ? .resize : .resizeAspect
         art.magnificationFilter = .nearest
         art.contentsScale = screen.backingScaleFactor
         art.actions = ["contents": NSNull()]
@@ -145,9 +157,7 @@ final class App: NSObject, NSApplicationDelegate {
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--first"), i + 1 < args.count { return split(args[i + 1]) }
         if let env = ProcessInfo.processInfo.environment["NOTCH_FIGHT_FIRST"], !env.isEmpty { return split(env) }
-        let cfg = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
-        guard let data = try? Data(contentsOf: cfg),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        let json = Self.config
         if let one = json["first"] as? String { return split(one) }
         return (json["first"] as? [String]) ?? []
     }
