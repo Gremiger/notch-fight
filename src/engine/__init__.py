@@ -5,3 +5,4 @@ from .claude import *
 from .text import *
 from .fx import *
 from .render import *
+from .logos import *

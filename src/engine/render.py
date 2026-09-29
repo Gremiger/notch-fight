@@ -60,6 +60,10 @@ def render(s,f):
         im=Image.composite(Image.new('RGB',(W,H),s['flashc']),im,m)
     return im
 
+def callout(s,txt,y=2,c=(255,226,90)):
+    """Centered shout at the top of the panel (technique / jutsu names)."""
+    s['fx'].append(('dmg',txt,W//2-len(txt)*2,y,c))
+
 def clip(name, n, fn):
     """Declare a clip: `fn(f)` returns a scene; frames are render(fn(f), f)."""
     return (name, n, lambda f: render(fn(f), f))

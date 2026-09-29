@@ -20,9 +20,6 @@ def _fx_gunbai(d,im,e,f):
     d.line([x-5,y-5,x+3,y-5],fill=(140,30,30))
 
 
-def callout(s,txt,y=2,c=(255,226,90)):
-    s['fx'].append(('dmg',txt,W//2-len(txt)*2,y,c))
-
 def poof(s,x,t):
     """Shadow-clone smoke puff, t = frames since the poof started (0..6)."""
     if 0<=t<7:

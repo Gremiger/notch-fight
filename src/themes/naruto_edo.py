@@ -15,20 +15,9 @@ KABUTO=poses(S([
 "......VVVV......",".....NN..NN.....",".....NN..NN.....",".....NN..NN.....",".....NN..NN.....",".....NN..NN.....",
 "....kkk..kkk....",]),8,'Vs',4)
 
-# Stylised pixel logos (11x11). Eyes 'y' = the glowing Edo Tensei gaze.
-ICONS={
- 'CODEX':[".kkkkkkkkk.","kkkkkkkkkkk","kkHkkkykyky","kkkHkkkkkkk","kkkkHkkkkkk","kkkHkkkkkkk",
-          "kkHkkkHHHkk","kkkkkkkkkkk","kkkkkkkkkkk","kkkkkkkkkkk",".kkkkkkkkk."],
- 'OPENCODE':["HHHHHHHHHHH","HkkkkkkkkkH","HkkkkykykkH","HkkDDDDDkkH","HkkDkkkDkkH","HkkDkkkDkkH",
-             "HkkDkkkDkkH","HkkDDDDDkkH","HkkkkkkkkkH","HkkkkkkkkkH","HHHHHHHHHHH"],
- 'GROK':["...kkkkk...",".kkHHHHHkk.",".kHkykykHk.","kHkkkkkkHHk","kHkkkkkHkHk","kHkkkkHkkHk",
-         "kHkkkHkkkHk","kHkkHkkkkHk",".kHHkkkkHk.",".HHHHHHHkk.","H..kkkkk..."],
-}
-BODY=["....ddd....","..ddddddd..",".dd.ddd.dd.","....ddd....","...dd.dd...","...dd.dd...","..ddd.ddd.."]
-
 def revived(name):
     """Logo on a little body, cracked like an Edo Tensei vessel."""
-    g=[list(r) for r in ICONS[name]+BODY]; rr=random.Random(zlib.crc32(name.encode()))
+    g=[list(r) for r in ICONS[name]+LOGO_BODY]; rr=random.Random(zlib.crc32(name.encode()))
     for _ in range(9):   # crack lines
         x,y=rr.randint(0,10),rr.randint(0,17)
         for _ in range(3):
