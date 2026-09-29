@@ -32,11 +32,12 @@ def head(d,x,top,rise):
 
 @fx('colossal')
 def _fx_colossal(d,im,e,f):
-    _,x,rise=e; top=int(WALL_TOP+6-rise*40)
+    _,x,rise,hands=e; top=int(WALL_TOP+6-rise*40)
     head(d,x,top,rise); wall(d)
     im.paste(bg_for(THEME).crop((0,GROUND+1,W,H)),(0,GROUND+1))   # keep the head out of the floor
     if rise>0.8:   # fingers gripping the rampart
-        for hx in (x-38,x+30):
+        for hx,on in zip((x-38,x+30),hands):
+            if not on: continue
             for k in range(4): d.rectangle([hx+k*3,WALL_TOP-3,hx+k*3+1,WALL_TOP+4],fill=MUSCLE); d.point((hx+k*3,WALL_TOP+4),fill=TOOTH)
 
 @fx('lightning')
@@ -96,7 +97,7 @@ def clip_colossal(f):
     if 20<=f<60: rise=ease((f-20)/34)
     elif 60<=f<176: rise=1
     elif 176<=f<210: rise=1-ease((f-176)/34)
-    if rise>0: s['under'].append(('colossal',TX,rise))
+    if rise>0: s['under'].append(('colossal',TX,rise,(True,not 104<=f<134)))   # the right hand leaves the Wall to sweep it
     if 18<=f<60: steam(s,TX,WALL_TOP,f-18,n=8,spread=26,seed=1)
     if 24<=f<56 and f%4==0: s['shake']=rshake()
     # 2) eye close-up
