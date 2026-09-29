@@ -34,7 +34,40 @@ ST_A=0.7   # Stands are translucent
 ORA_C=((217,119,87),(106,58,178))    # Claude's Stand fists: orange, purple streaks
 MUDA_C=((250,210,60),(160,110,20))
 
-register_bg(THEME, lambda v: (v//2+8,v//3,v+8))
+# ---- background: Cairo at night — minarets, the clock tower, DIO's mansion, the parked road roller --
+def _cairo(d):
+    for y in range(GROUND+1):                                        # violet night, glowing low
+        k=y/GROUND; d.line([0,y,W,y],fill=(int(10+34*k),int(6+12*k),int(26+30*k)))
+    rr=random.Random(1987)
+    for _ in range(26): d.point((rr.randint(0,W-1),rr.randint(0,24)),fill=rr.choice([(90,70,120),(180,160,210)]))
+    d.ellipse([60,3,72,15],fill=(236,220,170)); d.ellipse([64,1,76,13],fill=(14,8,30))         # crescent
+    far=(30,18,44)                                                    # the old city: domes and minarets
+    d.rectangle([0,38,W,50],fill=far)
+    for x,r in ((22,7),(58,5),(92,9),(118,5)): d.ellipse([x-r,38-r,x+r,38+r],fill=far); d.line([x,38-r-3,x,38-r],fill=far)
+    for x,top in ((8,20),(74,24),(106,18)):
+        d.rectangle([x-1,top,x+1,40],fill=far); d.polygon([(x-2,top),(x,top-4),(x+2,top)],fill=far); d.line([x-2,top+5,x+2,top+5],fill=far)
+    ct,ctl=(38,24,52),(52,34,66)                                      # the clock tower
+    d.rectangle([40,14,50,50],fill=ct); d.line([50,14,50,50],fill=ctl); d.polygon([(39,14),(45,6),(51,14)],fill=ct)
+    d.ellipse([41,17,49,25],fill=(232,212,150)); d.line([45,21,45,18],fill=(40,24,20)); d.line([45,21,47,21],fill=(40,24,20))
+    ms,msl=(34,20,40),(48,30,56)                                      # DIO's mansion, looming behind him
+    d.rectangle([128,20,185,52],fill=ms); d.polygon([(124,20),(156,6),(185,14),(185,20)],fill=(26,14,32))
+    d.rectangle([152,2,158,12],fill=ms)                                # chimney
+    d.line([128,20,185,20],fill=msl)
+    for wy in (24,34,43):
+        for wx in range(132,184,8):
+            lit=rr.random()<0.3; d.rectangle([wx,wy,wx+3,wy+5],fill=(118,34,50) if lit else (18,10,24))
+            d.line([wx,wy+6,wx+3,wy+6],fill=msl)
+    roof=(20,12,28)                                                   # rooftops in front, water tanks
+    d.polygon([(0,48),(26,48),(26,44),(60,44),(60,47),(100,47),(100,45),(128,45),(128,52),(0,52)],fill=roof)
+    for x in (12,84): d.rectangle([x,40,x+6,44],fill=roof); d.line([x+1,44,x+1,48],fill=roof); d.line([x+5,44,x+5,48],fill=roof)
+    d.rectangle([0,52,W,GROUND],fill=(26,18,30)); d.line([0,52,W,52],fill=(56,40,62))  # the street
+    for x in range(4,W,12): d.line([x,55,x+5,55],fill=(40,30,46))
+    rx=4                                                              # the road roller, parked in the dark
+    d.rectangle([rx,45,rx+14,51],fill=(120,96,30)); d.rectangle([rx+4,41,rx+12,45],fill=(96,76,24))
+    d.line([rx+4,40,rx+12,40],fill=(60,48,20))
+    d.ellipse([rx-5,46,rx+4,55],fill=(64,64,70)); d.line([rx-5,50,rx+4,50],fill=(90,90,96))
+    d.ellipse([rx+10,49,rx+16,55],fill=(40,40,44))
+register_bg(THEME, lambda v: (v//2+30,v//3+22,v+30), decor=_cairo)
 
 def _grey(im): return ImageOps.colorize(ImageOps.grayscale(im),(0,0,0),(196,202,232))
 def _neg(im): return ImageOps.colorize(ImageOps.invert(ImageOps.grayscale(im)),(30,0,50),(206,176,255))

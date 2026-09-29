@@ -2,6 +2,7 @@
 close-up of the glove's transmutation circle and the snap — then snap after snap until Envy
 is burned down to his tiny true form. The Philosopher's Stone rebuilds him for the loop."""
 from engine import *
+from PIL import ImageChops
 
 THEME = 'fma'
 
@@ -19,7 +20,55 @@ FAKE=variant(lambda s: S([r.replace('K','V') for r in s]))   # Envy as Claude: p
 TINY=S([".gg.....","gVgg..g.","gggggggg",".g.g.gg."])
 CHAR=[None,{'s':(170,110,84),'g':(40,70,34),'S':(20,26,20)},{'s':(110,66,50),'g':(34,44,28),'S':(16,16,14),'k':(20,14,12)}]
 
-register_bg(THEME, lambda v: (v,v//2+8,v//3))
+# ---- background: Central City at night — brick streets, lamp posts, Central HQ on the skyline ------
+LAMPS=(56,124)
+def _central(d):
+    for y in range(GROUND+1):                                        # night sky, warmer near the roofs
+        k=y/GROUND; d.line([0,y,W,y],fill=(int(8+18*k),int(10+12*k),int(26+16*k)))
+    rr=random.Random(303)
+    for _ in range(22): d.point((rr.randint(0,W-1),rr.randint(0,20)),fill=rr.choice([(70,70,96),(120,120,150)]))
+    d.ellipse([148,4,158,14],fill=(210,206,180)); d.ellipse([151,3,160,12],fill=(14,16,34))     # crescent moon
+    hq,hq2,win=(30,30,50),(40,40,62),(84,74,52)                      # Central HQ: wings, tower, spire
+    d.rectangle([58,30,128,50],fill=hq); d.rectangle([72,24,114,50],fill=hq2)
+    d.rectangle([86,12,100,50],fill=hq2); d.polygon([(84,12),(93,4),(102,12)],fill=hq)
+    d.line([93,0,93,4],fill=hq2); d.rectangle([94,0,98,2],fill=(110,40,40))           # the Amestris flag
+    d.ellipse([90,15,96,21],fill=(150,140,100)); d.point((93,18),fill=hq)            # tower clock
+    for y in (28,34,40):
+        for x in range(62,126,5):
+            if (72<=x<=112 or y>=34) and not 86<=x<=100 and rr.random()<0.55: d.point((x,y),fill=win)
+    for x in range(76,112,6): d.line([x,44,x,50],fill=(52,52,76))                    # columns at the entrance
+    brick,mortar,dark=(52,28,26),(38,20,20),(34,18,18)
+    for x0,x1,top,roof in ((0,40,16,'gable'),(40,58,30,'flat'),(140,160,26,'flat'),(160,185,12,'gable')):
+        d.rectangle([x0,top,x1,52],fill=brick)
+        for y in range(top+2,52,3):                                   # brick courses, staggered joints
+            d.line([x0,y,x1,y],fill=mortar)
+            for x in range(x0+(0 if (y//3)%2 else 3),x1,6): d.point((x,y+1),fill=mortar)
+        if roof=='gable': d.polygon([(x0-1,top),((x0+x1)//2,top-8),(x1+1,top)],fill=dark)
+        else: d.rectangle([x0,top-2,x1,top],fill=dark)
+        for wy in range(top+4,48,9):                                   # windows: most lit, a few dark
+            for wx in range(x0+4,x1-3,8):
+                lit=rr.random()<0.45; d.rectangle([wx,wy,wx+2,wy+3],fill=(196,142,72) if lit else (20,14,20))
+                if lit: d.point((wx+1,wy+4),fill=(90,56,34))
+    d.rectangle([0,50,W,52],fill=(46,42,46)); d.line([0,50,W,50],fill=(70,64,66))  # kerb / pavement
+    for y in range(53,GROUND+1):                                      # cobbles
+        d.line([0,y,W,y],fill=(26,24,30))
+        for x in range((y*3)%5,W,5): d.point((x,y),fill=(40,36,42) if (x+y)%3 else (18,16,22))
+    for x in LAMPS:                                                   # gas lamps, with a warm pool of light
+        for a in range(0,360,30): d.point((x+7*math.cos(math.radians(a)),27+7*math.sin(math.radians(a))),fill=(96,66,42))
+        d.line([x,28,x,51],fill=(34,34,40)); d.line([x-1,51,x+1,51],fill=(34,34,40))
+        d.rectangle([x-2,24,x+2,29],fill=(255,214,120)); d.line([x-3,23,x+3,23],fill=(34,34,40))
+        d.line([x-6,51,x+6,51],fill=(86,66,44))
+register_bg(THEME, lambda v: (v+30,v+24,v+26), decor=_central)
+
+@fx('fma_glow')
+def _fx_glow(d,im,e,f):
+    """The flame lights the street: a warm, soft pool around (x,y) at strength k."""
+    _,x,y,k=e
+    if k<=0: return
+    m=Image.new('L',(W,H),0); ImageDraw.Draw(m).ellipse([x-80,y-40,x+80,y+40],fill=int(255*min(1,k)))
+    m=m.filter(ImageFilter.GaussianBlur(14))
+    warm=ImageChops.screen(im,Image.new('RGB',(W,H),(150,70,20)))
+    im.paste(Image.composite(warm,im,m))
 
 @fx('snapspark')
 def _fx_snapspark(d,im,e,f):
@@ -82,6 +131,7 @@ def snap(s,f,t0,tx,big=6):
     if t0<=f<t0+3: s['fx'].append(('snapspark',*HAND,tx,GROUND-8,(f-t0+1)/3)); s['fx'].append(('bluespark',*HAND))
     if t0+3<=f<t0+14:
         k=f-t0-3; s['fx'].append(('fire',tx,GROUND,big*(1-k/14)+2))
+        s['under'].append(('fma_glow',tx,GROUND-10,(1-k/11)*(0.8+0.2*(k%2))))
         if k==0: s['flash']=0.9; s['fc']=(tx,GROUND-10); s['flashc']=(255,180,90); s['shake']=rshake(2)
     if t0<=f<t0+10: callout(s,"SNAP!",c=(255,200,110))
 
