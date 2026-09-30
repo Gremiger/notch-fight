@@ -2,7 +2,7 @@
 form on planet Namek — green sky, blue-green grass, round-topped Namekian trees, mesas in the water.
 Freezer laughs and fires Death Beams that Claude blocks, then lifts Codex into the sky with his mind
 (CLAUDE...!). Close-up: Freezer's smug face, a raised finger — the hand closes. Codex bursts into
-light. Close-up: Claude's shock turns to rage — CODEX...! CODEEEEEX!!! The sky goes black, lightning
+light. Close-up: Claude's shock turns to rage — CODEX...! FREEZEEER!!! The sky goes black, lightning
 strikes, the ground cracks and rocks float up; the hair flickers gold until the aura explodes — close-up:
 I AM THE SUPER SAIYAN, SON CLAUDE! Freezer panics: his beams miss, his Death Ball is kicked away, a rush
 and a Kamehameha that swallows his beam blow him off the field. The Dragon Balls glow, Porunga rises —
@@ -472,7 +472,7 @@ def _head(d,ox,gold,sway=0):
     return 60+ox,82+ox
 
 def closeup_rage(t,f):
-    """Primer plano: Claude stares at the empty sky — CODEX...! — then the rage: CODEEEEEX!!!"""
+    """Primer plano: Claude stares at the empty sky — CODEX...! — then the rage: FREEZEEER!!!"""
     rage=t>=0.45
     rr=random.Random(f)
     im=Image.new('RGB',(W,H),(120,16,20) if rage else (34,42,64)); d=ImageDraw.Draw(im)
@@ -504,7 +504,7 @@ def closeup_rage(t,f):
     if 0.1<=t<0.42: say(im,"CODEX...!",22,(220,230,255),scale=2,cx=134,outline=(30,40,90))
     if rage:
         n=min(12,4+int((t-0.47)/0.25*8)) if t>=0.47 else 0
-        word="CODEEEEEX!!!"[:max(0,n)]
+        word="FREEZEEER!!!"[:max(0,n)]
         jj=(f%3)-1
         if word: say(im,word,22+jj,(255,255,255),scale=2,cx=134+jj,outline=(200,20,20))
     if 0.45<=t<0.5: im=fade_to(im,(255,255,255),1-(t-0.45)/0.05); d=ImageDraw.Draw(im); zoom_lines(d,(255,200,200))
@@ -628,7 +628,7 @@ def clip_namek(f):
     if 212<=f<236: s['fx'].append(('frz_embers',AIR[0],AIR[1]-9,(f-212)/24))
     if 198<=f<228: fz['spr']=FZ['up'] if f<206 else FZ['idle']
     if 220<=f<228: cl['spr']=FORM['guard']                          # frozen, no breathing
-    # 6) close-up: CODEX...! CODEEEEEX!!!
+    # 6) close-up: CODEX...! FREEZEEER!!!
     if 228<=f<270: s['image']=closeup_rage((f-228)/42,f); return s
     # 7) the transformation: storm, lightning, cracks, floating rocks, the hair flickering gold
     if 270<=f<336:
