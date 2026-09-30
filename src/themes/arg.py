@@ -18,7 +18,7 @@ HUD_BG, HUD_INK = (16,16,22), (236,236,236)
 CPAL = {'c':CELESTE, 'W':WHITE, 'b':(24,24,28), 'y':(236,200,60)}
 # generic players: jersey j/J (J = second stripe colour), skin s, hair h, shorts p, boots k
 KIT_FRA   = {'j':FRA, 'J':FRA, 's':(150,104,78), 'h':(24,20,20), 'p':(236,236,236)}
-KIT_DIBU  = {'j':(60,170,90), 'J':(40,130,70), 's':(226,184,150), 'h':(40,30,26), 'p':(30,90,50)}
+KIT_DIBU  = {'j':(150,235,70), 'J':(150,235,70), 's':(226,184,150), 'h':(40,30,26), 'p':(110,190,50), 'g':(248,248,248), 'k':(230,60,50)}
 KIT_ARG   = {'j':CELESTE, 'J':WHITE, 's':(210,160,120), 'h':(40,30,26), 'p':(24,24,28)}
 
 def _albiceleste(spr):
@@ -38,6 +38,10 @@ PLAYER=poses(S([
 "..jJjJjJjJ..",".sjJjJjJjJs.",".sjJjJjJjJs.","..jJjJjJjJ..","..jJjJjJjJ..","...pppppp...",
 "...pppppp...","...ss..ss...","...ss..ss...","...kk..kk...",]),7,'s',3)
 DIVE=rotate90(PLAYER['idle'],1,trim=True)            # a keeper at full stretch
+STARFISH=S([                                         # Dibu spread wide: arms up, legs out (front on)
+"g.....hhhh.....g",".j....ssss....j.","..j...sKKs...j..","...j.jjjjjj.j...","....jjjjjjjj....",
+".....jjjjjj.....",".....pppppp.....","....pp....ppp...","...jj......jjj..","..jj.........jj.",
+".kk...........kk",])
 
 # ---------------------------------------------------------------- Lusail at night
 def _lusail(d):
@@ -137,24 +141,39 @@ def _fx_stars(d,im,e,f):
     if 0<third<1 and (f//2)%2: d.ellipse([x+5,y-3,x+11,y+3],outline=(255,250,210))
 
 def closeup_leg(t,f):
-    """Primer plano: minute 123 - Kolo Muani's shot, Dibu's left leg stretched out, the ball off his boot."""
+    """Primer plano: minute 123, from the front. Kolo Muani shoots from the left; Dibu spreads like a
+    starfish - arms flung up, gloves wide - and his outstretched left leg takes the ball off his shin."""
     im=Image.new('RGB',(W,H),(46,110,52)); d=ImageDraw.Draw(im)
     for x in range(0,W,24): d.rectangle([x,0,x+11,H],fill=(54,124,60))
-    for gy in range(0,H,4): d.line([0,gy,30,gy],fill=(170,180,180))                    # the net behind him
-    d.line([30,0,30,H],fill=(250,250,250))
+    d.line([0,10,W,4],fill=(220,230,220))                                                  # a line on the grass
+    lime,lime_d,skin=KIT_DIBU['j'],KIT_DIBU['p'],KIT_DIBU['s']
     reach=ease(min(1,t/0.25))
-    d.rectangle([34,2,70,30],fill=KIT_DIBU['j'])                                        # Dibu's body, sideways
-    d.ellipse([68,4,86,20],fill=KIT_DIBU['s']); d.rectangle([68,2,86,7],fill=KIT_DIBU['h'])
-    lx=int(lerp(50,128,reach))                                                         # the leg, out
-    d.polygon([(50,28),(56,24),(lx,44),(lx-6,52)],fill=KIT_DIBU['p'])
-    d.rounded_rectangle([lx-8,42,lx+8,54],radius=3,fill=(30,30,34))                   # the boot
-    for gx in (36,54): d.rounded_rectangle([gx,32,gx+12,44],radius=3,fill=(240,240,240),outline=(40,40,40))   # gloves
-    bx=lerp(W+6,lx+10,min(1,t/0.25)) if t<0.25 else lerp(lx+10,W+10,(t-0.25)/0.3)
-    by=48 if t<0.25 else 48-40*min(1,(t-0.25)/0.3)
+    # Kolo Muani, left, just struck it (navy, number on the back)
+    d.rectangle([14,20,32,40],fill=FRA); d.ellipse([16,8,30,22],fill=KIT_FRA['s']); d.rectangle([16,7,30,11],fill=KIT_FRA['h'])
+    d.line([18,40,10,58],fill=FRA,width=5); d.line([28,40,40,54],fill=FRA,width=5)            # standing leg, kicking leg
+    d.rectangle([38,52,44,56],fill=(90,200,220)); text(d,"12",19,26,(236,190,60),shadow=None)
+    # Dibu, front on: arms up and out, gloves, orange wrists
+    cx=112
+    for sx in (-1,1):
+        d.line([cx+sx*12,18,cx+sx*44,4],fill=lime,width=5)
+        gx=cx+sx*47; d.rectangle([gx-3,0,gx+3,6],fill=(248,248,248),outline=(60,60,60))
+        d.rectangle([cx+sx*42-2,4,cx+sx*42+2,8],fill=(255,130,40))
+    d.rectangle([cx-14,12,cx+14,34],fill=lime,outline=lime_d)                                # shirt
+    text(d,"23",cx-3,20,lime_d,shadow=None)
+    d.ellipse([cx-7,0,cx+7,14],fill=skin); d.rectangle([cx-7,0,cx+7,3],fill=KIT_DIBU['h'])   # head
+    d.rectangle([cx-12,34,cx+12,40],fill=lime_d)                                              # shorts
+    d.line([cx-8,40,cx-20,48],fill=lime,width=6); d.line([cx-20,48,cx-26,58],fill=lime,width=5)   # bent right leg
+    d.rectangle([cx-30,56,cx-22,60],fill=(248,248,248))
+    lx,ly=int(lerp(cx+14,cx+62,reach)),int(lerp(44,54,reach))                               # the outstretched left leg
+    d.line([cx+8,40,lx,ly],fill=lime,width=6); d.rectangle([lx-2,ly-3,lx+6,ly+3],fill=(230,60,50))
+    # the ball: from Kolo Muani's boot to Dibu's shin, then away
+    shin=(lerp(cx+8,lx,0.7),lerp(40,ly,0.7))
+    if t<0.25: bx,by=lerp(44,shin[0],t/0.25),lerp(52,shin[1],t/0.25)
+    else: q=min(1,(t-0.25)/0.3); bx,by=lerp(shin[0],W+10,q),lerp(shin[1],-10,q)
     d.ellipse([bx-5,by-5,bx+5,by+5],fill=(250,250,250),outline=(40,40,40)); d.point((int(bx),int(by)),fill=(40,40,40))
-    if 0.24<t<0.32: spark(d,lx+8,48,6,(255,255,255))
-    if t>=0.28: big_text(im,"DIBU!",6,(120,230,140),cx=138,shadow=(0,0,0),outline=(0,0,0))
-    text(d,"123",4,56,(236,236,236))
+    if 0.24<t<0.32: spark(d,int(shin[0]),int(shin[1]),6,(255,255,255))
+    if t>=0.28: big_text(im,"DIBU!",44,(170,250,110),cx=60,shadow=(0,0,0),outline=(0,0,0))
+    text(d,"123",4,4,(236,236,236))
     if t<0.06: zoom_lines(d)
     return im
 
@@ -174,7 +193,7 @@ def clip_final(f):
         km=ez(170,52,p) if f<84 else 52
         others.append(actor(PLAYER['attack' if 80<=f<86 else 'idle'],km,flip=True,pal=KIT_FRA))
         dibu_x=ez(26,34,p)
-        others.append(actor(PLAYER['idle'] if f<82 else DIVE,dibu_x,flip=True,pal=KIT_DIBU))
+        others.append(actor(PLAYER['idle'] if f<80 else STARFISH,dibu_x,flip=True,pal=KIT_DIBU))
         tx,tpose,tflip=ez(40,126,min(1,(f-44)/14)) if f<58 else ez(126,70,(f-58)/40),'dash',True
         if f<82: ball=(km-6,GROUND-2)
         elif f<86: ball=(lerp(km-6,30,(f-82)/4),GROUND-6)
