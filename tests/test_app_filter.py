@@ -5,6 +5,8 @@ import json, os, platform, select, subprocess, tempfile, time, unittest
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 BIN = os.path.join(ROOT, 'build', 'NotchFight.app', 'Contents', 'MacOS', 'NotchFight')
 CLIPS = sorted(os.listdir(os.path.join(ROOT, 'build', 'clips'))) if os.path.isdir(os.path.join(ROOT, 'build', 'clips')) else []
+SHIPPED_OFF = [c for c in CLIPS if os.path.exists(os.path.join(ROOT, 'build', 'clips', c, '.default-off'))]
+ON = [c for c in CLIPS if c not in SHIPPED_OFF]      # the clips that play with an empty config
 
 @unittest.skipUnless(platform.system() == 'Darwin' and os.path.exists(BIN), 'needs macOS and ./build.sh')
 class AppFilter(unittest.TestCase):
@@ -30,15 +32,15 @@ class AppFilter(unittest.TestCase):
 
     def test_no_selection_keys_plays_everything(self):
         log, _ = self.launch({})
-        self.assertIn(f'{len(CLIPS)}/{len(CLIPS)} clips active', log)
+        self.assertIn(f'{len(ON)}/{len(CLIPS)} clips active', log)
 
     def test_new_disabled_plays_only_the_enabled_list(self):
         log, _ = self.launch({'newClips': 'disabled', 'enabled': [CLIPS[0]]})
         self.assertIn(f'1/{len(CLIPS)} clips active', log)
 
     def test_new_enabled_skips_the_disabled_list(self):
-        log, _ = self.launch({'newClips': 'enabled', 'disabled': CLIPS[:2]})
-        self.assertIn(f'{len(CLIPS) - 2}/{len(CLIPS)} clips active', log)
+        log, _ = self.launch({'newClips': 'enabled', 'disabled': ON[:2]})
+        self.assertIn(f'{len(ON) - 2}/{len(CLIPS)} clips active', log)
 
     def test_nothing_active_quits_without_a_panel(self):
         log, quit_alone = self.launch({'newClips': 'disabled', 'enabled': []})
@@ -62,7 +64,7 @@ class AppDefaultOff(unittest.TestCase):
         cls.tmp = tempfile.mkdtemp()
         app = os.path.join(cls.tmp, 'NotchFight.app')
         subprocess.run(['cp', '-cR', os.path.join(ROOT, 'build', 'NotchFight.app'), app], check=True)  # APFS clone: fast
-        cls.marked = CLIPS[0]
+        cls.marked = ON[0]                          # a clip that ships on, marked off in this copy
         open(os.path.join(app, 'Contents', 'Resources', 'clips', cls.marked, '.default-off'), 'w').close()
         cls.bin = os.path.join(app, 'Contents', 'MacOS', 'NotchFight')
 
@@ -74,11 +76,11 @@ class AppDefaultOff(unittest.TestCase):
 
     def test_a_default_off_clip_is_not_active(self):
         log, _ = self.launch({})
-        self.assertIn(f'{len(CLIPS) - 1}/{len(CLIPS)} clips active', log)
+        self.assertIn(f'{len(ON) - 1}/{len(CLIPS)} clips active', log)
 
     def test_turning_it_on_in_enabled_mode(self):
         log, _ = self.launch({'newClips': 'enabled', 'enabled': [self.marked]})
-        self.assertIn(f'{len(CLIPS)}/{len(CLIPS)} clips active', log)
+        self.assertIn(f'{len(ON)}/{len(CLIPS)} clips active', log)
 
 
 if __name__ == '__main__':
