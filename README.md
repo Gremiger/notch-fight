@@ -136,6 +136,9 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
 - Clips forced with `first` (or `--first`) still play once at launch, even when turned off. The
   checklist shows them; `f` clears the list (`./build.sh` puts each new clip there).
 - Enabling a theme in `"disabled"` mode enables the clips it has now, not ones added later.
+- Some clips ship **off by default** (niche ones, see "Adding a clip"): they are listed as
+  `(off by default)` and only play once you turn them on. In `"enabled"` mode those go in an
+  `"enabled"` list next to `"disabled"`.
 - With nothing selected the panel does not show at all. Changes apply from the next launch.
 - `NOTCH_FIGHT_CONFIG=/path/config.json` points the app and `clips.sh` at another config (tests and
   dev only: the app sees it when its binary is run directly, not through `open`).
@@ -200,3 +203,8 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
 - **New theme:** create `src/themes/<id>.py` with `from engine import *`, `THEME = '<id>'`,
   `register_bg(THEME, ...)`, its sprites/effects (`@fx('name')`) and `CLIPS`. Nothing else to
   touch: themes are auto-discovered and transitions to/from it are generated.
+- **Off by default:** for a clip most people may not want (a football club, a brand), ship it off so
+  users opt in: `DEFAULT_OFF = True` in the theme file turns off all its clips, and
+  `clip('<name>', <frames>, clip_<name>, off=True)` (or `off=False` to override the theme) does it per clip.
+  `build.py` marks them in the build (`build/clips/<clip>/.default-off`); the app and `./clips.sh` read it.
+  `./build.sh` still puts a new clip first, so you see it while you make it.

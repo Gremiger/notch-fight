@@ -20,6 +20,8 @@
   theme = new `clip_<name>` + entry in that file's `CLIPS`.
 - Then `GIFS=1 ./build.sh`, look at `build/sheet_<theme>_<clip>.png` to check the frames, and commit
   the source + `media/clips/*.gif`.
+- If the clip is niche (a football club, a brand, an in-joke), ask whether it should ship off by default:
+  `DEFAULT_OFF = True` in the theme, or `clip(..., off=True)` for one clip (README "Adding a clip").
 
 ## Rules
 
