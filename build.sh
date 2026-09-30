@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Generates every clip + transition frame and builds NotchFight.app into build/.
+# ONLY=<theme|theme__clip>[,...] ./build.sh re-renders just those clips (and their themes' transitions)
+# on top of the last build; GIFS=1 then refreshes only their previews.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 OUT="$ROOT/build"; APP="$OUT/NotchFight.app"
@@ -27,16 +29,18 @@ fi
 
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/"
-cp -R "$OUT/clips" "$OUT/transitions" "$APP/Contents/Resources/"
+# APFS clones (cp -c) share the frames instead of copying ~45k files: ~3x faster; plain copy elsewhere
+cp -cR "$OUT/clips" "$OUT/transitions" "$APP/Contents/Resources/" 2>/dev/null \
+  || cp -R "$OUT/clips" "$OUT/transitions" "$APP/Contents/Resources/"
 # pin the deployment target: some toolchains default to a macOS newer than the running one (LaunchServices error -10825)
 swiftc -O -target "$(uname -m)-apple-macos13.0" "$ROOT/app/main.swift" -o "$APP/Contents/MacOS/NotchFight"
 codesign -s - --force "$APP" >/dev/null 2>&1
 
 if [[ "${GIFS:-0}" == "1" ]]; then   # GIFS=1 ./build.sh refreshes media/clips previews
-  for d in "$OUT"/clips/*/; do n=$(basename "$d")
+  while read -r n; do [[ -z "$n" ]] && continue; d="$OUT/clips/$n/"   # only the clips this run rendered
     ffmpeg -y -loglevel error -framerate 20 -i "$d%03d.png" \
       -vf "scale=iw*2:ih*2:flags=neighbor,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=none" \
       -loop 0 "$ROOT/media/clips/$n.gif"
-  done
+  done < "$OUT/.built"
 fi
 echo "Built $APP"

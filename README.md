@@ -205,6 +205,7 @@ media/                           # rendered previews
 ```bash
 ./build.sh           # frames + app into build/
 GIFS=1 ./build.sh    # also refresh media/clips/*.gif
+ONLY=sonic GIFS=1 ./build.sh      # just one theme (or theme__clip, comma-separated) on top of the last build
 ```
 
 Canvas is 185×64 art pixels = 185×64 pt on a 14" MacBook Pro (1 art px = 2 device px).

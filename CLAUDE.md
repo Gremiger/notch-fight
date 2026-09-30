@@ -18,8 +18,9 @@
 ## Adding content ("add a One Piece fight", "add a clip to DBZ")
 - New theme = new file `src/themes/<id>.py` (see README "Adding a clip"); new clip in an existing
   theme = new `clip_<name>` + entry in that file's `CLIPS`.
-- Then `GIFS=1 ./build.sh`, look at `build/sheet_<theme>_<clip>.png` to check the frames, and commit
-  the source + `media/clips/*.gif`.
+- Then `ONLY=<theme> GIFS=1 ./build.sh` (only that theme, its transitions and its GIF, on top of the
+  last build; a plain `./build.sh` rebuilds everything), look at `build/sheet_<theme>_<clip>.png` to
+  check the frames, and commit the source + `media/clips/<theme>__*.gif`.
 - If the clip is niche (a football club, a brand, an in-joke), ask whether it should ship off by default:
   `DEFAULT_OFF = True` in the theme, or `clip(..., off=True)` for one clip (README "Adding a clip").
 
