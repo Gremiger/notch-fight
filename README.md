@@ -64,6 +64,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
 | `fma` | Colonel Mustang (glove snap close-up, flame alchemy) | Envy (disguised as Claude, burned to his true form) | flame |
 | `dbz-jiren` | Claude in Ultra Instinct (silver-eyes close-up, dodges everything, instant hits from everywhere) at the Tournament of Power | Jiren (red glare close-up, knocked off the arena) | ultra |
+| `dbz-freezer` | Claude as Goku with Codex on planet Namek (Codex lifted and blown into light, CODEX...! FREEZEEER!!! rage close-up, storm and lightning, first SUPER SAIYAN close-up, Kamehameha) | Freezer, final form (smug close-up closing his hand, Death Beams, Death Ball; Porunga revives Codex) | namek |
 | `mk` | Claudepion (Scorpion: spear, Toasty fatality) | Sub-Zero, with the arcade HUD | fatality |
 | `apex` | a Legend with jump pack and grapple (kill-leader banner close-up) | Wraith (Into the Void, Dimensional Rift) | champion |
 | `cs` | Counter-Terrorist (AWP scope close-up, defuse) | Phoenix Terrorist, with the 1.6 HUD | defuse |
@@ -92,6 +93,8 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `avp` | Claude caught between them in the Antarctic pyramid (WHOEVER WINS... WE LOSE., clan-mark close-up, alien-head shield + spear, back-to-back close-up) | a Xenomorph, the Predator and the Queen (buried under the collapsing pyramid) | pyramid |
 | `gta` | CJ on Grove Street (AH SHIT HERE WE GO AGAIN..., wanted stars, handbrake donut, MISSION PASSED!) | a low-poly 3D police cruiser (flat-shaded software renderer: chase, barrel roll, explosion) | grove |
 | `simpsons` | a Sector 7G worker (D'OH!, stomps the uranium rod back in, MMM... ROSQUILLAS) | Mr. Burns and his hounds in the nuclear plant (EXCELENTE... close-up) | meltdown |
+| `portal` | the test subject with the Portal Gun in an Aperture test chamber (drops through blue/orange portals, turns the turret fire back through them, shoots a portal at the MOON; THIS WAS A TRIUMPH card, the cake is a lie) | GLaDOS on her ceiling arm (turrets, neurotoxin, yellow-to-red eye close-up — YOU MONSTER; her cores pop off, Wheatley babbles, SPAAACE!; sucked out into space) | triumph |
+| `amongus` | an orange crewmate with Codex in The Skeld cafeteria (fix-wiring close-up, spots Codex venting ?!, lights out, DEAD BODY REPORTED, CODEX VENTED! meeting, VICTORY) | Codex, the impostor (I WAS IN ELECTRICAL, sweating close-up, voted off: CODEX WAS THE IMPOSTOR.) | impostor |
 | `meshi` | Laios (sword, I WONDER HOW IT TASTES... close-up) | the Red Dragon, then Senshi cooks it: DRAGON STEW | dragonstew |
 | `terraria` | the Terrarian: Terra Blade beams, or a staff + whip with a Stardust Dragon | the Eye of Cthulhu (servants, phase 2 close-up, coins) | melee, summoner |
 | `mist` | Vin, Mistborn (mistcloak, Steel Pushes on coins, ATIUM close-up with her future shadows) | a Steel Inquisitor in Luthadel's mists and ash (she Pulls the spike from his back); off by default | inquisitor |
