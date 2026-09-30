@@ -102,6 +102,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `spidey` | Miles Morales, on twos with magenta/cyan rim light (camouflage split into comic panels, A LEAP OF FAITH close-up, the city turns upside down with streaking lights, THWIP, webs, venom blast ZZAKT!) | the Prowler in Brooklyn (webbed to a wall, police lights) | leap |
 | `coraline` | Coraline in stop-motion (the little door and the tunnel, NO., the seeing stone close-up with the ghost children's eyes, the escape with the cat, the button key: CLICK.) | the Other Mother: WE ONLY WANT YOU TO STAY., then her spider form with needle fingers | buttons |
 | `ghibli-totoro` | Satsuki at the bus stop in the rain, no fight (fireflies, the lamp, lends Totoro the spare umbrella, grin close-up, the Catbus's headlight eyes, a bundle of acorns) | Totoro and the Catbus | busstop |
+| `phm` | Ryland Grace in the Hail Mary's lab, no fight: `rocky` (the Blip-A, the xenonite tunnel, chords that become AMAZE AMAZE AMAZE, FIST MY BUMP close-up) and `astrophage` (the star dims, the bench, Taumoeba under the microscope, IT WORKS!); off by default | Rocky, a friend; Astrophage, the problem | rocky, astrophage |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
@@ -185,7 +186,7 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
 │   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
