@@ -10,6 +10,9 @@
 - Not macOS: say the app is macOS-only; the generator still runs (`python3 src/build.py` in `build/`).
 - Uninstall: `./uninstall.sh` (`--purge` also removes `build/` and `~/.config/notch-fight`).
 - Never hand-edit the hooks: `scripts/hooks.py` owns them (it matches entries mentioning `NotchFight`).
+- Showing / hiding clips ("hide the Maki clip", "only new clips I pick"): use `./clips.sh list | enable |
+  disable <clip|theme> | mode enabled|disabled`, never edit the config by hand. The checklist (`./clips.sh`
+  with no args) needs a real terminal: tell the user to run it themselves.
 - Hooks added mid-session may need `/hooks` opened once to reload — tell the user.
 
 ## Adding content ("add a One Piece fight", "add a clip to DBZ")

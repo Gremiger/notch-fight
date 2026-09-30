@@ -3,7 +3,7 @@
 Pixel-art anime fights that drop out of the MacBook Pro notch while Claude Code is working.
 Claude (the orange asterisk mascot) is always the protagonist.
 
-![DBZ beam](media/clips/dbz__beam.gif)
+![DBZ Cell Games](media/clips/dbz__cellgames.gif)
 
 ## Install
 
@@ -14,6 +14,7 @@ Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Too
 git clone <this repo> && cd notch-fight
 ./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
 ./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
+./clips.sh          # choose which clips play (see "Choosing clips")
 # several Claude profiles? NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh (same for uninstall)
 ```
 
@@ -46,23 +47,23 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 
 | Theme | Claude as | Opponent | Clips |
 |---|---|---|---|
-| `dbz` | Claude | Cell | beam, teleport, barrage, super, genki, standoff |
-| `ygo` | Yugi-style duelist | Kaiba | duel |
-| `kny` | Tanjiro-style swordsman | Akaza | breath |
-| `jjk` | Gojo-style sorcerer | Sukuna | infinity |
-| `fn` | Fortnite default with pickaxe | Geno | royale |
-| `pkm` | Pokémon with Ash's cap | Mewtwo | psychic |
-| `snk` | Survey Corps scout (ODM gear) | 5 titans + the Armored Titan | survey |
-| `nrt` | Naruto (headband, shadow clones, Rasengan) | Madara (Sharingan close-up) | shadowclone |
-| `naruto-edo` | Naruto (clones, Rasengan, Rasenshuriken) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up) | edotensei |
+| `dbz` | Claude (goes Super Saiyan) | Perfect Cell, on the Cell Games ring | cellgames |
+| `ygo` | Yugi-style duelist (D-D-D-DUEL and Heart of the Cards close-ups, Dark Magician card reveal, Mirror Force) | Kaiba + Blue-Eyes White Dragon hologram, in the Kaiba Corp stadium (life points 8000 to 0) | duel |
+| `kny` | Tanjiro-style swordsman (Water Breathing dragon and Hinokami Kagura close-ups) | Akaza (kanji-eye close-up), on the Mugen Train roof; beheaded, crumbles to ash | breath |
+| `jjk` | Gojo at the Shibuya crossing on 10.31 (Infinity stops Dismantle and the lunge — MUGEN, blindfold-off SIX EYES close-up, Blue, Red, HOLLOW PURPLE close-up erases the street) | Sukuna (Dismantle slashes, blown into the 109 tower, reforms from cursed motes) | infinity |
+| `fn` | Jonesy with a pickaxe (cranks 90s to high ground, wood-edit shotgun close-up — 200 HEADSHOT, #1 VICTORY ROYALE crown card, default dance) | Geno, on the island (Tilted Towers skyline, Battle Bus overhead, the storm wall closing in; AR, rocket, eliminated into cubes) | royale |
+| `pkm` | Claude in Ash's cap on a GBA battle screen (FIGHT menu, HP/EXP boxes; Quick Attack, Shadow Ball — SUPER EFFECTIVE close-up, levels up, YOU WIN!, Poke Ball GO! close-up) | Mewtwo on the far platform (Psychic warps the screen, faints, a wild one appears) | psychic |
+| `snk` | Survey Corps scout (ODM gear) | a grinning Titan in Trost (red roofs, church spire, the Wall; grin + crossed-blades close-ups, SHINZOU WO SASAGEYO!, nape slash, steam) | survey |
+| `nrt` | Naruto in the Hidden Leaf under the Hokage faces (hand-seal close-up, shadow clones, leaps the Great Fireball, Rasengan close-up) | Madara (gunbai swats the clones, Sharingan close-up, Katon) | shadowclone |
+| `naruto-edo` | Naruto on the Fourth Great Ninja War battlefield (clones, Rasengan, Sage Mode close-up, Rasenshuriken wind dome) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up, paper-dust regeneration) | edotensei |
 | `naruto-zabuza` | Kakashi (Sharingan close-up, copied jutsu) | Zabuza on the lake (Water Dragons clash, Great Waterfall) | waterdragon |
-| `dbz-buu` | Claude, then Clodex (fusion dance with Codex) | Kid Buu (regenerates) | fusion |
-| `jjk-sukuna` | Gojo-style sorcerer (Unlimited Void, eye close-up, Black Flash) | Sukuna (Malevolent Shrine) | domain |
+| `dbz-buu` | Claude, then Clodex (fusion dance with Codex, FU-SION-HA! close-up, goes blue for the Final Kamehameha) on the Supreme Kai's world | Kid Buu (grin close-up, planet-destroying ball, regenerates) | fusion |
+| `jjk-sukuna` | Gojo in ruined Shibuya under a red moon (hand-sign close-up with one Six Eye, Unlimited Void swallows the shrine, four Black Flashes) | Sukuna (grin close-up with four eyes, Malevolent Shrine, Dismantle + Cleave storm) | domain |
 | `jjk-toji` | Toji (Inventory curse, Inverted Spear of Heaven, SORCERER KILLER close-up) | young Gojo: the spear shatters his Infinity | sakahoko |
 | `jjk-maki` | Maki, awakened (glasses crack close-up, afterimage cuts) | the Zen'in clan, then her father Ogi | zenin |
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
 | `fma` | Colonel Mustang (glove snap close-up, flame alchemy) | Envy (disguised as Claude, burned to his true form) | flame |
-| `dbz-jiren` | Claude in Ultra Instinct (silver hair, afterimages) | Jiren (instant hits from behind) | ultra |
+| `dbz-jiren` | Claude in Ultra Instinct (silver-eyes close-up, dodges everything, instant hits from everywhere) at the Tournament of Power | Jiren (red glare close-up, knocked off the arena) | ultra |
 | `mk` | Claudepion (Scorpion: spear, Toasty fatality) | Sub-Zero, with the arcade HUD | fatality |
 | `apex` | a Legend with jump pack and grapple (kill-leader banner close-up) | Wraith (Into the Void, Dimensional Rift) | champion |
 | `cs` | Counter-Terrorist (AWP scope close-up, defuse) | Phoenix Terrorist, with the 1.6 HUD | defuse |
@@ -79,6 +80,18 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `bb` | Heisenberg (SAY MY NAME: CLAUDENBERG) | Tuco | saymyname |
 | `snk-colosal` | Survey Corps scout (ODM gear) | the Colossal Titan behind the Wall (eye close-up) | colossal |
 | `jojo` | Jotaro-style Stand user (ORA ORA barrage, moves in stopped time) | DIO and The World (ZA WARUDO, clock close-up) | theworld |
+| `etendo` | Claude the brand designer | the old Etendo logo (grabbed, spun, morphed into the new star in a close-up — NEW ETENDO!) | rebrand |
+| `sl` | Sung Jinwoo, the Shadow Monarch (twin daggers, ARISE! close-up, shadow army) | Igris the Blood-Red Knight, extracted as a shadow (System windows) | arise |
+| `memes` | Claude on a vaporwave stage (hug, uppercut, blast, deal-with-it shades) | a meme boss rush: Forever Alone, Tung Tung Tung Sahur, then the FINAL BOSS "6 7" (close-up, weighing-gesture attacks) | bossrush |
+| `ben10` | Ben Tennyson with the Omnitrix (HERO TIME close-up, Heatblast, Four Arms, XLR8, the watch times out, Diamondhead) | Vilgax in the desert at night | hero |
+| `sonic` | Claude as a blue hedgehog in Green Hill (rings, spin dash, loop-de-loop, ring loss, 7 Chaos Emeralds, SUPER CLAUDE) | Dr. Eggman in the Egg Mobile with the wrecking ball (GOT THROUGH ACT 1 tally) | greenhill |
+| `tetris` | Claude in an ushanka (punches and kicks the falling pieces into place, FINALLY! I-piece close-up, TETRIS!) | the falling tetrominoes on an NES/Game Boy playfield in front of the Kremlin (4-line clear, Game Boy rocket ending) | tetris |
+| `clippy` | Claude on a Windows 98 desktop (clicks NO, punches error dialogs, END TASK, bends him straight into the Recycle Bin) | Clippy in a DEATH MATCH (NEED HELP? spam, grows huge, turns into a bicycle/bell/question mark, crazy-eyes close-up) | deathmatch |
+| `predator` | an 80s jungle commando (laser triple-dot, thermal-vision close-up, mud camouflage, log trap) | the Predator (decloaks, unmasks with a RAAARGH!, wrist self-destruct and mushroom blast) | hunt |
+| `alien` | a warrant-officer survivor with a pulse rifle, then in the yellow power loader (motion-tracker and inner-jaw close-ups, GET AWAY FROM HER!) | the Xenomorph (acid blood that eats the deck, blown out of the airlock) | nostromo |
+| `avp` | Claude caught between them in the Antarctic pyramid (WHOEVER WINS... WE LOSE., clan-mark close-up, alien-head shield + spear, back-to-back close-up) | a Xenomorph, the Predator and the Queen (buried under the collapsing pyramid) | pyramid |
+| `gta` | CJ on Grove Street (AH SHIT HERE WE GO AGAIN..., wanted stars, handbrake donut, MISSION PASSED!) | a low-poly 3D police cruiser (flat-shaded software renderer: chase, barrel roll, explosion) | grove |
+| `simpsons` | a Sector 7G worker (D'OH!, stomps the uranium rod back in, MMM... ROSQUILLAS) | Mr. Burns and his hounds in the nuclear plant (EXCELENTE... close-up) | meltdown |
 | `meshi` | Laios (sword, I WONDER HOW IT TASTES... close-up) | the Red Dragon, then Senshi cooks it: DRAGON STEW | dragonstew |
 | `terraria` | the Terrarian: Terra Blade beams, or a staff + whip with a Stardust Dragon | the Eye of Cthulhu (servants, phase 2 close-up, coins) | melee, summoner |
 
@@ -106,6 +119,31 @@ mkdir -p ~/.config/notch-fight && cp config.example.json ~/.config/notch-fight/c
 
 Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name is logged
 (with the list of valid names) and ignored. Clip names = folder names under `build/clips/`.
+
+## Choosing clips
+
+```bash
+./clips.sh                         # checklist (in a real terminal): space toggles, m mode, enter saves
+./clips.sh list                    # on/off per clip
+./clips.sh disable jjk-sukuna       # a clip (<theme>__<clip>) or a whole theme
+./clips.sh enable sw__father
+./clips.sh mode disabled           # what happens to NEW clips; the current selection is kept
+```
+
+Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers the checklist too):
+
+| `newClips` | List | New clips |
+|---|---|---|
+| `"enabled"` (default) | `"disabled": [...]`: everything plays except these | play until you turn them off |
+| `"disabled"` | `"enabled": [...]`: only these play | ignored until you turn them on |
+
+- Clips forced with `first` (or `--first`) still play once at launch, even when turned off. The
+  checklist shows them; `f` clears the list (`./build.sh` puts each new clip there).
+- Enabling a theme in `"disabled"` mode enables the clips it has now, not ones added later.
+- With nothing selected the panel does not show at all. Changes apply from the next launch.
+- `NOTCH_FIGHT_CONFIG=/path/config.json` points the app and `clips.sh` at another config (tests and
+  dev only: the app sees it when its binary is run directly, not through `open`).
+- Tests: `python3 -m unittest discover tests` (the app tests need `./build.sh` and show the panel briefly).
 
 ## Panel shape
 

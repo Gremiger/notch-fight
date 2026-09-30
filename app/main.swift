@@ -16,6 +16,7 @@ final class App: NSObject, NSApplicationDelegate {
     // would delay the drop by seconds); a clip's frames are read when it is queued, and a background
     // pass warms the cache for the clips.
     var clipDirs: [String: URL] = [:]               // "<theme>__<clip>" -> frames directory
+    var allowed: [String] = []                      // the clips in the rotation (config selection)
     var transDirs: [String: URL] = [:]              // "<from>__<to>" -> frames directory
     var cache: [String: [CGImage]] = [:]            // "c:<clip>" / "t:<transition>" -> frames
     var queue: [[CGImage]] = []
@@ -42,9 +43,13 @@ final class App: NSObject, NSApplicationDelegate {
     var bodyW: CGFloat { notchW * scale }   // panel body (the art area); the notch-wide stem rises into the notch
     var bodyH: CGFloat { clipH * scale }
 
-    // ~/.config/notch-fight/config.json, read once. Keys: "first", "fillet", "stretch", "widthTweak".
+    // ~/.config/notch-fight/config.json, read once. Keys: "first", "fillet", "stretch", "scale", "widthTweak",
+    // "newClips"/"enabled"/"disabled" (which clips play; see activeClips). NOTCH_FIGHT_CONFIG overrides the
+    // path (tests/dev: only seen when the binary is run directly, `open` does not pass the environment).
     static let config: [String: Any] = {
-        let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
+        let env = ProcessInfo.processInfo.environment["NOTCH_FIGHT_CONFIG"] ?? ""
+        let url = env.isEmpty ? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/config.json")
+                              : URL(fileURLWithPath: env)
         guard let data = try? Data(contentsOf: url),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [:] }
         return json
@@ -77,8 +82,9 @@ final class App: NSObject, NSApplicationDelegate {
         let res = Bundle.main.resourceURL!
         clipDirs = Self.subdirs(res.appendingPathComponent("clips"))
         transDirs = Self.subdirs(res.appendingPathComponent("transitions"))
-        remaining = Array(clipDirs.keys)
-        // Forced clips play first, in order (and count as played for this round).
+        allowed = activeClips()
+        remaining = allowed
+        // Forced clips play first, in order (and count as played for this round) — even when not active.
         for first in forcedFirst() {
             let name = clipDirs[first] != nil ? first
                 : (remaining.filter { themeOf($0) == first }.randomElement() ?? clipDirs.keys.filter { themeOf($0) == first }.randomElement())
@@ -86,6 +92,9 @@ final class App: NSObject, NSApplicationDelegate {
                 NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipDirs.keys.sorted())"); continue
             }
             enqueue(name)
+        }
+        if allowed.isEmpty && queue.isEmpty {
+            NSLog("NotchFight: no clips active (see ./clips.sh); not showing the panel"); NSApp.terminate(nil); return
         }
         win = NotchPanel(contentRect: rect(height: 0), styleMask: [.borderless, .nonactivatingPanel],
                          backing: .buffered, defer: false)
@@ -218,12 +227,25 @@ final class App: NSObject, NSApplicationDelegate {
         }
     }
 
+    // The clips in the rotation. "newClips": "enabled" (default): all except "disabled", so new clips play;
+    // "disabled": only "enabled", so new clips are ignored until added. Unknown names are logged and skipped.
+    func activeClips() -> [String] {
+        let cfg = Self.config, all = Array(clipDirs.keys)
+        let optIn = (cfg["newClips"] as? String) == "disabled"
+        let list = (cfg[optIn ? "enabled" : "disabled"] as? [String]) ?? []
+        for n in list where clipDirs[n] == nil { NSLog("NotchFight: unknown clip '\(n)' in \"\(optIn ? "enabled" : "disabled")\"") }
+        let active = optIn ? all.filter { list.contains($0) } : all.filter { !list.contains($0) }
+        NSLog("NotchFight: \(active.count)/\(all.count) clips active (new clips \(optIn ? "disabled" : "enabled"))")
+        return active
+    }
+
     func themeOf(_ name: String) -> String { String(name.split(separator: "_", maxSplits: 1).first ?? "") }
 
     // Stay in the current theme for up to maxPerVisit clips, then move to another theme;
     // always drawing from the clips not yet played this round.
     func pickNext() -> String? {
-        if remaining.isEmpty { remaining = Array(clipDirs.keys) }       // new round
+        if remaining.isEmpty { remaining = allowed }                    // new round
+        if remaining.isEmpty { return nil }
         var pool = remaining.filter { $0 != lastPlayed }
         if pool.isEmpty { pool = remaining }
         let same = pool.filter { themeOf($0) == theme }
@@ -245,7 +267,7 @@ final class App: NSObject, NSApplicationDelegate {
     func tick() {
         if idx >= current.count {
             if queue.isEmpty, let next = pickNext() { enqueue(next) }
-            guard !queue.isEmpty else { return }
+            guard !queue.isEmpty else { close(); return }             // only forced clips, and they are done
             current = queue.removeFirst(); idx = 0
         }
         art.contents = current[idx]

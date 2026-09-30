@@ -47,10 +47,18 @@ fi
 echo "Registering Claude Code hooks"
 python3 "$ROOT/scripts/hooks.py" install "$ROOT/build/NotchFight.app"
 
+# Which clips play: offer the checklist when a person is at the terminal (never when scripted).
+if [[ -t 0 && -t 1 ]]; then
+  read -r -p "Choose which clips to show now? [y/N] " ans
+  [[ "$ans" =~ ^[yY] ]] && "$ROOT/clips.sh"
+else
+  echo "  - to choose which clips play: ./clips.sh (in a terminal)"
+fi
+
 cat <<MSG
 
 Done. Send any prompt to Claude Code and the fight drops out of the notch;
 it retracts when Claude finishes. Click it to dismiss.
 If it does not appear in an already-open Claude Code session, open /hooks once (reloads config).
-Uninstall: ./uninstall.sh
+Choose clips: ./clips.sh   Uninstall: ./uninstall.sh
 MSG
