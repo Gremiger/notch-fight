@@ -14,6 +14,7 @@ Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Too
 git clone <this repo> && cd notch-fight
 ./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
 ./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
+./clips.sh          # choose which clips play (see "Choosing clips")
 # several Claude profiles? NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh (same for uninstall)
 ```
 
@@ -115,6 +116,34 @@ mkdir -p ~/.config/notch-fight && cp config.example.json ~/.config/notch-fight/c
 Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name is logged
 (with the list of valid names) and ignored. Clip names = folder names under `build/clips/`.
 
+## Choosing clips
+
+```bash
+./clips.sh                         # checklist (in a real terminal): space toggles, m mode, enter saves
+./clips.sh list                    # on/off per clip
+./clips.sh disable jjk-sukuna       # a clip (<theme>__<clip>) or a whole theme
+./clips.sh enable sw__father
+./clips.sh mode disabled           # what happens to NEW clips; the current selection is kept
+```
+
+Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers the checklist too):
+
+| `newClips` | List | New clips |
+|---|---|---|
+| `"enabled"` (default) | `"disabled": [...]`: everything plays except these | play until you turn them off |
+| `"disabled"` | `"enabled": [...]`: only these play | ignored until you turn them on |
+
+- Clips forced with `first` (or `--first`) still play once at launch, even when turned off. The
+  checklist shows them; `f` clears the list (`./build.sh` puts each new clip there).
+- Enabling a theme in `"disabled"` mode enables the clips it has now, not ones added later.
+- Some clips ship **off by default** (niche ones, see "Adding a clip"): they are listed as
+  `(off by default)` and only play once you turn them on. In `"enabled"` mode those go in an
+  `"enabled"` list next to `"disabled"`.
+- With nothing selected the panel does not show at all. Changes apply from the next launch.
+- `NOTCH_FIGHT_CONFIG=/path/config.json` points the app and `clips.sh` at another config (tests and
+  dev only: the app sees it when its binary is run directly, not through `open`).
+- Tests: `python3 -m unittest discover tests` (the app tests need `./build.sh` and show the panel briefly).
+
 ## Panel shape
 
 The panel takes its size and position from the real notch of each Mac. Two looks can be tuned in
@@ -174,3 +203,8 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
 - **New theme:** create `src/themes/<id>.py` with `from engine import *`, `THEME = '<id>'`,
   `register_bg(THEME, ...)`, its sprites/effects (`@fx('name')`) and `CLIPS`. Nothing else to
   touch: themes are auto-discovered and transitions to/from it are generated.
+- **Off by default:** for a clip most people may not want (a football club, a brand), ship it off so
+  users opt in: `DEFAULT_OFF = True` in the theme file turns off all its clips, and
+  `clip('<name>', <frames>, clip_<name>, off=True)` (or `off=False` to override the theme) does it per clip.
+  `build.py` marks them in the build (`build/clips/<clip>/.default-off`); the app and `./clips.sh` read it.
+  `./build.sh` still puts a new clip first, so you see it while you make it.
