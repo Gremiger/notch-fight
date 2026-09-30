@@ -62,6 +62,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
 | `fma` | Colonel Mustang (glove snap close-up, flame alchemy) | Envy (disguised as Claude, burned to his true form) | flame |
 | `dbz-jiren` | Claude in Ultra Instinct (silver-eyes close-up, dodges everything, instant hits from everywhere) at the Tournament of Power | Jiren (red glare close-up, knocked off the arena) | ultra |
+| `dbz-freezer` | Claude as Goku with Codex as Krillin on planet Namek (Codex lifted and blown into light, KRILLIN...! CODEEEEEX!!! rage close-up, storm and lightning, first SUPER SAIYAN close-up, Kamehameha) | Freezer, final form (smug close-up closing his hand, Death Beams, Death Ball; Porunga revives Codex) | namek |
 | `mk` | Claudepion (Scorpion: spear, Toasty fatality) | Sub-Zero, with the arcade HUD | fatality |
 | `apex` | a Legend with jump pack and grapple (kill-leader banner close-up) | Wraith (Into the Void, Dimensional Rift) | champion |
 | `cs` | Counter-Terrorist (AWP scope close-up, defuse) | Phoenix Terrorist, with the 1.6 HUD | defuse |
