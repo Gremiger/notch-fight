@@ -10,11 +10,12 @@ if __name__=='__main__':
     shutil.rmtree('clips',ignore_errors=True); shutil.rmtree('transitions',ignore_errors=True)
     first={}
     for theme,items in THEMES.items():
-        for name,n,frame_fn in items:
+        for name,n,frame_fn,off in items:
             random.seed(zlib.crc32(name.encode()))
             frames=[frame_fn(f) for f in range(n)]
             dd=f'clips/{theme}__{name}'; os.makedirs(dd)
             for i,fr in enumerate(frames): fr.save(f'{dd}/{i:03d}.png')
+            if off: open(f'{dd}/.default-off','w').close()   # shipped off: ./clips.sh and the app read this
             first.setdefault(theme,frames[0])
             big=[fr.resize((W*2,H*2),Image.NEAREST) for fr in frames]
             sh=Image.new('RGB',(W*4,H*12)); pick=[int(i*(n-1)/11) for i in range(12)]

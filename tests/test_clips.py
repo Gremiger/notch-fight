@@ -121,5 +121,51 @@ class Checklist(unittest.TestCase):
         self.assertEqual(up['first'], [])
 
 
+class DefaultOff(unittest.TestCase):
+    """Clips the author ships off: they only play once turned on (or when new clips are ignored anyway)."""
+    OFF = {'terraria__summoner'}
+
+    def test_a_default_off_clip_does_not_play_in_enabled_mode(self):
+        self.assertNotIn('terraria__summoner', clips.active({}, CLIPS, self.OFF))
+
+    def test_turning_it_on_in_enabled_mode_uses_the_enabled_list(self):
+        cfg = {'newClips': 'enabled', 'enabled': ['terraria__summoner']}
+        self.assertIn('terraria__summoner', clips.active(cfg, CLIPS, self.OFF))
+
+    def test_disabled_mode_only_looks_at_the_enabled_list(self):
+        cfg = {'newClips': 'disabled', 'enabled': ['terraria__summoner']}
+        self.assertEqual(clips.active(cfg, CLIPS, self.OFF), {'terraria__summoner'})
+
+    def test_enabled_mode_writes_both_lists_when_needed(self):
+        on = set(CLIPS) - {'dbz__beam'}                      # summoner turned on, beam turned off
+        up, drop = clips.updates({}, CLIPS, on, 'enabled', self.OFF)
+        self.assertEqual(up, {'newClips': 'enabled', 'disabled': ['dbz__beam'], 'enabled': ['terraria__summoner']})
+        self.assertEqual(drop, set())
+
+    def test_enabled_mode_drops_an_empty_enabled_list(self):
+        up, drop = clips.updates({}, CLIPS, set(CLIPS) - self.OFF, 'enabled', self.OFF)
+        self.assertEqual(up, {'newClips': 'enabled', 'disabled': []})
+        self.assertEqual(drop, {'enabled'})
+
+    def test_mode_switch_keeps_the_selection_with_default_off_clips(self):
+        cfg = {'newClips': 'enabled', 'disabled': ['dbz__beam'], 'enabled': ['terraria__summoner']}
+        before = clips.active(cfg, CLIPS, self.OFF)
+        for mode in ('disabled', 'enabled'):
+            cfg, _ = clips.updates(cfg, CLIPS, clips.active(cfg, CLIPS, self.OFF), mode, self.OFF)
+            self.assertEqual(clips.active(cfg, CLIPS, self.OFF), before)
+
+    def test_markers_in_the_build_are_read(self):
+        d = tempfile.mkdtemp()
+        for n in ('dbz__beam', 'cai__clasico'): os.makedirs(os.path.join(d, n))
+        open(os.path.join(d, 'cai__clasico', '.default-off'), 'w').close()
+        self.assertEqual(clips.default_off(d), {'cai__clasico'})
+
+    def test_the_checklist_starts_with_default_off_clips_unticked_and_labels_them(self):
+        m = clips.Checklist(CLIPS, {}, self.OFF)
+        self.assertNotIn('terraria__summoner', m.on)
+        self.assertIn('off by default', m.label('terraria__summoner'))
+        self.assertNotIn('off by default', m.label('dbz__beam'))
+
+
 if __name__ == '__main__':
     unittest.main()

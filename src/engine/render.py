@@ -64,6 +64,8 @@ def callout(s,txt,y=2,c=(255,226,90)):
     """Centered shout at the top of the panel (technique / jutsu names)."""
     s['fx'].append(('dmg',txt,W//2-len(txt)*2,y,c))
 
-def clip(name, n, fn):
-    """Declare a clip: `fn(f)` returns a scene; frames are render(fn(f), f)."""
-    return (name, n, lambda f: render(fn(f), f))
+def clip(name, n, fn, off=None):
+    """Declare a clip: `fn(f)` returns a scene; frames are render(fn(f), f).
+    off=True ships it off by default (users turn it on with ./clips.sh); off=False keeps it on in a
+    theme with DEFAULT_OFF = True; None follows the theme."""
+    return (name, n, lambda f: render(fn(f), f), {} if off is None else {'off': off})

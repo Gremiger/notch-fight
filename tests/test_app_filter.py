@@ -54,5 +54,32 @@ class AppFilter(unittest.TestCase):
         log, _ = self.launch({'newClips': 'enabled', 'disabled': ['nope__clip']})
         self.assertIn("unknown clip 'nope__clip'", log)
 
+@unittest.skipUnless(platform.system() == 'Darwin' and os.path.exists(BIN), 'needs macOS and ./build.sh')
+class AppDefaultOff(unittest.TestCase):
+    """A clip whose build folder has a .default-off marker stays out of the rotation until enabled."""
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()
+        app = os.path.join(cls.tmp, 'NotchFight.app')
+        subprocess.run(['cp', '-cR', os.path.join(ROOT, 'build', 'NotchFight.app'), app], check=True)  # APFS clone: fast
+        cls.marked = CLIPS[0]
+        open(os.path.join(app, 'Contents', 'Resources', 'clips', cls.marked, '.default-off'), 'w').close()
+        cls.bin = os.path.join(app, 'Contents', 'MacOS', 'NotchFight')
+
+    def launch(self, cfg):
+        global BIN
+        saved, BIN = BIN, self.bin
+        try: return AppFilter.launch(self, cfg)
+        finally: BIN = saved
+
+    def test_a_default_off_clip_is_not_active(self):
+        log, _ = self.launch({})
+        self.assertIn(f'{len(CLIPS) - 1}/{len(CLIPS)} clips active', log)
+
+    def test_turning_it_on_in_enabled_mode(self):
+        log, _ = self.launch({'newClips': 'enabled', 'enabled': [self.marked]})
+        self.assertIn(f'{len(CLIPS)}/{len(CLIPS)} clips active', log)
+
+
 if __name__ == '__main__':
     unittest.main()

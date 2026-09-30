@@ -228,14 +228,19 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     // The clips in the rotation. "newClips": "enabled" (default): all except "disabled", so new clips play;
-    // "disabled": only "enabled", so new clips are ignored until added. Unknown names are logged and skipped.
+    // "disabled": only "enabled", so new clips are ignored until added. Clips shipped off by default (a
+    // .default-off marker from build.py) only play when listed in "enabled". Unknown names are logged.
     func activeClips() -> [String] {
         let cfg = Self.config, all = Array(clipDirs.keys)
         let optIn = (cfg["newClips"] as? String) == "disabled"
-        let list = (cfg[optIn ? "enabled" : "disabled"] as? [String]) ?? []
-        for n in list where clipDirs[n] == nil { NSLog("NotchFight: unknown clip '\(n)' in \"\(optIn ? "enabled" : "disabled")\"") }
-        let active = optIn ? all.filter { list.contains($0) } : all.filter { !list.contains($0) }
-        NSLog("NotchFight: \(active.count)/\(all.count) clips active (new clips \(optIn ? "disabled" : "enabled"))")
+        let enabled = Set((cfg["enabled"] as? [String]) ?? []), disabled = Set((cfg["disabled"] as? [String]) ?? [])
+        for (key, list) in [("enabled", enabled), ("disabled", optIn ? [] : disabled)] {
+            for n in list.sorted() where clipDirs[n] == nil { NSLog("NotchFight: unknown clip '\(n)' in \"\(key)\"") }
+        }
+        let shippedOff = Set(all.filter { FileManager.default.fileExists(atPath: clipDirs[$0]!.appendingPathComponent(".default-off").path) })
+        let active = optIn ? all.filter { enabled.contains($0) }
+                           : all.filter { shippedOff.contains($0) ? enabled.contains($0) : !disabled.contains($0) }
+        NSLog("NotchFight: \(active.count)/\(all.count) clips active (new clips \(optIn ? "disabled" : "enabled"), \(shippedOff.count) off by default)")
         return active
     }
 

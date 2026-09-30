@@ -2,6 +2,8 @@
 
     {"newClips": "enabled",  "disabled": [...]}   everything plays except these; new clips play
     {"newClips": "disabled", "enabled":  [...]}   only these play; new clips are ignored
+Clips shipped off by default (a theme's DEFAULT_OFF, clip(..., off=True)) only play once turned on:
+in "enabled" mode they go in an "enabled" list next to "disabled".
 
     ./clips.sh                     checklist (needs a real terminal)
     ./clips.sh list                on/off per clip, the mode, the forced first clips
@@ -37,20 +39,31 @@ def load(path):
 
 def mode_of(cfg): return 'disabled' if cfg.get('newClips') == 'disabled' else 'enabled'
 
-def active(cfg, clips):
-    """The clips that play in the rotation."""
-    if mode_of(cfg) == 'disabled': return set(clips) & set(cfg.get('enabled', []))
-    return set(clips) - set(cfg.get('disabled', []))
+def default_off(clips_dir):
+    """Clips shipped off by default (DEFAULT_OFF / clip(..., off=True)): build.py leaves a marker."""
+    if not os.path.isdir(clips_dir): return set()
+    return {n for n in os.listdir(clips_dir) if os.path.exists(os.path.join(clips_dir, n, '.default-off'))}
 
-def updates(cfg, clips, on, mode):
-    """Config keys to write for this selection (and the key to drop). Names that are not current
-    clips are kept when the mode does not change (a rename or a partial build loses nothing)."""
+def active(cfg, clips, off=frozenset()):
+    """The clips that play in the rotation. `off`: clips shipped off by default, which in "enabled"
+    mode only play when listed in "enabled"."""
+    enabled = set(cfg.get('enabled', []))
+    if mode_of(cfg) == 'disabled': return set(clips) & enabled
+    return (set(clips) - set(cfg.get('disabled', [])) - set(off)) | (set(clips) & set(off) & enabled)
+
+def updates(cfg, clips, on, mode, off=frozenset()):
+    """Config keys to write for this selection (and the keys to drop). "enabled" mode writes the
+    shipped-on clips turned off ("disabled") and the shipped-off clips turned on ("enabled", dropped
+    when empty). Names that are not current clips are kept when the mode does not change (a rename
+    or a partial build loses nothing)."""
     same = mode_of(cfg) == mode
+    keep = lambda key: [n for n in cfg.get(key, []) if n not in clips] if same else []
     if mode == 'enabled':
-        kept = [n for n in cfg.get('disabled', []) if n not in clips] if same else []
-        return {'newClips': 'enabled', 'disabled': sorted(set(clips) - set(on)) + kept}, {'enabled'}
-    kept = [n for n in cfg.get('enabled', []) if n not in clips] if same else []
-    return {'newClips': 'disabled', 'enabled': sorted(set(on) & set(clips)) + kept}, {'disabled'}
+        up = {'newClips': 'enabled', 'disabled': sorted(set(clips) - set(on) - set(off)) + keep('disabled')}
+        turned_on = sorted(set(on) & set(off) & set(clips)) + keep('enabled')
+        if turned_on: up['enabled'] = turned_on; return up, set()
+        return up, {'enabled'}
+    return {'newClips': 'disabled', 'enabled': sorted(set(on) & set(clips)) + keep('enabled')}, {'disabled'}
 
 def expand(names, clips):
     """Clip or theme names -> clip names; unknown names fail with the closest matches."""
@@ -77,9 +90,9 @@ def save(path, up, drop):
 
 class Checklist:
     """The checklist's state: which clips are on, the mode, the forced first clips."""
-    def __init__(self, clips, cfg):
-        self.clips, self.mode = clips, mode_of(cfg)
-        self.on = active(cfg, clips)
+    def __init__(self, clips, cfg, off=frozenset()):
+        self.clips, self.mode, self.off = clips, mode_of(cfg), set(off)
+        self.on = active(cfg, clips, self.off)
         self.first = list(cfg.get('first', [])) if isinstance(cfg.get('first'), list) else \
                      ([cfg['first']] if cfg.get('first') else [])
         self.first_cleared = False
@@ -104,21 +117,24 @@ class Checklist:
         if self.mark(name) == 'x': self.on -= set(m)
         else: self.on |= set(m)
 
+    def label(self, name):
+        return name + ('  (off by default)' if name in self.off else '')
+
     def set_all(self, value): self.on = set(self.clips) if value else set()
     def switch_mode(self): self.mode = 'disabled' if self.mode == 'enabled' else 'enabled'
     def clear_first(self): self.first, self.first_cleared = [], True
 
     def result(self, cfg):
-        up, drop = updates(cfg, self.clips, self.on, self.mode)
+        up, drop = updates(cfg, self.clips, self.on, self.mode, self.off)
         if self.first_cleared: up['first'] = []
         return up, drop
 
 
 HELP = "↑↓/jk move · space toggle · a all · n none · m new-clips mode · f clear forced · enter save · q quit"
 
-def run_checklist(clips, path):
+def run_checklist(clips, path, off=frozenset()):
     import curses
-    cfg = load(path); m = Checklist(clips, cfg); rows = m.rows()
+    cfg = load(path); m = Checklist(clips, cfg, off); rows = m.rows()
 
     def ui(scr):
         curses.curs_set(0); pos, top, warn = 0, 0, ''
@@ -134,7 +150,7 @@ def run_checklist(clips, path):
             if pos >= top + body: top = pos - body + 1
             for i, (kind, name) in enumerate(rows[top:top + body]):
                 indent = '' if kind == 'theme' else '    '
-                line = f"{'>' if top + i == pos else ' '} {indent}[{m.mark(name)}] {name}"
+                line = f"{'>' if top + i == pos else ' '} {indent}[{m.mark(name)}] {m.label(name) if kind == 'clip' else name}"
                 scr.addnstr(len(head) + 1 + i, 0, line, w - 1, curses.A_REVERSE if top + i == pos else 0)
             if warn: scr.addnstr(h - 1, 0, warn, w - 1, curses.A_BOLD)
             k = scr.getch(); warn = ''
@@ -157,33 +173,33 @@ def run_checklist(clips, path):
         save(path, *m.result(cfg)); print(f'saved {path}: {len(m.on)}/{len(clips)} clips on, new clips {m.mode}')
     else: print('not saved')
 
-def cmd_list(clips, cfg):
-    on = active(cfg, clips)
+def cmd_list(clips, cfg, off=frozenset()):
+    on = active(cfg, clips, off)
     print(f"new clips: {mode_of(cfg)} ({'they play' if mode_of(cfg) == 'enabled' else 'ignored until enabled'})")
-    for c in clips: print(f"  {'on ' if c in on else 'off'}  {c}")
+    for c in clips: print(f"  {'on ' if c in on else 'off'}  {c}" + ('  (off by default)' if c in off else ''))
     first = cfg.get('first')
     if first: print(f"forced first (plays once at every launch): {first}")
 
 def main(argv):
     try:
         clips = clip_names(CLIPS_DIR)
-        cfg = load(CONFIG)
+        cfg = load(CONFIG); off = default_off(CLIPS_DIR)
         if not argv:
             if not (sys.stdin.isatty() and sys.stdout.isatty()):
                 print('The checklist needs a real terminal (not `!` inside Claude Code). Open one and run ./clips.sh,')
                 print('or use the commands:'); print(__doc__.split('\n\n')[2]); return 1
             try: import curses  # noqa: F401
             except ImportError: print('this python3 has no curses; use the commands:'); print(__doc__); return 1
-            run_checklist(clips, CONFIG); return 0
+            run_checklist(clips, CONFIG, off); return 0
         cmd, args = argv[0], argv[1:]
-        if cmd == 'list': cmd_list(clips, cfg); return 0
+        if cmd == 'list': cmd_list(clips, cfg, off); return 0
         if cmd in ('enable', 'disable') and args:
-            on = active(cfg, clips); names = set(expand(args, clips))
+            on = active(cfg, clips, off); names = set(expand(args, clips))
             on = on | names if cmd == 'enable' else on - names
-            save(CONFIG, *updates(cfg, clips, on, mode_of(cfg)))
+            save(CONFIG, *updates(cfg, clips, on, mode_of(cfg), off))
             print(f"{cmd}d: {', '.join(sorted(names))}"); return 0
         if cmd == 'mode' and len(args) == 1 and args[0] in MODES:
-            save(CONFIG, *updates(cfg, clips, active(cfg, clips), args[0]))
+            save(CONFIG, *updates(cfg, clips, active(cfg, clips, off), args[0], off))
             print(f'new clips: {args[0]} (the current selection is kept)'); return 0
         print(__doc__); return 2
     except ClipsError as e:
