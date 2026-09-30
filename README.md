@@ -104,7 +104,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `ghibli-totoro` | Satsuki at the bus stop in the rain, no fight (fireflies, the lamp, lends Totoro the spare umbrella, grin close-up, the Catbus's headlight eyes, a bundle of acorns) | Totoro and the Catbus | busstop |
 | `phm` | Ryland Grace in the Hail Mary's lab, no fight: `rocky` (the Blip-A, the xenonite tunnel, chords that become AMAZE AMAZE AMAZE, FIST MY BUMP close-up) and `astrophage` (the star dims, the bench, Taumoeba under the microscope, IT WORKS!); off by default | Rocky, a friend; Astrophage, the problem | rocky, astrophage |
 | `arg` | the albiceleste number 10 in the 2022 World Cup final (Dibu's leg on Kolo Muani at 123 in close-up, PENALES with the TV scoreboard, GOL, Montiel's last penalty, CAMPEONES DEL MUNDO, the Cup and the third star) | France | final |
-| `arg-86` | Diego at the Azteca, 1986 (sub-theme of `arg`): `mano` (up with Shilton, the fist in close-up, LA MANO DE DIOS) and `siglo` (from his own half past four Englishmen and the keeper; BARRILETE COSMICO, GOLAZO) | England | mano, siglo |
+| `arg-86` | Diego at the Azteca, 1986 (sub-theme of `arg`), with the TV scoreboard: `mano` (the one-two with Valdano, Hodge's loop, up against the taller Shilton, the fist in close-up, the English round the referee, LA MANO DE DIOS) and `siglo` (the spin in his own half, the camera following his run past a slide, two lunges and the keeper, Butcher from behind; TA TA TA TA, GOLAZO, BARRILETE COSMICO, DE QUE PLANETA VINISTE) | England | mano, siglo |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
