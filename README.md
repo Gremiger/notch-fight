@@ -99,6 +99,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `terraria` | the Terrarian: Terra Blade beams, or a staff + whip with a Stardust Dragon | the Eye of Cthulhu (servants, phase 2 close-up, coins) | melee, summoner |
 | `mist` | Vin, Mistborn (mistcloak, Steel Pushes on coins, ATIUM close-up with her future shadows) | a Steel Inquisitor in Luthadel's mists and ash (she Pulls the spike from his back); off by default | inquisitor |
 | `deadpool` | Deadpool (katanas, the arm pops off and a tiny one grows back, talks to us in yellow boxes and knocks on the notch, MAXIMUM EFFORT close-up) | Wolverine in the Void (SNIKT, takes the chimichanga: BUB.) | bub |
+| `spidey` | Miles Morales, on twos with magenta/cyan rim light (camouflage split into comic panels, A LEAP OF FAITH close-up, the city turns upside down with streaking lights, THWIP, webs, venom blast ZZAKT!) | the Prowler in Brooklyn (webbed to a wall, police lights) | leap |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
