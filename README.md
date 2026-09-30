@@ -145,7 +145,12 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
 - With nothing selected the panel does not show at all. Changes apply from the next launch.
 - `NOTCH_FIGHT_CONFIG=/path/config.json` points the app and `clips.sh` at another config (tests and
   dev only: the app sees it when its binary is run directly, not through `open`).
-- Tests: `python3 -m unittest discover tests` (the app tests need `./build.sh` and show the panel briefly).
+- To check what would play without opening the panel:
+  `build/NotchFight.app/Contents/MacOS/NotchFight --print-selection` (the active count, forced clips, and
+  whether the panel would show).
+- Tests: `python3 -m unittest discover tests` (the app tests need `./build.sh`). They use `--print-selection`,
+  so no panel shows and the focused window keeps focus. `NOTCH_FIGHT_TEST_PANEL=1` adds real launches
+  (in the background with `open -g`: the panel shows, focus stays).
 
 ## Panel shape
 

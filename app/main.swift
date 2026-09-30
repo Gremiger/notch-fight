@@ -79,20 +79,7 @@ final class App: NSObject, NSApplicationDelegate {
             notchH = screen.safeAreaInsets.top
             notchW += CGFloat(Self.cfgNumber("widthTweak") ?? Double(Self.notchWidthTweak[Self.hwModel] ?? 0))
         }
-        let res = Bundle.main.resourceURL!
-        clipDirs = Self.subdirs(res.appendingPathComponent("clips"))
-        transDirs = Self.subdirs(res.appendingPathComponent("transitions"))
-        allowed = activeClips()
-        remaining = allowed
-        // Forced clips play first, in order (and count as played for this round) — even when not active.
-        for first in forcedFirst() {
-            let name = clipDirs[first] != nil ? first
-                : (remaining.filter { themeOf($0) == first }.randomElement() ?? clipDirs.keys.filter { themeOf($0) == first }.randomElement())
-            guard let name else {
-                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipDirs.keys.sorted())"); continue
-            }
-            enqueue(name)
-        }
+        for name in planSelection() { enqueue(name) }
         if allowed.isEmpty && queue.isEmpty {
             NSLog("NotchFight: no clips active (see ./clips.sh); not showing the panel"); NSApp.terminate(nil); return
         }
@@ -227,6 +214,26 @@ final class App: NSObject, NSApplicationDelegate {
         }
     }
 
+    // Loads the clip list, works out the rotation (allowed) and resolves the forced clips, which play
+    // first, in order, even when not active. Shared by the launch and by --print-selection.
+    func planSelection() -> [String] {
+        let res = Bundle.main.resourceURL!
+        clipDirs = Self.subdirs(res.appendingPathComponent("clips"))
+        transDirs = Self.subdirs(res.appendingPathComponent("transitions"))
+        allowed = activeClips()
+        remaining = allowed
+        var forced: [String] = [], left = Set(remaining)
+        for first in forcedFirst() {
+            let name = clipDirs[first] != nil ? first
+                : (left.filter { themeOf($0) == first }.randomElement() ?? clipDirs.keys.filter { themeOf($0) == first }.randomElement())
+            guard let name else {
+                NSLog("NotchFight: unknown first clip/theme '\(first)'. Known: \(clipDirs.keys.sorted())"); continue
+            }
+            forced.append(name); left.remove(name)
+        }
+        return forced
+    }
+
     // The clips in the rotation. "newClips": "enabled" (default): all except "disabled", so new clips play;
     // "disabled": only "enabled", so new clips are ignored until added. Clips shipped off by default (a
     // .default-off marker from build.py) only play when listed in "enabled". Unknown names are logged.
@@ -326,6 +333,15 @@ final class ClickView: NSView {
     var onClick: (() -> Void)?
     override func mouseDown(with e: NSEvent) { onClick?() }
     override func acceptsFirstMouse(for e: NSEvent?) -> Bool { true }
+}
+
+// --print-selection: print what would play and exit before the app starts (no panel, no focus change).
+// Used by the tests; also handy to check a config: ./build/NotchFight.app/Contents/MacOS/NotchFight --print-selection
+if CommandLine.arguments.contains("--print-selection") {
+    let p = App(), forced = p.planSelection()
+    for n in forced { print("forced: \(n)") }
+    print("panel: \(p.allowed.isEmpty && forced.isEmpty ? "hidden (no clips active)" : "shown")")
+    exit(0)
 }
 
 let app = NSApplication.shared
