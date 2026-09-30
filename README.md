@@ -91,6 +91,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `avp` | Claude caught between them in the Antarctic pyramid (WHOEVER WINS... WE LOSE., clan-mark close-up, alien-head shield + spear, back-to-back close-up) | a Xenomorph, the Predator and the Queen (buried under the collapsing pyramid) | pyramid |
 | `gta` | CJ on Grove Street (AH SHIT HERE WE GO AGAIN..., wanted stars, handbrake donut, MISSION PASSED!) | a low-poly 3D police cruiser (flat-shaded software renderer: chase, barrel roll, explosion) | grove |
 | `simpsons` | a Sector 7G worker (D'OH!, stomps the uranium rod back in, MMM... ROSQUILLAS) | Mr. Burns and his hounds in the nuclear plant (EXCELENTE... close-up) | meltdown |
+| `portal` | the test subject with the Portal Gun in an Aperture test chamber (drops through blue/orange portals, turns the turret fire back through them, shoots a portal at the MOON; THIS WAS A TRIUMPH card, the cake is a lie) | GLaDOS on her ceiling arm (turrets, neurotoxin, yellow-to-red eye close-up — YOU MONSTER; her cores pop off, Wheatley babbles, SPAAACE!; sucked out into space) | triumph |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
