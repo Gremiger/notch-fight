@@ -14,6 +14,7 @@ Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Too
 git clone <this repo> && cd notch-fight
 ./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
 ./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
+./clips.sh          # choose which clips play (see "Choosing clips")
 # several Claude profiles? NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh (same for uninstall)
 ```
 
@@ -114,6 +115,31 @@ mkdir -p ~/.config/notch-fight && cp config.example.json ~/.config/notch-fight/c
 
 Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name is logged
 (with the list of valid names) and ignored. Clip names = folder names under `build/clips/`.
+
+## Choosing clips
+
+```bash
+./clips.sh                         # checklist (in a real terminal): space toggles, m mode, enter saves
+./clips.sh list                    # on/off per clip
+./clips.sh disable jjk-sukuna       # a clip (<theme>__<clip>) or a whole theme
+./clips.sh enable sw__father
+./clips.sh mode disabled           # what happens to NEW clips; the current selection is kept
+```
+
+Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers the checklist too):
+
+| `newClips` | List | New clips |
+|---|---|---|
+| `"enabled"` (default) | `"disabled": [...]`: everything plays except these | play until you turn them off |
+| `"disabled"` | `"enabled": [...]`: only these play | ignored until you turn them on |
+
+- Clips forced with `first` (or `--first`) still play once at launch, even when turned off. The
+  checklist shows them; `f` clears the list (`./build.sh` puts each new clip there).
+- Enabling a theme in `"disabled"` mode enables the clips it has now, not ones added later.
+- With nothing selected the panel does not show at all. Changes apply from the next launch.
+- `NOTCH_FIGHT_CONFIG=/path/config.json` points the app and `clips.sh` at another config (tests and
+  dev only: the app sees it when its binary is run directly, not through `open`).
+- Tests: `python3 -m unittest discover tests` (the app tests need `./build.sh` and show the panel briefly).
 
 ## Panel shape
 
