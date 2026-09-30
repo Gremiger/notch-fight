@@ -53,6 +53,7 @@ def _fx_field(d,im,e,f):
     bx=goal-26-cam
     if 0<bx<W: d.line([bx,34,bx,GROUND],fill=(240,240,230)); d.point((goal-16-cam,50),fill=(240,240,230))
     if goal-cam<W+10: draw_goal(d,goal-cam,1)
+    _fx_boards(d,im,('a86_boards',cam),f)
 
 @fx('a86_hud')
 def _fx_hud(d,im,e,f):
@@ -166,7 +167,11 @@ def closeup_joy(t,f):
 # ---------------------------------------------------------------- clip 1: la mano de Dios
 def clip_mano(f):
     s=scene(f,THEME)
-    s['under'].insert(0,('a86_field',0,176))
+    # the camera: at the centre circle for the neutral pose (like siglo), then it pans up to the box with
+    # Diego; the play below is written in box-view coordinates, shifted by what the pan hasn't covered yet
+    cam=180*ease((f-14)/26) if 14<=f<40 else (180 if 40<=f<250 else 0)
+    shift=180-cam if 14<=f<40 else 0
+    s['under'].insert(0,('a86_field',cam,356))
     dx,dy,dpose,dflip=40,GROUND,guard_pose(f),False
     ball=(49,GROUND-2) if f<14 or f>=250 else None
     others=[]
@@ -199,13 +204,49 @@ def clip_mano(f):
     if 14<=f<132: others.append(actor(PLAYER['attack' if 40<=f<46 else 'idle'],vx,pal=KIT_ARG))
     if 14<=f<132: others.append(actor(PLAYER['attack' if 46<=f<52 else 'idle'],hx,flip=True,pal=KIT_ENG))
     if 14<=f<236: others.append(actor(TALL[kpose],kx,ky,flip=True,pal=KIT_KEEP,alpha=1 if f<216 else max(0,1-(f-216)/20)))
-    if ball: s['fx'].append(('arg_ball',)+ball)
+    if ball: s['fx'].append(('arg_ball',)+ball)                                   # at his feet: already in screen space
+    for a in others: a['x']+=shift
     s['actors']=others+[actor(DIEGO[dpose],dx,dy,flip=dflip,pal=DPAL)]
     return s
 
-# ---------------------------------------------------------------- clip 2: el gol del siglo
+# ---------------------------------------------------------------- clip 2: el gol del siglo (2.5D)
+# Depth: z 0 = the far side of the pitch, 1 = the near side. Feet sit higher up the grass the farther
+# they are; far figures are drawn 3/4 size and a little faded; everything is sorted back to front and
+# moves with a touch of parallax. Diego weaves between lanes, always to the side away from the man.
 GOAL=356                                     # world x of England's goal
-AHEAD=((150,'slide'),(210,'lunge'),(262,'lunge'))   # defenders waiting up the pitch (world x)
+AHEAD=((150,'slide',0.35),(210,'lunge',0.8),(262,'lunge',0.45))   # (world x, kind, depth) up the pitch
+WEAVE=((40,1.0),(80,0.7),(128,0.6),(150,0.88),(188,0.7),(210,0.32),(240,0.55),(262,0.82),(330,0.6),(344,0.6))
+
+def feet_of(z): return int(lerp(46,GROUND,z))
+
+_small={}
+def shrink(spr,k=0.75):
+    """A 3/4-size copy of a sprite grid (nearest sampling), cached."""
+    key=tuple(spr)
+    if key not in _small:
+        h,w=len(spr),len(spr[0]); nh,nw=max(1,round(h*k)),max(1,round(w*k))
+        _small[key]=S([''.join(spr[min(h-1,int(y/k))][min(w-1,int(x/k))] for x in range(nw)) for y in range(nh)])
+    return _small[key]
+
+def place(spr,wx,z,cam,flip,pal,alpha=1.0,lift=0):
+    """An actor at world x / depth z: parallax, size, fade and feet line from the depth."""
+    sx=wx-cam*lerp(0.9,1.0,z); far=z<0.5
+    return actor(shrink(spr) if far else spr,sx,feet_of(z)-lift,flip=flip,pal=pal,alpha=alpha*(0.82 if far else 1.0)), sx
+
+@fx('a86_shadow')
+def _fx_shadow(d,im,e,f):
+    """A soft shadow on the grass under a figure or the ball."""
+    _,x,y,w=e; L=Image.new('L',(W,H),0); ImageDraw.Draw(L).ellipse([x-w,y-1,x+w,y+1],fill=90)
+    im.paste((40,60,30),(0,0),L)
+
+@fx('a86_boards')
+def _fx_boards(d,im,e,f):
+    """Advertising boards along the far touchline, sliding at their own speed."""
+    _,cam=e; off=int(cam*0.8)
+    cols=((200,40,40),(240,240,240),(30,60,140),(240,200,40),(40,120,60))
+    for i in range(-1,W//18+2):
+        k=(i+off//18)%len(cols); x=i*18-off%18
+        d.rectangle([x,29,x+16,32],fill=cols[k]); d.line([x+3,30,x+12,30],fill=(250,250,250) if k!=1 else (40,40,40))
 
 def diego_world(f):
     """Diego's world x: the spin at the halfway line, then the run up to the goal."""
@@ -214,62 +255,73 @@ def diego_world(f):
     if f<262: return lerp(330,344,(f-250)/12)
     return 344
 
+def diego_depth(wx):
+    """The weave: his lane at world x, eased between the keyframes."""
+    for (x0,z0),(x1,z1) in zip(WEAVE,WEAVE[1:]):
+        if x0<=wx<=x1: return lerp(z0,z1,ease((wx-x0)/max(1,x1-x0)))
+    return WEAVE[-1][1]
+
 def clip_siglo(f):
     s=scene(f,THEME)
-    wx=diego_world(f)
+    wx=diego_world(f); dz=diego_depth(wx)
     cam=max(0,min(180,wx-70)) if f<380 else 0
     s['under'].insert(0,('a86_field',cam,GOAL))
-    dpose,dflip,dy='dash' if 40<=f<262 else guard_pose(f),False,GROUND
-    ball=(wx+9+math.sin(f*0.8),GROUND-2) if 22<=f<262 else None
-    others=[]
+    dpose,dflip='dash' if 40<=f<262 else guard_pose(f),False
+    hop=abs(math.sin(f*0.8))*3 if 22<=f<250 else 0                       # the ball bobbing off his foot
+    ball=(wx+9,dz,hop) if 22<=f<262 else None
+    figs=[]                                                                # (spr, world x, z, flip, pal, alpha)
     if 14<=f<360: s['fx'].append(('a86_hud',2 if f>=270 else 1,0,55))
-    # the pass arrives; two close in and he spins between them
-    if 14<=f<22: ball=(lerp(4,40,(f-14)/8),GROUND-2)
-    for i,x0 in enumerate((58,66)):
-        if f<40: x=lerp(x0+30,x0,min(1,(f-14)/16)) if f>=14 else x0+30
-        else: x=x0
-        pose='attack' if 34<=f<40 else ('idle' if f<40 else None)
-        if f>=40 and i==1: continue                                          # Reid: becomes the chaser
-        if pose: others.append((x,PLAYER[pose],True))
-        elif f<200: others.append((x0,DIVE,True))
-    if 30<=f<40: dflip=(f//2)%2==1; s['fx'].append(('a86_swirl',40-cam,GROUND-3,f-30))
-    # the ones waiting up the pitch: a slide, a lunge, another; each left on the grass
+    # the pass arrives; two close in from either side and he spins between them
+    if 14<=f<22: ball=(lerp(4,40,(f-14)/8),1.0,0)
+    for i,(x0,z0) in enumerate(((58,0.45),(66,0.85))):
+        if f<40:
+            z=lerp(z0+(0.2 if i==0 else -0.2),z0,min(1,(f-14)/16)) if f>=14 else z0
+            figs.append((PLAYER['attack' if 34<=f<40 else 'idle'],lerp(x0+30,x0,min(1,max(0,(f-14)/16))),z,True,KIT_ENG,1))
+        elif i==0 and f<200: figs.append((DIVE,x0,z0,True,KIT_ENG,1))
+    if 30<=f<40: dflip=(f//2)%2==1; s['fx'].append(('a86_swirl',40-cam,feet_of(dz)-3,f-30))
+    # the ones up the pitch: each steps across into his lane, and is left on the grass
     ta=0
-    for x0,kind in AHEAD:
+    for x0,kind,z0 in AHEAD:
         reach=x0-16
-        if wx<reach: others.append((x0,PLAYER['idle'],True))
+        if wx<reach-24: figs.append((PLAYER['idle'],x0,z0,True,KIT_ENG,1))
+        elif wx<reach: figs.append((PLAYER['idle'],x0,lerp(z0,dz,0.5*(wx-reach+24)/24),True,KIT_ENG,1))
         elif wx<x0+2:
-            others.append((x0-4,DIVE if kind=='slide' else PLAYER['attack'],True)); ta+=1
-            if kind=='slide': s['fx'].append(('a86_turf',x0-4-cam,GROUND-2,int(wx-reach)))
-        else: others.append((x0+2,DIVE,True)); ta+=1
-    # the chaser from behind, who tackles as he shoots
-    if 40<=f<262: others.append((lerp(66,wx-18,min(1,(f-40)/200)),PLAYER['idle'] if f<258 else DIVE,False))
-    if 262<=f<330: others.append((wx-14,DIVE,False))
-    # Shilton comes out, is sent the wrong way; the shot; GOLAZO
-    kpose=TALL['idle'] if f<252 else DIVE
-    others.append((GOAL-12 if f<240 else lerp(GOAL-12,GOAL-22,min(1,(f-240)/10)),kpose,True))
+            zz=lerp(z0,dz,0.5); ta+=1
+            figs.append((DIVE if kind=='slide' else PLAYER['attack'],x0-4,zz,True,KIT_ENG,1))
+            if kind=='slide': s['fx'].append(('a86_turf',x0-4-cam,feet_of(zz)-2,int(wx-reach)))
+        else: figs.append((DIVE,x0+2,lerp(z0,dz,0.5),True,KIT_ENG,1)); ta+=1
+    # the chaser, near side, who tackles as he shoots
+    if 40<=f<262: figs.append((PLAYER['idle'] if f<258 else DIVE,lerp(66,wx-18,min(1,(f-40)/200)),0.92,False,KIT_ENG,1))
+    if 262<=f<330: figs.append((DIVE,wx-14,0.92,False,KIT_ENG,1))
+    # Shilton comes out, is sent the wrong way
+    kz=0.6 if f<240 else lerp(0.6,0.4,min(1,(f-240)/10))
+    figs.append((TALL['idle'] if f<252 else DIVE,GOAL-12 if f<240 else lerp(GOAL-12,GOAL-22,min(1,(f-240)/10)),kz,True,KIT_KEEP,1))
     if 250<=f<262: dpose='guard' if (f//3)%2 else 'dash'
-    if 258<=f<266: ball=(lerp(wx+9,GOAL+2,(f-258)/8),GROUND-3)
-    if 266<=f<280: ball=(GOAL+2,GROUND-3); s['fx'].append(('arg_net',GOAL+4-cam,GROUND-4,f-266))
+    if 258<=f<266: ball=(lerp(wx+9,GOAL+2,(f-258)/8),lerp(dz,0.6,(f-258)/8),0)
+    if 266<=f<280: ball=(GOAL+2,0.6,0); s['fx'].append(('arg_net',GOAL+4-cam,feet_of(0.6)-4,f-266))
     if 262<=f<300: dpose,dflip='armsup',(f//12)%2==1
     if 40<=f<262 and ta: s['fx'].append(('a86_caption',' '.join(['TA']*(ta+1))))
     if 270<=f<300: s['fx'].append(('a86_big',"GOLAZO",20,GOLD))                          # 1.5 s
-    if 40<=f<262: s['under'].append(('a86_trail',wx-cam,GROUND))
-    # close-up
     if 300<=f<380: s['image']=closeup_joy((f-300)/80,f); return s
     # back to the centre circle
     if 380<=f<410:
         s['fx'].append(('arg_confetti',f-380,1-(f-380)/30))
-        wx,dflip,dpose=ez(120,40,(f-380)/30),True,guard_pose(f); others=[]
-    if f>=410: wx,dflip,dpose=40,False,guard_pose(f); others=[]
-    if f>=410: ball=(49,GROUND-2)
-    if f<14: ball=(49,GROUND-2)
+        wx,dz,dflip,dpose=ez(120,40,(f-380)/30),1.0,True,guard_pose(f); figs=[]
+    neutral=f>=410 or f<14
+    if neutral: wx,dz,dflip,dpose=40,1.0,False,guard_pose(f); figs=[]; ball=(49,1.0,0)
+    figs.append((DIEGO[dpose],wx,dz,dflip,DPAL,1))
     acts=[]
-    for x,spr,flip in others:
-        sx=x-cam
-        if -12<sx<W+12: acts.append(actor(spr,sx,flip=flip,pal=KIT_KEEP if spr in (TALL['idle'],) or (x>=GOAL-30 and spr is DIVE and f>=252) else KIT_ENG))
-    if ball: s['fx'].append(('arg_ball',ball[0]-cam,ball[1]))
-    s['actors']=acts+[actor(DIEGO[dpose],wx-cam,dy,flip=dflip,pal=DPAL)]
+    for spr,x,z,flip,pal,a in sorted(figs,key=lambda t:t[2]):                # back to front
+        act,sx=place(spr,x,z,cam,flip,pal,a)
+        if -14<sx<W+14:
+            if not neutral: s['under'].append(('a86_shadow',sx,feet_of(z),5 if z<0.5 else 7))   # the neutral pose matches mano
+            acts.append(act)
+    if 40<=f<262: s['under'].append(('a86_trail',wx-cam*lerp(0.9,1.0,dz),feet_of(dz)))
+    if ball:
+        bx,bz,bh=ball; bsx=bx-cam*lerp(0.9,1.0,bz); by=feet_of(bz)
+        if not neutral: s['under'].append(('a86_shadow',bsx,by,2))
+        s['fx'].append(('arg_ball',bsx,by-2-bh))
+    s['actors']=acts
     return s
 
 CLIPS = [clip('mano', N_MANO, clip_mano), clip('siglo', N_SIGLO, clip_siglo)]
