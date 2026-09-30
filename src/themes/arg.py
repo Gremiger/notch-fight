@@ -8,7 +8,6 @@ theme (cai, lfc) needs them."""
 from engine import *
 
 THEME = 'arg'
-DEFAULT_OFF = True            # a national team: users turn it on with ./clips.sh enable arg
 N_ = 380
 
 CELESTE, WHITE, GOLD = (116,172,223), (244,244,244), (236,190,60)
@@ -32,6 +31,7 @@ def _albiceleste(spr):
             if g[y][x]=='o' and x<l: g[y][x]='y'; break
     return S([''.join(x) for x in g])
 TEN=variant(_albiceleste)
+albiceleste=_albiceleste               # for the sub-themes (arg-86)
 
 PLAYER=poses(S([
 "....hhhh....","...hhhhhh...","...ssssss...","...sKssKs...","...ssssss...","....ssss....",
@@ -56,9 +56,9 @@ def _lusail(d):
     for x in range(8,W,16): d.rectangle([x,28,x+7,GROUND],fill=(54,124,60))
     d.line([0,28,W,28],fill=(236,236,236))
     d.line([150,34,150,GROUND],fill=(220,230,220)); d.point((160,50),fill=(236,236,236))  # box line, spot
-    _goal(d,176,1)
+    draw_goal(d,176,1)
 
-def _goal(d,x,side):
+def draw_goal(d,x,side):
     """A goal seen from the side: posts, crossbar, net hatching (side 1: right, -1: left)."""
     x0,x1=(x,x+8) if side>0 else (x-8,x)
     for gx in range(x0,x1,2): d.line([gx,34,gx,GROUND],fill=(170,180,180))
@@ -68,7 +68,7 @@ def _goal(d,x,side):
 register_bg(THEME, lambda v: (v//3,v+20,v//3), decor=_lusail)
 
 @fx('arg_leftgoal')
-def _fx_leftgoal(d,im,e,f): _goal(d,8,-1)
+def _fx_leftgoal(d,im,e,f): draw_goal(d,8,-1)
 
 @fx('arg_net')
 def _fx_net(d,im,e,f):
