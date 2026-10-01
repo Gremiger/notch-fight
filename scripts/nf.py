@@ -8,7 +8,7 @@
     nf preview <clip|theme>...     play those clips in the notch now, then close (no focus change)
     nf quiet [HH:MM-HH:MM [all|weekdays] | off]
                                    never show it in that window, every day or Monday to Friday
-    nf share [on|off]              hide it while you share your screen (Zoom, macOS screen recording)
+    nf share [hide|show]           while you share your screen: hide the panel (default) or keep showing it
 
 Whether the panel may show right now is decided in one place, `gate()`, which the Claude Code hook
 (scripts/notch-hook.sh) and the app (every few seconds while it is up) both ask: `nf gate` exits 0
@@ -163,7 +163,7 @@ def cmd_status(args):
     pause = 'no' if until is None else ('until you resume' if until == float('inf') else f'until {fmt_time(until)} ({fmt_left(until - time.time())} left)')
     q = cfg.get('quiet')
     quiet = 'off' if not q else f"{q['from']}-{q['to']} {'(weekdays)' if q.get('days') == 'weekdays' else '(every day)'}"
-    share = 'off' if not cfg.get('pauseOnShare', True) else ('on, sharing now' if sharing(cfg) else 'on')
+    share = share_line(cfg.get('pauseOnShare', True)) + (' (sharing now)' if sharing(cfg) else '')
     try:
         names = clipsmod.clip_names(clipsmod.CLIPS_DIR); off = clipsmod.default_off(clipsmod.CLIPS_DIR)
         act = clipsmod.active(cfg, names, off); clip_line = f'{len(act)}/{len(names)} active ({clipsmod.mode_of(cfg)} mode for new clips)'
@@ -176,7 +176,7 @@ def cmd_status(args):
     dirs = sorted(set(claude_dirs()) | set(glob.glob(os.path.expanduser('~/.claude*'))))   # every profile on this Mac
     hooked = [d for d in dirs if os.path.isdir(d) and has_hook(d)]
     rows = [('now', 'may show' if ok else f'hidden: {why}'), ('paused', pause), ('quiet hours', quiet),
-            ('screen sharing', share), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
+            ('when sharing', share), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
             ('hooks', ', '.join(d.replace(os.path.expanduser('~'), '~') for d in hooked) or 'not installed (./install.sh)'),
             ('sessions', f'{live_sessions()} working'), ('app', ('running' if app_running() else 'built') if os.path.isdir(APP) else 'not built (./build.sh)')]
     for k, v in rows: print(f'  {k:<15}{v}')
@@ -208,11 +208,17 @@ def cmd_quiet(args):
     print(f"Quiet hours: {f}-{t}, {'Monday to Friday' if days == 'weekdays' else 'every day'}")
     if not gate(cfg)[0]: hide_app()
 
+SHARE_WORDS = {'hide': True, 'show': False, 'on': True, 'off': False}   # on/off: older spelling of hide/show
+
+def share_line(hide): return 'hide the panel' if hide else 'keep showing the panel'
+
 def cmd_share(args):
-    cfg = load_cfg()
-    if not args: print(f"Hide while sharing the screen: {'on' if cfg.get('pauseOnShare', True) else 'off'}"); return
-    if args[0] not in ('on', 'off'): raise NfError("nf share on|off")
-    cfg['pauseOnShare'] = args[0] == 'on'; save_cfg(cfg); print(f'Hide while sharing the screen: {args[0]}')
+    cfg = load_cfg(); hide = cfg.get('pauseOnShare', True)
+    if not args: print(f'While sharing the screen: {share_line(hide)}'); return
+    if args[0] not in SHARE_WORDS: raise NfError('nf share hide|show (hide the panel while sharing, or keep showing it)')
+    cfg['pauseOnShare'] = SHARE_WORDS[args[0]]; save_cfg(cfg)
+    print(f"While sharing the screen: {share_line(cfg['pauseOnShare'])}")
+    if cfg['pauseOnShare'] and not gate(cfg)[0]: hide_app()
 
 def cmd_gate(args):
     ok, why = gate(); print(why); sys.exit(0 if ok else 1)
