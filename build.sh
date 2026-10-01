@@ -36,6 +36,13 @@ cp -cR "$OUT/clips" "$OUT/transitions" "$APP/Contents/Resources/" 2>/dev/null \
 swiftc -O -target "$(uname -m)-apple-macos13.0" "$ROOT/app/main.swift" -o "$APP/Contents/MacOS/NotchFight"
 codesign -s - --force "$APP" >/dev/null 2>&1
 
+# the menu bar icon (nf menu on): a tiny separate app, so it can stay up while the panel comes and goes
+MENU="$OUT/NotchFightMenu.app"
+rm -rf "$MENU"; mkdir -p "$MENU/Contents/MacOS"
+cp "$ROOT/app/MenuInfo.plist" "$MENU/Contents/Info.plist"
+swiftc -O -target "$(uname -m)-apple-macos13.0" "$ROOT/app/menu.swift" -o "$MENU/Contents/MacOS/NotchFightMenu"
+codesign -s - --force "$MENU" >/dev/null 2>&1
+
 if [[ "${GIFS:-0}" == "1" ]]; then   # GIFS=1 ./build.sh refreshes media/clips previews
   while read -r n; do [[ -z "$n" ]] && continue; d="$OUT/clips/$n/"   # only the clips this run rendered
     ffmpeg -y -loglevel error -framerate 20 -i "$d%03d.png" \

@@ -95,7 +95,12 @@ final class App: NSObject, NSApplicationDelegate {
         win.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
 
         let v = ClickView(frame: NSRect(origin: .zero, size: win.frame.size))
-        v.onClick = { [weak self] in self?.close() }
+        // Config "click": "close" (default) closes on a click; "next" skips to the next clip, a double click closes.
+        let skips = (Self.config["click"] as? String) == "next"
+        v.onClick = { [weak self] count in
+            guard let self else { return }
+            if skips && count < 2 { self.idx = self.current.count } else { self.close() }   // idx past the end: tick picks the next
+        }
         v.wantsLayer = true
         root = v.layer!
         root.backgroundColor = NSColor.black.cgColor
@@ -359,8 +364,8 @@ final class App: NSObject, NSApplicationDelegate {
 }
 
 final class ClickView: NSView {
-    var onClick: (() -> Void)?
-    override func mouseDown(with e: NSEvent) { onClick?() }
+    var onClick: ((Int) -> Void)?
+    override func mouseDown(with e: NSEvent) { onClick?(e.clickCount) }
     override func acceptsFirstMouse(for e: NSEvent?) -> Bool { true }
 }
 

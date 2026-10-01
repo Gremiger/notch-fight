@@ -56,6 +56,14 @@ else
   echo "  - $BIN/nf already exists and is not ours: left alone (run $ROOT/nf directly)"
 fi
 
+# The menu bar icon (pause, preview, settings without a terminal): offered, never forced.
+if [[ -t 0 && -t 1 ]]; then
+  read -r -p "Add a menu bar icon (pause, preview, settings)? [y/N] " ans
+  [[ "$ans" =~ ^[yY] ]] && "$ROOT/nf" menu on
+else
+  echo "  - for a menu bar icon: nf menu on"
+fi
+
 # Which clips play: offer the checklist when a person is at the terminal (never when scripted).
 if [[ -t 0 && -t 1 ]]; then
   read -r -p "Choose which clips to show now? [y/N] " ans

@@ -156,12 +156,20 @@ nf status                   # paused?, quiet hours, screen sharing, clips, scale
 nf preview odyssey          # play a clip or a whole theme in the notch now, then close (no focus change)
 nf quiet 22:00-08:00        # never show it in that window (add `weekdays` for Monday to Friday; `off`)
 nf share hide|show          # while sharing the screen: hide the panel (default) or keep showing it
+nf delay 10s                # only show it once Claude has worked that long (quick answers stay quiet; `off`)
+nf click next               # a click skips to the next clip, a double click closes it (`close`: the default)
+nf menu on                  # a menu bar icon with all of the above (and "Choose clips…"); starts at login; `off`
 ```
 
 Whether the panel may show is decided in one place, `nf gate` (`scripts/nf.py`): the Claude Code hook
 asks before opening it, and the app asks every few seconds while it is up, so a pause, quiet hours or a
 screen share hides a panel that is already out. Sessions keep being tracked meanwhile. The pause lives
 in `~/.config/notch-fight/paused`; quiet hours and `pauseOnShare` in `config.json`.
+
+With a delay, the hook hands the prompt to a detached sleeper and returns at once: after the delay, the
+panel shows only if that session is still working (its marker is still there). The menu bar icon is a
+separate tiny app (`build/NotchFightMenu.app`, a LaunchAgent once on): a sparkle when the panel may
+show, a pause sign when it is hidden, and every item just runs `nf`.
 
 Screen sharing is detected by process: Zoom runs `CptHost` while sharing and macOS runs
 `screencaptureui` while recording. A share from a browser tab (Meet, Teams on the web) looks like any
