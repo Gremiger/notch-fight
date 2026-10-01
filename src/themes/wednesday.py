@@ -1,149 +1,150 @@
-"""What a week, huh? (the Tintin meme): no fight. Claude as Captain Haddock (the cap with the anchor, the
-black beard, the blue sweater, the pipe) in the salon at Marlinspike, in Herge's clear line: thin black
-outlines, flat colours, no shading. He drops into the armchair, the pipe smoking: WHAT A WEEK, HUH?
-Tintin (the quiff, the plus-fours, Snowy at his feet) looks at him: CAPTAIN, IT'S WEDNESDAY. Close-up:
-Haddock taking it in, the pipe falls out of his mouth, a drop of sweat, the cartoon anger lines —
-BLISTERING BARNACLES! Snowy barks; the Captain gets up and it starts again."""
+"""What a week, huh? (the Tintin meme): no fight, as in the panel. Claude as Captain Haddock, a bit worse
+for wear: hair all over the place, the black beard, red nose and cheeks, the blue sweater, slumped over
+the bar with a pint. Herge's clear line: flat ochre wall, fine black outlines, a thick panel border.
+He drinks: WHAT A WEEK, HUH? Tintin, in his brown coat, a sideways look: CAPTAIN, IT'S WEDNESDAY.
+Close-up: the Captain's bleary face taking it in — the eyes pop: BLISTERING BARNACLES! Snowy, up on the
+counter, sniffs the beer, sweat flying off his ears; the Captain pulls the pint back."""
 from engine import *
 
 THEME = 'wednesday'
 N_ = 288                                                            # a multiple of 12
-CX, CHAIR, TX = 34, 70, 136                                         # Haddock standing; the armchair; Tintin
+TOP = 55                                                            # the top of the counter
+TX, HX, BEER, SNX = 36, 98, 138, 166                                 # Tintin, Haddock, the pint, Snowy
 SKIN,SKIN_D,INK=(217,119,87),(168,80,54),(20,20,24)
-NAVY, NAVY_D = (40,60,130), (26,40,96)
-# Haddock: the peaked cap with the gold anchor, the black beard, the navy sweater with its anchor
-HPAL = {'1':NAVY_D,'2':(20,20,24),'3':(240,200,80),'4':NAVY,'5':(230,230,230)}
-CAP = ["...111111...","..11131111..","1111111111.."]
-# Tintin: ginger quiff, blue sweater over a white collar, plus-fours, brown shoes
-TPAL = {'h':(220,130,50),'s':(240,200,170),'j':(90,140,200),'J':(90,140,200),'W':(250,250,250),'p':(200,170,120),'k':(110,70,40)}
+BAR, BAR_D = (120,74,40), (84,50,26)
+# Haddock: hair everywhere, the beard, a red nose and cheeks, half-shut eyes, the blue sweater
+HPAL = {'1':(20,20,24),'2':(28,26,30),'4':(70,110,190),'5':(64,100,176),'6':(220,70,60)}
+HAIR = ["1..1.1..1.1.",".1111111111.","111111111111"]
+# Tintin: ginger quiff, rosy cheek, the brown coat over a white collar
+TPAL = {'h':(230,130,50),'s':(244,200,170),'j':(150,120,70),'J':(150,120,70),'W':(250,250,250),'r':(240,130,120),'p':(130,104,60),'k':(80,56,30)}
 TINTIN = S([
-"....hh......","...hhh......","...hhhhh....","...ssssss...","...sKssKs...","...ssssss...","....ssss....",
-"...WWWWWW...","..jjjjjjjj..",".sjjjjjjjjs.",".sjjjjjjjjs.","..jjjjjjjj..","...pppppp...","...pppppp...",
-"...pp..pp...","...ss..ss...","...kk..kk...",])
+"....hh......","...hhh......","...hhhhh....","...ssssss...","...sKssKs...","...ssrsss...","....ssss....",
+"...WWWWWW...","..jjjjjjjj..",".jjjjjjjjjj.",".jjjjjjjjjj.","..jjjjjjjj..","..jjjjjjjj..",])          # cut by the bar
 
 def _haddock(spr):
-    g=[list(r) for r in overlay(spr,CAP,-1,0)]
-    top,l,r=body_box(S([''.join(x) for x in g]))
+    g=[list(r) for r in overlay(spr,HAIR,-1,0)]
+    top,l,r=body_box(S([''.join(x) for x in g])); w=len(g[0])
     for y in range(len(g)):
-        for x in range(len(g[0])):
+        for x in range(w):
             c=g[y][x]
-            if c=='O' and top+3<=y<=top+5 and x>=l+3: g[y][x]='2'          # the beard
-            elif c=='O' and y>=top+6: g[y][x]='3' if (y==top+6 and x==(l+r)//2+1) else '4'   # sweater, anchor
-            elif c=='o' and y>=top+5 and y<top+8: g[y][x]='4'
+            if c=='K' and y==top+2: g[y][x]='O'                         # half-shut, bleary eyes
+            elif c=='O' and y<=top+1 and x<=l+1: g[y][x]='1'            # the mop over the back of the head
+            elif c=='O' and top+3<=y<=top+5 and x>=l+3: g[y][x]='2'     # the beard
+            elif c=='O' and y>=top+6: g[y][x]='4' if (x+y)%5 else '5'   # the sweater
+            elif c=='o' and top+5<=y<top+8: g[y][x]='4'
+    if r+1<w: g[top+3][r+1]='6'                                         # the red nose, poking out
+    if g[top+3][r-3]=='2': g[top+3][r-3]='6'                            # a flushed cheek above the beard
     return S([''.join(x) for x in g])
 HADDOCK=variant(_haddock)
+def scale2(spr): return S([''.join(c*2 for c in r) for r in spr for _ in (0,1)])
+BIG={k:scale2(v) for k,v in HADDOCK.items()}                         # the panel is a close shot: double size
+TINTIN2=scale2(TINTIN)
+SNOWY=scale2(S(["..W.W...","..WWW...",".WWWWWWW","KWWWWWWW",".WWWWWWW","..W...W."]))
 
-# ---- background: the salon at Marlinspike, in clear line -----------------------------------------------
-def _salon(d):
-    d.rectangle([0,0,W,H],fill=(214,226,196))                       # pale green wallpaper
-    for x in range(8,W,16):
-        for y in range(6,44,12): d.point((x,y),fill=(190,206,170)); d.point((x+8,y+6),fill=(190,206,170))
-    d.rectangle([0,42,W,44],fill=(150,96,60)); d.line([0,42,W,42],fill=INK)   # the dado rail
-    d.rectangle([96,6,128,26],fill=(160,120,60)); d.rectangle([98,8,126,24],fill=(170,210,230),outline=INK)   # a painting: a ship
-    d.rectangle([98,18,126,24],fill=(70,110,170)); d.polygon([(104,18),(120,18),(118,21),(106,21)],fill=(120,70,40))
-    d.line([112,10,112,18],fill=INK); d.polygon([(112,10),(112,17),(118,17)],fill=(250,250,250),outline=INK)
-    d.rectangle([150,4,180,36],fill=(180,210,230),outline=INK)        # the window and its red curtains
-    d.line([165,4,165,36],fill=INK); d.line([150,20,180,20],fill=INK)
-    d.polygon([(146,2),(154,2),(152,38),(146,38)],fill=(190,50,50),outline=INK); d.polygon([(176,2),(184,2),(184,38),(178,38)],fill=(190,50,50),outline=INK)
-    d.rectangle([0,44,W,H],fill=(170,120,80))                         # the floor and a rug
-    d.ellipse([40,50,110,64],fill=(160,50,50),outline=INK); d.ellipse([48,53,102,62],outline=(220,190,120))
-register_bg(THEME, lambda v: (v+120,v+80,v+50), decor=_salon)
+# ---- background: the bar, ochre and flat --------------------------------------------------------------
+def _bar(d):
+    d.rectangle([0,0,W,H],fill=(196,168,116))                       # the ochre wall
+    rr=random.Random(41)
+    for _ in range(40): d.point((rr.randint(0,W-1),rr.randint(0,TOP)),fill=(186,158,108))
+    d.rectangle([0,TOP,W,H],fill=BAR)                               # the counter (drawn again over them)
+register_bg(THEME, lambda v: (v+120,v+90,v+50), decor=_bar)
 
-@fx('wd_chair_back')
-def _fx_chair_back(d,im,e,f):
-    x=CHAIR; d.rounded_rectangle([x-10,GROUND-22,x+10,GROUND-6],radius=4,fill=(60,120,80),outline=INK)
+@fx('wd_border')
+def _fx_border(d,im,e,f):
+    """The panel: a cream margin and a thick, slightly wobbly black border."""
+    d.rectangle([0,0,W-1,H-1],outline=(244,240,230),width=2)
+    d.rectangle([2,2,W-3,H-3],outline=INK,width=1); d.line([3,3,W-4,3],fill=INK)
 
-@fx('wd_chair_front')
-def _fx_chair_front(d,im,e,f):
-    """The armchair's seat and arms, over the Captain's legs."""
-    x=CHAIR
-    d.rectangle([x-11,GROUND-8,x+11,GROUND-2],fill=(70,140,90),outline=INK)
-    for ax in (x-13,x+9): d.rounded_rectangle([ax,GROUND-12,ax+4,GROUND-2],radius=2,fill=(60,120,80),outline=INK)
-    for lx in (x-10,x+9): d.line([lx,GROUND-2,lx,GROUND],fill=INK)
+@fx('wd_pint')
+def _fx_pint(d,im,e,f):
+    """A pint of beer, foam on top (level 0..1); x,y = its foot."""
+    _,x,y,level=e; x,y=int(x),int(y)
+    d.polygon([(x-3,y-11),(x+3,y-11),(x+2,y),(x-2,y)],fill=(236,236,230),outline=INK)
+    top=int(y-1-9*level)
+    if level>0: d.polygon([(x-2,top),(x+2,top),(x+2,y-1),(x-2,y-1)],fill=(230,170,60)); d.line([x-2,top,x+2,top],fill=(255,250,240))
+    d.line([x-1,y-9,x-1,y-2],fill=(255,255,255))
 
-@fx('wd_pipe')
-def _fx_pipe(d,im,e,f):
-    """The pipe in his mouth, smoke curling up from the bowl."""
-    _,x,y,smoke=e; x,y=int(x),int(y)
-    d.line([x,y,x+3,y+1],fill=(90,56,30)); d.rectangle([x+3,y-1,x+5,y+2],fill=(110,70,40),outline=INK)
-    if smoke:
-        for k in range(3): ph=(f+k*4)%12; d.point((x+4+int(math.sin(ph*0.6)),y-3-ph//2),fill=(200,200,206))
-
-@fx('wd_snowy')
-def _fx_snowy(d,im,e,f):
-    """Snowy: small, white, black nose; bark: his mouth open and the lines."""
-    _,x,bark=e; x=int(x); y=GROUND
-    d.rectangle([x-4,y-5,x+2,y-1],fill=(250,250,250),outline=INK)
-    d.ellipse([x+1,y-9,x+6,y-4],fill=(250,250,250),outline=INK); d.point((x+6,y-6),fill=INK); d.point((x+3,y-7),fill=INK)
-    d.line([x-5,y-6,x-7,y-8],fill=INK)                               # the tail, up
-    for lx in (x-3,x+1): d.line([lx,y-1,lx,y],fill=INK)
-    if bark:
-        d.line([x+5,y-5,x+7,y-5],fill=INK)
-        for k in range(3): d.line([x+8,y-8+k*2,x+10,y-9+k*2],fill=INK)
+@fx('wd_sweat')
+def _fx_sweat(d,im,e,f):
+    """Drops flying off Snowy's ears."""
+    _,x,y=e
+    for k in range(3): a=-2.6+k*0.6; d.point((int(x+math.cos(a)*(6+f%4)),int(y+math.sin(a)*(4+f%4))),fill=(120,190,240))
 
 @fx('wd_balloon')
 def _fx_balloon(d,im,e,f):
-    """A Herge balloon: white, a fine black line, the tail to the speaker."""
-    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
-    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
-    d.rounded_rectangle([x,y,x+w,y+h],radius=4,fill=(255,255,255),outline=INK)
-    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(255,255,255),outline=INK)
-    d.line([tx-1,y+h,tx+1,y+h],fill=(255,255,255))
-    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+    """A Herge balloon: a white box with a fine black line and a zigzag tail down to the speaker."""
+    _,lines,x,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
+    w=max(len(l) for l in lines)*4+9; h=len(lines)*7+5
+    d.rectangle([x,y,x+w,y+h],fill=(255,255,255),outline=INK)
+    tx,ty=int(tail[0]),int(tail[1])
+    bx=max(x+6,min(x+w-6,tx+4))
+    d.line([bx,y+h,bx-3,y+h+3,bx+1,y+h+5,tx,ty],fill=INK)
+    for i,l in enumerate(lines): text(d,l,x+5,y+3+i*7,INK,shadow=None)
 
 # ---- close-up -----------------------------------------------------------------------------------------
 def closeup_haddock(t,f):
-    """Primer plano: the Captain taking it in. The eyes go round, the pipe drops, a bead of sweat, the
-    anger lines — BLISTERING BARNACLES!"""
-    im=Image.new('RGB',(W,H),(214,226,196)); d=ImageDraw.Draw(im)
-    ox=22; shock=t>=0.3
-    d.rectangle([ox,16,ox+60,H],fill=SKIN,outline=INK)
-    d.polygon([(ox,40),(ox+60,40),(ox+60,H),(ox,H)],fill=(24,24,28))  # the beard
-    for k in range(6): d.line([ox+4+k*10,40,ox+8+k*10,48],fill=(60,60,66))
-    d.rectangle([ox-4,4,ox+64,18],fill=NAVY_D,outline=INK); d.rectangle([ox-8,16,ox+40,20],fill=(20,20,30),outline=INK)   # the cap
-    d.ellipse([ox+26,6,ox+34,14],fill=(240,200,80),outline=INK); d.line([ox+30,8,ox+30,13],fill=INK)   # the anchor badge
+    """Primer plano: the Captain's bleary face, hair everywhere, red nose — it sinks in, the eyes pop:
+    BLISTERING BARNACLES!"""
+    im=Image.new('RGB',(W,H),(196,168,116)); d=ImageDraw.Draw(im)
+    ox=22; pop=t>=0.35
+    d.rectangle([ox,12,ox+60,H],fill=SKIN,outline=INK)
+    d.polygon([(ox,38),(ox+60,38),(ox+60,H),(ox,H)],fill=(24,24,28))    # the beard
+    rr=random.Random(3)
+    for k in range(18):                                               # the hair, all over the place
+        x=ox-4+rr.randint(0,68); d.line([x,16,x+rr.randint(-6,6),rr.randint(0,8)],fill=INK,width=2)
+    d.rectangle([ox,8,ox+60,16],fill=INK)
     for ex in (ox+18,ox+42):
-        if shock: d.ellipse([ex-5,24,ex+5,36],fill=(255,255,255),outline=INK); d.ellipse([ex-1,28,ex+1,31],fill=INK)
-        else: d.line([ex-4,30,ex+4,30],fill=INK,width=2)             # tired, half shut
-        d.line([ex-6,22 if shock else 25,ex+6,21 if shock else 26],fill=INK,width=2)
-    py=36 if t<0.4 else int(lerp(36,H+10,(t-0.4)/0.15))              # the pipe falls out
-    d.line([ox+34,py+6,ox+46,py+10],fill=(90,56,30),width=2); d.rectangle([ox+46,py+4,ox+52,py+12],fill=(110,70,40),outline=INK)
-    if t>=0.45:                                                      # sweat, anger lines
-        d.polygon([(ox+64,22),(ox+61,28),(ox+67,28)],fill=(120,190,240),outline=INK)
+        if pop: d.ellipse([ex-5,22,ex+5,34],fill=(255,255,255),outline=INK); d.ellipse([ex-1,27,ex+1,30],fill=INK)
+        else:                                                         # half-shut, bleary
+            d.chord([ex-5,24,ex+5,34],0,180,fill=(255,255,255),outline=INK); d.point((ex,30),fill=INK)
+            d.line([ex-6,24,ex+6,24],fill=INK,width=2)
+        d.ellipse([ex-7,32,ex+1,36],fill=(230,110,100))                   # flushed cheeks
+    d.ellipse([ox+26,28,ox+38,42],fill=(220,70,60),outline=INK)          # the red nose
+    d.ellipse([ox+28,46,ox+34,50],fill=(250,250,250))                    # the open mouth in the beard
+    if t>=0.45:
         for k in range(3):
-            a=-2.2+k*0.5; x0,y0=ox+30+math.cos(a)*44,24+math.sin(a)*30
+            a=-2.2+k*0.5; x0,y0=ox+30+math.cos(a)*42,26+math.sin(a)*28
             d.line([x0,y0,x0+math.cos(a)*6,y0+math.sin(a)*6],fill=INK,width=2)
     if t>=0.55:
         jj=(f%3)-1
         big_text(im,"BLISTERING",14,(220,40,40),scale=2,cx=138+jj,outline=INK)
         big_text(im,"BARNACLES!",32,(220,40,40),scale=2,cx=138+jj,outline=INK)
+    FX['wd_border'](d,im,('wd_border',),f)
     if t<0.05: zoom_lines(d,INK)
     return im
 
 # ---- the clip -----------------------------------------------------------------------------------------
 def clip_wednesday(f):
     s=scene(f,THEME)
-    hx,hy,hpose,hflip,sitting=CX,GROUND,guard_pose(f),False,False
-    # 1) he drops into the armchair
-    if 14<=f<28: hx,hpose=ez(CX,CHAIR,(f-14)/14),'dash'
-    if 28<=f<200: hx,hy,hpose,sitting=CHAIR,GROUND-4,'guard',True
-    if 40<=f<86: s['fx'].append(('wd_balloon',"WHAT A WEEK, HUH?",CHAIR-6,8,CHAIR+2))
-    if 88<=f<134: s['fx'].append(('wd_balloon',"CAPTAIN, IT'S WEDNESDAY.",TX-26,8,TX))
+    sway=int(round(math.sin(2*math.pi*f/48)))                          # he isn't quite steady
+    hpose='guard'; level=0.8; pint=(BEER,TOP); sniff=False
+    # 1) a long pull at the pint
+    if 14<=f<44:
+        p=min(1,(f-14)/8) if f<36 else max(0,1-(f-36)/8)
+        pint=(lerp(BEER,HX+16,p),lerp(TOP,44,p)); hpose='charge' if p>0.2 else 'guard'
+        level=0.8-0.3*min(1,max(0,(f-22)/14))
+    if 44<=f<240: level=0.5
+    if 30<=f<62: s['fx'].append(('dmg',"HIC",HX+14,22,(60,40,30)))
+    if 62<=f<108: s['fx'].append(('wd_balloon',"WHAT A WEEK, HUH?",70,3,(HX+6,26)))
+    if 108<=f<154: s['fx'].append(('wd_balloon',"CAPTAIN, IT'S WEDNESDAY",6,14,(TX+4,28)))
     # 2) close-up
-    if 134<=f<194: s['image']=closeup_haddock((f-134)/60,f); return s
-    # 3) Snowy barks; the Captain gets up and goes back
-    bark=196<=f<228 and (f//4)%2==0
-    if 196<=f<228: s['fx'].append(('wd_balloon',"WOOF!",TX+14,26,TX+16))
-    if 200<=f<222: hx,hy,hpose,sitting=CHAIR,GROUND,'armsup',False
-    if 222<=f<240: hx,hpose,hflip=ez(CHAIR,CX,(f-222)/18),'dash',True
-    s['under'].append(('wd_chair_back',))
-    acts=[actor(TINTIN,TX,flip=True,pal=TPAL),actor(HADDOCK[hpose],hx,hy,flip=hflip,pal=HPAL)]
-    s['actors']=acts
-    if sitting: s['fx'].append(('wd_chair_front',))
-    else: s['under'].append(('wd_chair_front',))
-    ox,oy=origin(HADDOCK[hpose],hx,hy); top,l,r=body_box(HADDOCK[hpose])
-    px=ox+(r+1 if not hflip else len(HADDOCK[hpose][0])-r-5); s['fx'].append(('wd_pipe',px,oy+top+4,sitting))
-    s['fx'].append(('wd_snowy',TX+14,bark))
+    if 154<=f<214: s['image']=closeup_haddock((f-154)/60,f); return s
+    # 3) Snowy at the beer; the Captain takes it back
+    if 214<=f<246: sniff=True; level=0.5-0.2*(f-214)/32
+    if 246<=f<258: p=(f-246)/12; pint=(lerp(BEER,BEER-6,p),TOP); hpose='charge'; level=0.3
+    if 258<=f<288: level=0.3+0.5*(f-258)/30                             # topped up for the loop
+    s['actors']=[actor(TINTIN2,TX,y=GROUND+2,flip=True,pal=TPAL),actor(BIG[hpose],HX+sway,y=GROUND+1,pal=HPAL),
+                 actor(SNOWY,SNX,y=TOP+(2 if sniff else 0),flip=True,pal={'W':(250,250,250),'K':INK})]
+    if sniff: s['fx'].append(('wd_sweat',SNX-2,TOP-14))
+    s['fx'].append(('wd_counter',))
+    s['fx'].append(('wd_pint',pint[0],pint[1],level))
+    s['fx'].append(('wd_border',))
     return s
+
+@fx('wd_counter')
+def _fx_counter(d,im,e,f):
+    """The front of the bar, over the two of them: they are leaning on it."""
+    d.rectangle([0,TOP,W,H],fill=BAR); d.line([0,TOP,W,TOP],fill=INK); d.rectangle([0,TOP+1,W,TOP+2],fill=(150,96,54))
+    for x in range(12,W,30): d.line([x,TOP+3,x+4,H],fill=BAR_D)
 
 CLIPS = [clip('wednesday', N_, clip_wednesday)]
