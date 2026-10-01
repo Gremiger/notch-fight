@@ -118,6 +118,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `thebear` | Carmy (The Bear) at the pass, the blue LED clock and its EVERY SECOND COUNTS plaque over the line: the printer spits tickets (ORDERS IN!), the brigade's YES CHEF!, a pan in flames, BEHIND!, a smashed plate, the clock racing through a whole day; the clock and the plaque in close-up, glowing with every second; the last plate with the tweezers (HANDS!) and the quiet after | the dinner service (Sydney, Marcus, Tina and Richie on the line) | service |
 | `lol` | Quinn and Valor (League of Legends) in a lane of Summoner's Rift: bolts, damage numbers and gold, Harrier's mark; Q, Blinding Assault (Valor dives); Valor's eye in close-up (DEMACIA!); E, Vault; R, Behind Enemy Lines over the turret (TURRET DESTROYED); VICTORY | a red minion wave and the enemy turret | valor |
 | `thisisfine` | No fight: the This Is Fine dog (KC Green's Gunshow) in his bowler hat, sipping coffee at the kitchen table while the fire climbs the walls and the pictures turn into BUILD FAILED, PROD IS DOWN and DEPLOY FRIDAY; the calm smile in close-up (THIS IS FINE.), IM OKAY WITH THE EVENTS THAT ARE UNFOLDING CURRENTLY., then the smoke clears | the fire | fine |
+| `wednesday` | No fight: Captain Haddock (the Tintin meme), in Herge's clear line in the salon at Marlinspike: drops into the armchair (WHAT A WEEK, HUH?), Tintin: CAPTAIN, IT'S WEDNESDAY., the close-up as he takes it in (the pipe falls: BLISTERING BARNACLES!), Snowy barks | Tintin and Snowy | wednesday |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
@@ -206,7 +207,7 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
 │   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
