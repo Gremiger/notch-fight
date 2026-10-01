@@ -96,7 +96,8 @@ class ChecklistInATerminal(unittest.TestCase):
         self.drive(path, [b'm', b'\r'])
         cfg = json.load(open(path))
         self.assertEqual(cfg['newClips'], 'disabled')
-        self.assertEqual(len(cfg['enabled']), len(os.listdir(os.path.join(ROOT, 'build', 'clips'))))
+        shipped_off = [c for c in BUILT if os.path.exists(os.path.join(ROOT, 'build', 'clips', c, '.default-off'))]
+        self.assertEqual(len(cfg['enabled']), len(BUILT) - len(shipped_off))   # what played before the switch
 
     def test_f_clears_the_forced_clips(self):
         path = config_file({'first': [CLIP]})
