@@ -102,6 +102,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `mist-kelsier` | Kelsier, the Survivor of Hathsin, in Fountain Square under the red sun (sub-theme of `mist`, off by default): hops the axe, Steel-Pushes coins, a pewter punch; the spear, and the smile in close-up (THERES ALWAYS ANOTHER SECRET); the skaa raise their hands, the mists roll in and he stands up out of them | a Steel Inquisitor, then the Lord Ruler | survivor |
 | `deadpool` | Deadpool (katanas, the arm pops off and a tiny one grows back, talks to us in yellow boxes and knocks on the notch, MAXIMUM EFFORT close-up) | Wolverine in the Void (SNIKT, takes the chimichanga: BUB.) | bub |
 | `spidey` | Miles Morales, on twos with magenta/cyan rim light (camouflage split into comic panels, A LEAP OF FAITH close-up, the city turns upside down with streaking lights, THWIP, webs, venom blast ZZAKT!) | the Prowler in Brooklyn (webbed to a wall, police lights) | leap |
+| `xmen-nightcrawler` | Nightcrawler (X-Men '97) on a New York rooftop at dusk: BAMF out of the crossfire, pops up behind each drone in a puff of indigo smoke, the yellow-eyed grin in close-up (BAMF!), teleports the last one into the sky (AUF WIEDERSEHEN!) | four Sentinel drones (MUTANT DETECTED) | bamf |
 | `coraline` | Coraline in stop-motion (the little door and the tunnel, NO., the seeing stone close-up with the ghost children's eyes, the escape with the cat, the button key: CLICK.) | the Other Mother: WE ONLY WANT YOU TO STAY., then her spider form with needle fingers | buttons |
 | `odyssey` | Odysseus in a Corinthian helmet in the Cyclops' cave (Homer, book 9): gives him wine, the MY NAME IS NOBODY close-up, the olive stake heated in the fire and driven into the eye (close-up, TSSSS), rides out under the ram | Polyphemus (WHO ARE YOU?, MORE WINE!, NOBODY IS HURTING ME!; the other Cyclopes: NOBODY? THEN HUSH!) | nobody |
 | `ghibli-totoro` | Satsuki at the bus stop in the rain, no fight (fireflies, the lamp, lends Totoro the spare umbrella, grin close-up, the Catbus's headlight eyes, a bundle of acorns) | Totoro and the Catbus | busstop |
@@ -198,7 +199,7 @@ src/
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  mist_kelsier.py  snk_colosal.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  mist_kelsier.py  xmen_nightcrawler.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
