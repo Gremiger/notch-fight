@@ -9,9 +9,9 @@ charred, gunbai in hand: WORTH IT.
 webcam: he notices the MacBook camera above the panel (WAIT. IS THAT A CAMERA?), presses his face to
 the glass (fisheye close-up: HI MOM!), pushes the panel's edges (LET ME OUT!), gets bored watching
 Claude think (STILL THINKING?) and falls asleep — the panel starts closing on him: HEY! NOT YET!
-review (off by default: a personal one): Claude's pull request on Etendo_schema_forge drops in as a
-terminal; Deadpool reads the diff out loud, judges the Etendo rebrand in close-up (the black logo turns
-yellow: NEW LOGO, HUH? / EDGY. I DIG IT.), stamps it LGTM and merges it with a katana."""
+review: Claude's pull request on Etendo_schema_forge drops in as a
+terminal; Deadpool reads the diff out loud, judges the Etendo rebrand in close-up (the yellow logo turns
+green and black: NEW LOGO. HUH? / EDGY. I DIG IT.), stamps it LGTM and merges it with a katana."""
 from engine import *
 from themes.nrt import MADARA, MADARA_AURA      # notchverse: the other themes' worlds and casts
 from themes.dbz import CE, CELL_KI
@@ -459,7 +459,8 @@ def clip_webcam(f):
     return s
 
 # ==== review ==========================================================================================
-ETENDO_YELLOW, ETENDO_NAVY = (250,214,20), (32,36,82)
+ETENDO_YELLOW, ETENDO_NAVY = (250,214,20), (32,36,82)                  # the old logo
+ETENDO_GREEN, ETENDO_BLACK = (34,170,84), (20,20,20)                   # the new one
 DIFF=[("+","EXPORT FUNCTION FORGE"),("-","IF A IF B IF C IF D"),("+","CONST THINGY2: ANY"),      # only what the font has
       ("+","TODO: FIX LATER. MAYBE."),("-","CONSOLE.LOG ASDFASDF"),("+","RETURN SCHEMA"),("+","TESTS: 412 PASSED")]
 
@@ -502,16 +503,15 @@ def _fx_term_pr(d,im,e,f):
     if cut<0.3: ImageDraw.Draw(im).line([x0-4,y0+24,x1+4,y0+22],fill=(255,255,255),width=2)
 
 def closeup_logo(t,f):
-    """Primer plano: the Etendo logo on a card, Deadpool's mask peeking in from the right. The old black
-    logo; a swipe; the new yellow one — NEW LOGO, HUH? / EDGY. I DIG IT."""
+    """Primer plano: the Etendo logo on a card, Deadpool's mask peeking in from the right. The old yellow
+    logo; a swipe; the new green and black one — NEW LOGO. HUH? / EDGY. I DIG IT."""
     im=Image.new('RGB',(W,H),(30,18,14)); d=ImageDraw.Draw(im)
     d.rectangle([6,8,132,58],fill=(250,250,250),outline=(200,200,200))
     new=t>=0.32
     sw=min(1,max(0,(t-0.3)/0.06))
-    mark=ETENDO_YELLOW if new else (20,20,20)
-    etendo_mark(d,14,16,34,mark,w=4)
-    big_text(im,"ETENDO",27,ETENDO_NAVY if new else (20,20,20),scale=2,cx=96,shadow=None)
-    if 0<sw<1: d.rectangle([6,8,6+int(126*sw),58],fill=ETENDO_YELLOW)          # the rebrand, swiped in
+    etendo_mark(d,14,16,34,ETENDO_GREEN if new else ETENDO_YELLOW,w=4)
+    big_text(im,"ETENDO",27,ETENDO_BLACK if new else ETENDO_NAVY,scale=2,cx=96,shadow=None)
+    if 0<sw<1: d.rectangle([6,8,6+int(126*sw),58],fill=ETENDO_GREEN)           # the rebrand, swiped in
     d.rectangle([150,10,W+10,H],fill=RED); d.line([166,10,166,H],fill=RED_D)  # the mask, peeking in
     d.polygon([(154,20),(176,20),(174,40),(156,40)],fill=(18,16,18))
     sq=0.0 if t<0.5 else 0.5
@@ -554,4 +554,4 @@ def clip_review(f):
     return s
 
 CLIPS = [clip('bub', N_, clip_bub), clip('notchverse', 366, clip_notchverse), clip('webcam', 378, clip_webcam),
-         clip('review', 378, clip_review, off=True)]   # personal (Etendo): off by default
+         clip('review', 378, clip_review)]
