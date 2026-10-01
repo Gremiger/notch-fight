@@ -8,7 +8,10 @@ NOBODY and gets thrown out, stands in front of Cell's Kamehameha (close-up: OH N
 charred, gunbai in hand: WORTH IT.
 webcam: he notices the MacBook camera above the panel (WAIT. IS THAT A CAMERA?), presses his face to
 the glass (fisheye close-up: HI MOM!), pushes the panel's edges (LET ME OUT!), gets bored watching
-Claude think (STILL THINKING?) and falls asleep — the panel starts closing on him: HEY! NOT YET!"""
+Claude think (STILL THINKING?) and falls asleep — the panel starts closing on him: HEY! NOT YET!
+review (off by default: a personal one): Claude's pull request on Etendo_schema_forge drops in as a
+terminal; Deadpool reads the diff out loud, judges the Etendo rebrand in close-up (the black logo turns
+yellow: NEW LOGO, HUH? / EDGY. I DIG IT.), stamps it LGTM and merges it with a katana."""
 from engine import *
 from themes.nrt import MADARA, MADARA_AURA      # notchverse: the other themes' worlds and casts
 from themes.dbz import CE, CELL_KI
@@ -455,4 +458,100 @@ def clip_webcam(f):
     s['actors']=acts
     return s
 
-CLIPS = [clip('bub', N_, clip_bub), clip('notchverse', 366, clip_notchverse), clip('webcam', 378, clip_webcam)]
+# ==== review ==========================================================================================
+ETENDO_YELLOW, ETENDO_NAVY = (250,214,20), (32,36,82)
+DIFF=[("+","EXPORT FUNCTION FORGE"),("-","IF A IF B IF C IF D"),("+","CONST THINGY2: ANY"),      # only what the font has
+      ("+","TODO: FIX LATER. MAYBE."),("-","CONSOLE.LOG ASDFASDF"),("+","RETURN SCHEMA"),("+","TESTS: 412 PASSED")]
+
+def etendo_mark(d,x,y,S,c,w=1):
+    """The Etendo mark: a box open on the right, two diagonals crossing into an X, each ending in a stub."""
+    P=lambda u,v: (x+u*S,y+v*S)
+    d.line([P(0.95,0),P(0,0),P(0,1),P(0.95,1)],fill=c,width=w)
+    d.line([P(0.95,0),P(0.46,0.62),P(0.26,0.62)],fill=c,width=w)
+    d.line([P(0.95,1),P(0.46,0.36),P(0.26,0.36)],fill=c,width=w)
+
+@fx('dp_term_pr')
+def _fx_term_pr(d,im,e,f):
+    """Claude's PR as a terminal window on the right: the title bar, the diff scrolling; k 0..1 slides it in,
+    cut: once the katana goes through, the two halves fall apart."""
+    _,k,scroll,stamp,cut=e
+    x0,x1=74,182; y0=int(lerp(-50,4,ease(k))); y1=y0+46
+    def window(dd,yy):
+        dd.rectangle([x0,yy,x1,yy+46],fill=(18,18,24),outline=(90,90,104))
+        dd.rectangle([x0,yy,x1,yy+6],fill=(40,40,52))
+        for c,cx in (((240,90,80),x0+3),((240,200,80),x0+6),((110,200,90),x0+9)): dd.point((cx,yy+3),fill=c)
+        text(dd,"ETENDO_SCHEMA_FORGE",x0+13,yy+1,(200,200,214),shadow=None)
+        text(dd,"PR BY CLAUDE",x0+3,yy+8,(217,119,87),shadow=None)
+        for i in range(5):
+            j=(i+int(scroll))%len(DIFF); sign,line=DIFF[j]
+            c=(110,210,120) if sign=='+' else (230,100,100)
+            text(dd,sign+line[:25],x0+3,yy+15+i*6,c,shadow=None)
+        if stamp>0:                                                   # LGTM, slammed on (it shrinks into place)
+            sc=1 if stamp>=1 else 2; cx,cy=(x0+x1)//2,yy+26
+            w,h=28*sc,10*sc
+            dd.rectangle([cx-w,cy-h,cx+w,cy+h],fill=(16,40,22),outline=(90,220,110),width=2)
+            big_text(dd._image,"LGTM",cy-5*sc,(90,220,110),scale=2*sc,cx=cx,shadow=None)
+    if cut<=0: window(d,y0); return
+    layer=Image.new('RGB',(W,H),(0,0,0)); m=Image.new('L',(W,H),0)
+    window(ImageDraw.Draw(layer),y0); ImageDraw.Draw(m).rectangle([x0,y0,x1,y1],fill=255)
+    tmp=im.copy(); tmp.paste(layer,(0,0),m)
+    top=tmp.crop((x0,y0,x1+1,y0+23)); bot=tmp.crop((x0,y0+23,x1+1,y1+1))
+    drop=int(cut*cut*60)
+    im.paste(top.rotate(-6*cut,expand=False),(x0-int(10*cut),y0-drop//3))
+    im.paste(bot.rotate(8*cut,expand=False),(x0+int(8*cut),y0+23+drop))
+    if cut<0.3: ImageDraw.Draw(im).line([x0-4,y0+24,x1+4,y0+22],fill=(255,255,255),width=2)
+
+def closeup_logo(t,f):
+    """Primer plano: the Etendo logo on a card, Deadpool's mask peeking in from the right. The old black
+    logo; a swipe; the new yellow one — NEW LOGO, HUH? / EDGY. I DIG IT."""
+    im=Image.new('RGB',(W,H),(30,18,14)); d=ImageDraw.Draw(im)
+    d.rectangle([6,8,132,58],fill=(250,250,250),outline=(200,200,200))
+    new=t>=0.32
+    sw=min(1,max(0,(t-0.3)/0.06))
+    mark=ETENDO_YELLOW if new else (20,20,20)
+    etendo_mark(d,14,16,34,mark,w=4)
+    big_text(im,"ETENDO",27,ETENDO_NAVY if new else (20,20,20),scale=2,cx=96,shadow=None)
+    if 0<sw<1: d.rectangle([6,8,6+int(126*sw),58],fill=ETENDO_YELLOW)          # the rebrand, swiped in
+    d.rectangle([150,10,W+10,H],fill=RED); d.line([166,10,166,H],fill=RED_D)  # the mask, peeking in
+    d.polygon([(154,20),(176,20),(174,40),(156,40)],fill=(18,16,18))
+    sq=0.0 if t<0.5 else 0.5
+    d.rectangle([160,24+int(6*sq),170,36],fill=(250,250,250))
+    if 0.06<=t<0.5: FX['dp_box'](d,im,('dp_box',"NEW LOGO. HUH?",70,1),f)
+    if t>=0.52: FX['dp_box'](d,im,('dp_box',"EDGY. I DIG IT.",70,1),f)
+    if t<0.05: zoom_lines(d)
+    return im
+
+def clip_review(f):
+    s=scene(f,THEME)
+    x,y,pose,mood,flip=30,GROUND,guard_pose(f),'normal',False
+    k,scroll,stamp,cut=0.0,0,0.0,0.0
+    if 14<=f<330: k=min(1,(f-14)/12)
+    if 18<=f<62: s['fx'].append(('dp_box',"OOH. A PULL REQUEST.",34,4)); mood='happy'
+    if 62<=f<160: scroll=(f-62)/14
+    if 66<=f<110: s['fx'].append(('dp_box',["WHO NAMED","THIS VARIABLE?"],34,4)); mood='squint'
+    if 112<=f<160: s['fx'].append(('dp_box',["THREE NESTED","IFS? BOLD."],34,4)); mood='angry'
+    if 160<=f<250: s['image']=closeup_logo((f-160)/90,f); return s
+    if 250<=f<300:
+        scroll=7; stamp=min(1,(f-256)/5) if f>=256 else 0
+        if 256<=f<262: s['shake']=rshake(2)
+        if 254<=f<262: pose='armsup'
+        s['fx'].append(('dp_box',"LGTM.",34,4)); mood='happy'
+    if 300<=f<330:
+        scroll,stamp=7,1
+        if f<310: x,pose=ez(30,96,(f-300)/10),'dash'
+        else: x,pose=96,'punch'
+        if f<316: callout(s,"MERGE.",y=52,c=(190,140,255))
+        cut=0 if f<312 else (f-312)/18
+    if 330<=f<354: callout(s,"MERGED",y=4,c=(190,140,255)); x,pose,mood=96,guard_pose(f),'happy'
+    if 354<=f<366: x,flip,pose=ez(96,30,(f-354)/12),True,guard_pose(f)
+    if f>=366: x,flip=30,False
+    if 14<=f<330: s['under'].append(('dp_term_pr',k,scroll,stamp,cut))
+    acts=[actor(DP[mood][pose],x,y,flip=flip,pal=DPAL)]
+    if pose in GRIP:
+        hx,hy=hand_at(DP[mood][pose],x,int(y),flip,*GRIP[pose],h=11)
+        s['fx'].append(('dp_katana',hx,hy,180 if flip else 0))
+    s['actors']=acts
+    return s
+
+CLIPS = [clip('bub', N_, clip_bub), clip('notchverse', 366, clip_notchverse), clip('webcam', 378, clip_webcam),
+         clip('review', 378, clip_review, off=True)]   # personal (Etendo): off by default
