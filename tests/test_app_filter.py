@@ -1,87 +1,109 @@
-"""The app honours the clip selection in config.json. Runs the built binary (the panel shows for a
-moment) against temporary configs via NOTCH_FIGHT_CONFIG; skipped when there is no build or no Mac."""
-import json, os, platform, select, subprocess, tempfile, time, unittest
+"""The app honours the clip selection in config.json, pointed at temporary configs via NOTCH_FIGHT_CONFIG.
+
+By default the built binary runs with --print-selection: it works out the selection exactly as at launch,
+prints it and exits before the app starts — no panel, and the window you are typing in keeps focus.
+NOTCH_FIGHT_TEST_PANEL=1 also runs real launches (through `open -g`: the panel shows, focus stays).
+Skipped when there is no build or no Mac."""
+import json, os, platform, subprocess, tempfile, time, unittest
 
 ROOT = os.path.join(os.path.dirname(__file__), '..')
-BIN = os.path.join(ROOT, 'build', 'NotchFight.app', 'Contents', 'MacOS', 'NotchFight')
+APP = os.path.join(ROOT, 'build', 'NotchFight.app')
+BIN = os.path.join(APP, 'Contents', 'MacOS', 'NotchFight')
 CLIPS = sorted(os.listdir(os.path.join(ROOT, 'build', 'clips'))) if os.path.isdir(os.path.join(ROOT, 'build', 'clips')) else []
 SHIPPED_OFF = [c for c in CLIPS if os.path.exists(os.path.join(ROOT, 'build', 'clips', c, '.default-off'))]
 ON = [c for c in CLIPS if c not in SHIPPED_OFF]      # the clips that play with an empty config
+HAS_APP = platform.system() == 'Darwin' and os.path.exists(BIN)
 
-@unittest.skipUnless(platform.system() == 'Darwin' and os.path.exists(BIN), 'needs macOS and ./build.sh')
-class AppFilter(unittest.TestCase):
-    def launch(self, cfg, wait=1.0):
-        """Run the app with this config; return (stderr log, whether it quit on its own `wait` s after
-        logging its selection)."""
-        path = os.path.join(tempfile.mkdtemp(), 'config.json'); json.dump(cfg, open(path, 'w'))
-        env = dict(os.environ, NOTCH_FIGHT_CONFIG=path); env.pop('NOTCH_FIGHT_FIRST', None)
-        p = subprocess.Popen([BIN], env=env, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL)
-        log, t0, seen = b'', time.time(), None
-        while time.time() - t0 < 10:                   # wait for the selection line, not a fixed time
-            r, _, _ = select.select([p.stderr], [], [], 0.1)
-            if r:
-                chunk = os.read(p.stderr.fileno(), 65536)
-                if not chunk: break                    # the app quit
-                log += chunk
-            if seen is None and b'clips active' in log: seen = time.time()
-            if seen is not None and time.time() - seen >= wait: break
-        try: p.wait(timeout=1); quit_alone = True        # it quit on its own (e.g. nothing to show)
-        except subprocess.TimeoutExpired: quit_alone = False; p.kill()
-        rest = p.communicate()[1]
-        return (log + (rest or b'')).decode(errors='replace'), quit_alone
+def config_file(cfg):
+    path = os.path.join(tempfile.mkdtemp(), 'config.json'); json.dump(cfg, open(path, 'w')); return path
 
-    def test_no_selection_keys_plays_everything(self):
-        log, _ = self.launch({})
-        self.assertIn(f'{len(ON)}/{len(CLIPS)} clips active', log)
+def selection(cfg, binary=BIN):
+    """Run the app with --print-selection against this config; return (output, seconds, exit code)."""
+    env = dict(os.environ, NOTCH_FIGHT_CONFIG=config_file(cfg)); env.pop('NOTCH_FIGHT_FIRST', None)
+    t0 = time.time()
+    r = subprocess.run([binary, '--print-selection'], env=env, capture_output=True, text=True, timeout=20)
+    return r.stdout + r.stderr, time.time() - t0, r.returncode
+
+@unittest.skipUnless(HAS_APP, 'needs macOS and ./build.sh')
+class AppSelection(unittest.TestCase):
+    def test_print_selection_exits_on_its_own_without_the_panel(self):
+        out, secs, code = selection({})
+        self.assertEqual(code, 0)
+        self.assertIn('panel: shown', out)
+        self.assertLess(secs, 10)
+
+    def test_no_selection_keys_plays_everything_shipped_on(self):
+        out, _, _ = selection({})
+        self.assertIn(f'{len(ON)}/{len(CLIPS)} clips active', out)
 
     def test_new_disabled_plays_only_the_enabled_list(self):
-        log, _ = self.launch({'newClips': 'disabled', 'enabled': [CLIPS[0]]})
-        self.assertIn(f'1/{len(CLIPS)} clips active', log)
+        out, _, _ = selection({'newClips': 'disabled', 'enabled': [CLIPS[0]]})
+        self.assertIn(f'1/{len(CLIPS)} clips active', out)
 
     def test_new_enabled_skips_the_disabled_list(self):
-        log, _ = self.launch({'newClips': 'enabled', 'disabled': ON[:2]})
-        self.assertIn(f'{len(ON) - 2}/{len(CLIPS)} clips active', log)
+        out, _, _ = selection({'newClips': 'enabled', 'disabled': ON[:2]})
+        self.assertIn(f'{len(ON) - 2}/{len(CLIPS)} clips active', out)
 
-    def test_nothing_active_quits_without_a_panel(self):
-        log, quit_alone = self.launch({'newClips': 'disabled', 'enabled': []})
-        self.assertIn('no clips active', log)
-        self.assertTrue(quit_alone)
+    def test_nothing_active_means_no_panel(self):
+        out, _, _ = selection({'newClips': 'disabled', 'enabled': []})
+        self.assertIn('no clips active', out)
+        self.assertIn('panel: hidden', out)
 
     def test_a_forced_clip_plays_even_when_disabled(self):
-        log, quit_alone = self.launch({'newClips': 'disabled', 'enabled': [], 'first': [CLIPS[0]]})
-        self.assertIn(f'0/{len(CLIPS)} clips active', log)
-        self.assertFalse(quit_alone)
+        out, _, _ = selection({'newClips': 'disabled', 'enabled': [], 'first': [CLIPS[0]]})
+        self.assertIn(f'0/{len(CLIPS)} clips active', out)
+        self.assertIn(f'forced: {CLIPS[0]}', out)
+        self.assertIn('panel: shown', out)
 
     def test_unknown_names_in_the_lists_are_logged(self):
-        log, _ = self.launch({'newClips': 'enabled', 'disabled': ['nope__clip']})
-        self.assertIn("unknown clip 'nope__clip'", log)
+        out, _, _ = selection({'newClips': 'enabled', 'disabled': ['nope__clip']})
+        self.assertIn("unknown clip 'nope__clip'", out)
 
-@unittest.skipUnless(platform.system() == 'Darwin' and os.path.exists(BIN), 'needs macOS and ./build.sh')
+@unittest.skipUnless(HAS_APP, 'needs macOS and ./build.sh')
 class AppDefaultOff(unittest.TestCase):
     """A clip whose build folder has a .default-off marker stays out of the rotation until enabled."""
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.mkdtemp()
         app = os.path.join(cls.tmp, 'NotchFight.app')
-        subprocess.run(['cp', '-cR', os.path.join(ROOT, 'build', 'NotchFight.app'), app], check=True)  # APFS clone: fast
-        cls.marked = ON[0]                          # a clip that ships on, marked off in this copy
+        subprocess.run(['cp', '-cR', APP, app], check=True)          # APFS clone: fast
+        cls.marked = ON[0]                                          # a clip that ships on, marked off in this copy
         open(os.path.join(app, 'Contents', 'Resources', 'clips', cls.marked, '.default-off'), 'w').close()
         cls.bin = os.path.join(app, 'Contents', 'MacOS', 'NotchFight')
 
-    def launch(self, cfg):
-        global BIN
-        saved, BIN = BIN, self.bin
-        try: return AppFilter.launch(self, cfg)
-        finally: BIN = saved
-
     def test_a_default_off_clip_is_not_active(self):
-        log, _ = self.launch({})
-        self.assertIn(f'{len(ON) - 1}/{len(CLIPS)} clips active', log)
+        out, _, _ = selection({}, self.bin)
+        self.assertIn(f'{len(ON) - 1}/{len(CLIPS)} clips active', out)
 
     def test_turning_it_on_in_enabled_mode(self):
-        log, _ = self.launch({'newClips': 'enabled', 'enabled': [self.marked]})
-        self.assertIn(f'{len(ON)}/{len(CLIPS)} clips active', log)
+        out, _, _ = selection({'newClips': 'enabled', 'enabled': [self.marked]}, self.bin)
+        self.assertIn(f'{len(ON)}/{len(CLIPS)} clips active', out)
 
+@unittest.skipUnless(HAS_APP and os.environ.get('NOTCH_FIGHT_TEST_PANEL') == '1',
+                     'real launches show the panel: opt in with NOTCH_FIGHT_TEST_PANEL=1')
+class AppPanel(unittest.TestCase):
+    """Real launches, in the background (`open -g -n`): the panel shows, the focused window keeps focus."""
+    def launch(self, cfg, wait=3.0):
+        """Launch a new instance; return (its log, whether it quit on its own within `wait` s)."""
+        log = os.path.join(tempfile.mkdtemp(), 'err.log')
+        p = subprocess.Popen(['open', '-g', '-n', '-W', '--env', f'NOTCH_FIGHT_CONFIG={config_file(cfg)}',
+                              '--stderr', log, APP])
+        try: p.wait(timeout=wait); quit_alone = True
+        except subprocess.TimeoutExpired:
+            quit_alone = False
+            subprocess.run(['pkill', '-nx', 'NotchFight'], capture_output=True)   # the newest instance: ours
+            p.wait(timeout=5)
+        return (open(log).read() if os.path.exists(log) else ''), quit_alone
+
+    def test_nothing_active_quits_without_a_panel(self):
+        log, quit_alone = self.launch({'newClips': 'disabled', 'enabled': []})
+        self.assertIn('no clips active', log)
+        self.assertTrue(quit_alone)
+
+    def test_a_forced_clip_keeps_the_panel_up(self):
+        log, quit_alone = self.launch({'newClips': 'disabled', 'enabled': [], 'first': [CLIPS[0]]})
+        self.assertIn(f'0/{len(CLIPS)} clips active', log)
+        self.assertFalse(quit_alone)
 
 if __name__ == '__main__':
     unittest.main()
