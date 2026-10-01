@@ -1,7 +1,7 @@
 """The Bear: Claude as Carmy (white tee, the blue apron, a towel on the shoulder) at the pass, in the kitchen
-with EVERY SECOND COUNTS taped to the wall over the line. The printer starts spitting tickets (ORDERS IN!);
+with the blue LED clock and its EVERY SECOND COUNTS plaque on the wall over the line. The printer starts spitting tickets (ORDERS IN!);
 the brigade (Sydney, Marcus, Tina, Richie) answers YES CHEF!; a pan goes up in flames, BEHIND!, a plate
-smashes, the clock on the wall racing. Close-up: the sign, its letters jumping with every second. Carmy
+smashes, the clock racing through a whole day. Close-up: the clock and the plaque, glowing with every second. Carmy
 plates the last one with his tweezers (HANDS!), the printer stops, the kitchen goes quiet — YES CHEF."""
 from engine import *
 from themes.arg import PLAYER                                       # the generic people, in kitchen whites
@@ -47,14 +47,40 @@ def _kitchen(d):
     for x in range(0,W,10): d.line([x,46,x,H],fill=(136,126,118))
 register_bg(THEME, lambda v: (v+100,v+96,v+90), decor=_kitchen)
 
-@fx('tb_sign')
-def _fx_sign(d,im,e,f):
-    """EVERY SECOND COUNTS, printed out and taped up on the wall (jolt: it shakes with the second)."""
-    _,jolt=e; x0,y0=64,3; jx=jolt
-    d.rectangle([x0+jx,y0,x0+56+jx,y0+16],fill=(250,250,248),outline=(200,200,196))
-    for tx,ty in ((x0+1,y0-1),(x0+52,y0-1)): d.rectangle([tx+jx,ty,tx+3+jx,ty+1],fill=(220,210,170))   # tape
-    text(d,"EVERY",x0+8+jx,y0+2,(20,20,20),shadow=None); text(d,"SECOND",x0+30+jx,y0+2,(20,20,20),shadow=None)
-    text(d,"COUNTS",x0+16+jx,y0+9,(200,30,30),shadow=None)
+LED, LED_DIM, PLAQUE = (90,170,255), (18,22,30), (22,40,66)
+SEGS={'0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc','5':'afgcd','6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg'}
+def seven(d,x,y,w,h,ch,c,t=1):
+    """One seven-segment LED digit, top-left at (x,y), w x h, segments t px thick."""
+    m=h//2; on=SEGS.get(ch,'')
+    seg={'a':(x+t,y,x+w-t,y+t-1),'g':(x+t,y+m-t//2,x+w-t,y+m+(t-1)-t//2),'d':(x+t,y+h-t+1,x+w-t,y+h),
+         'f':(x,y+t,x+t-1,y+m-1),'b':(x+w-t+1,y+t,x+w,y+m-1),'e':(x,y+m+1,x+t-1,y+h-t),'c':(x+w-t+1,y+m+1,x+w,y+h-t)}
+    for k,r in seg.items(): d.rectangle(r,fill=c if k in on else LED_DIM)
+
+def wall_unit(d,x0,y0,hhmm,flash=0.0,scale=1):
+    """The clock over the plaque, as on the wall in the show: blue LED digits, EVERY SECOND COUNTS."""
+    k=scale; cw,ch=44*k,15*k
+    d.rectangle([x0,y0,x0+cw,y0+ch],fill=(14,14,18),outline=(70,70,78))
+    c=tuple(int(lerp(v,255,flash)) for v in LED)
+    dw,dh=5*k,9*k; xs=[x0+4*k,x0+12*k,x0+25*k,x0+33*k]
+    for i,chd in enumerate(hhmm.replace(':','')): seven(d,xs[i],y0+3*k,dw,dh,chd,c,max(1,k))
+    for dy in (5*k,9*k): d.rectangle([x0+21*k,y0+dy,x0+21*k+k-1,y0+dy+k-1],fill=c)
+    px0,pw,py0=x0-18*k,80*k,y0+ch+2*k
+    d.rectangle([px0,py0,px0+pw,py0+9*k],fill=PLAQUE,outline=(50,70,100))
+    if k==1: text(d,"EVERY SECOND COUNTS",px0+3,py0+2,(240,244,250),shadow=None)
+
+@fx('tb_wall')
+def _fx_wall(d,im,e,f):
+    _,hhmm,flash=e
+    if flash>0:
+        g=Image.new('L',(W,H),0); ImageDraw.Draw(g).rectangle([70,0,116,18],fill=int(90*flash))
+        im.paste(LED,(0,0),g.filter(ImageFilter.GaussianBlur(3))); d=ImageDraw.Draw(im)
+    wall_unit(d,71,1,hhmm,flash)
+
+def clock_at(f):
+    """08:17 at rest; during the service it races through one whole day and lands on 08:17 again."""
+    m=8*60+17
+    if 16<=f<236: m+=int(24*60*ease((f-16)/220))
+    m%=24*60; return f"{m//60:02d}:{m%60:02d}"
 
 @fx('tb_tickets')
 def _fx_tickets(d,im,e,f):
@@ -66,13 +92,6 @@ def _fx_tickets(d,im,e,f):
     d.rectangle([44,31,54,37],fill=(50,50,56))                         # the printer
     if printing:
         L=2+(f%6); d.rectangle([47,31-L,51,31],fill=(250,250,244)); d.point((52,33),fill=(90,220,110))
-
-@fx('tb_clock')
-def _fx_clock(d,im,e,f):
-    """The clock on the wall, racing through the service (secs)."""
-    _,secs=e; m,s_=divmod(int(secs),60)
-    d.rectangle([150,22,180,30],fill=(20,20,24),outline=(90,90,100))
-    text(d,f"{m:02d}:{s_:02d}".replace(':',':'),152,24,(255,70,60),shadow=None)
 
 @fx('tb_bubble')
 def _fx_bubble(d,im,e,f):
@@ -97,35 +116,32 @@ def _fx_tweezers(d,im,e,f):
 
 # ---- close-up -----------------------------------------------------------------------------------------
 def closeup_sign(t,f):
-    """Primer plano: EVERY SECOND COUNTS, pushed in on; every second the letters jump and the room flashes."""
+    """Primer plano: the clock and the plaque, as on the wall; every second the digits jump and glow."""
     tick=(f%20)<3
-    im=Image.new('RGB',(W,H),(230,230,224)); d=ImageDraw.Draw(im)
-    for y in range(0,H,8):
-        d.line([0,y,W,y],fill=(206,206,200))
-        for x in range((y//8)%2*8,W,16): d.line([x,y,x,y+7],fill=(206,206,200))
-    k=1+0.15*ease(t)
-    pw,ph=int(150*k),int(54*k); px,py=(W-pw)//2,(H-ph)//2
-    jx=random.Random(f).randint(-2,2) if tick else 0
-    d.rectangle([px+jx,py,px+pw+jx,py+ph],fill=(250,250,248),outline=(190,190,186))
-    d.rectangle([px+2+jx,py-2,px+12+jx,py+3],fill=(220,210,170)); d.rectangle([px+pw-12+jx,py-2,px+pw-2+jx,py+3],fill=(220,210,170))
-    big_text(im,"EVERY SECOND",py+6,(20,20,20),scale=2,cx=W//2+jx,shadow=None)
-    big_text(im,"COUNTS",py+24,(200,30,30),scale=3,cx=W//2+jx,shadow=None)
-    if tick: im=fade_to(im,(255,60,40),0.18); d=ImageDraw.Draw(im)
-    if t<0.05: zoom_lines(d,(200,30,30))
+    im=Image.new('RGB',(W,H),(214,216,214)); d=ImageDraw.Draw(im)
+    for y in range(0,H,12): d.line([0,y,W,y],fill=(190,192,190))
+    for y in range(0,H,12):
+        for x in range((y//12)%2*24,W,48): d.line([x,y,x,y+11],fill=(190,192,190))
+    secs=17+int(t*3)                                                # 08:17, 08:18, 08:19: one per second
+    hhmm=f"08:{secs:02d}"
+    k=2; x0=(W-44*k)//2+(random.Random(f).randint(-1,1) if tick else 0); y0=2
+    if tick:
+        g=Image.new('L',(W,H),0); ImageDraw.Draw(g).rectangle([x0-6,y0-4,x0+44*k+6,y0+15*k+4],fill=110)
+        im.paste(LED,(0,0),g.filter(ImageFilter.GaussianBlur(6))); d=ImageDraw.Draw(im)
+    wall_unit(d,x0,y0,hhmm,0.35 if tick else 0.0,scale=k)
+    big_text(im,"EVERY SECOND COUNTS",y0+15*k+8,(240,244,250),scale=1,cx=W//2,shadow=None)
+    if t<0.05: zoom_lines(d,LED)
     return im
 
 # ---- the clip -----------------------------------------------------------------------------------------
 def clip_service(f):
     s=scene(f,THEME)
-    pose=guard_pose(f); jolt=0
+    pose=guard_pose(f)
     rush=16<=f<236
     n=0 if not rush else min(9,(f-16)//8+1)
     if 200<=f<236: n=max(0,9-(f-200)//4)                               # the last ones coming down
-    secs=0 if f<16 else (min(f,236)-16)*0.6                            # the clock races through the night
-    if rush and (f%20)<2: jolt=1
-    s['under'].append(('tb_sign',jolt))
+    s['under'].append(('tb_wall',clock_at(f),0.5 if rush and (f%20)<2 else 0.0))   # it pulses with every second
     s['under'].append(('tb_tickets',n,16<=f<120))
-    if 16<=f<272: s['under'].append(('tb_clock',secs))                  # on for the service only
     bposes=['idle']*4
     if 18<=f<50: s['fx'].append(('tb_bubble',"ORDERS IN!",CX+4,12))
     if 50<=f<88:
