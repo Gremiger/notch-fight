@@ -9,16 +9,21 @@ THEME = 'thisisfine'
 N_ = 372                                                            # a multiple of 12
 CX = 70                                                             # the dog at the table
 SKIN,SKIN_D,INK=(217,119,87),(168,80,54),(40,20,16)
-# the dog: Claude's own orange, a brown bowler hat with a dark band, floppy brown ears
-DPAL = {'1':(120,78,44),'2':(60,36,22),'3':(150,90,50)}
-HAT = ["...1111.....","..111111....","..222222....","1111111111.."]
+# the dog: Claude's own orange, a brown bowler (dome, dark band, brim), long floppy ears on both sides,
+# a pale muzzle with a black nose and a little smile
+DPAL = {'1':(120,78,44),'2':(60,36,22),'3':(140,80,44),'4':(244,186,130),'5':(30,20,18)}
+HAT = ["...1111.....","..111111....","..222222....",".11111111..."]
 
 def _dog(spr):
     g=[list(r) for r in overlay(spr,HAT,0,0)]
-    top,l,r=body_box(S([''.join(x) for x in g]))
-    for y in range(top+1,top+5):                                     # the ear, hanging off the back
-        if l-1>=0: g[y][l-1]='3'
-        if y>=top+2: g[y][l]='3'
+    top,l,r=body_box(S([''.join(x) for x in g])); w=len(g[0])
+    def put(x,y,c,over='.Oo'):
+        if 0<=y<len(g) and 0<=x<w and g[y][x] in over: g[y][x]=c
+    for y in range(top,top+7): put(l-1,y,'3'); put(l,y,'3','O')          # the back ear, hanging long
+    for y in range(top,top+4): put(r+1,y,'3')                             # the front ear, behind the face
+    for x in range(r-3,r+1): put(x,top+4,'4','O'); put(x,top+5,'4','O')   # the muzzle...
+    put(r+1,top+4,'5'); put(r,top+4,'5','O4')                             # ...its nose
+    put(r-2,top+5,'5','4'); put(r-1,top+6,'5','O')                        # the smile
     return S([''.join(x) for x in g])
 DOG=variant(_dog)
 WALL, WALL_D = (236,206,120), (214,180,96)
@@ -111,14 +116,22 @@ def closeup_fine(t,f):
         d.polygon([(x-8,H),(x+rr.randint(-4,4),H-h),(x+8,H)],fill=rr.choice([(255,140,40),(255,200,80),(230,80,30)]))
     for i in range(8): d.ellipse([i*26-10,-14,i*26+24,10],fill=(80,76,74))   # the smoke above
     ox=40
-    d.rectangle([ox,18,ox+56,H],fill=SKIN); d.rectangle([ox+50,18,ox+56,H],fill=SKIN_D)
-    d.polygon([(ox-10,22),(ox,18),(ox+4,46),(ox-6,50)],fill=DPAL['3'])        # the floppy ear
-    d.rectangle([ox+8,8,ox+46,18],fill=DPAL['1']); d.rectangle([ox+8,14,ox+46,17],fill=DPAL['2'])   # the bowler
-    d.ellipse([ox+12,0,ox+42,14],fill=DPAL['1']); d.rectangle([ox-2,17,ox+58,20],fill=DPAL['1'])
-    for ex in (ox+18,ox+40): d.rectangle([ex-2,28,ex+2,34],fill=(24,14,12)); d.point((ex-1,29),fill=(255,220,160))
-    d.arc([ox+20,36,ox+40,50],20,160,fill=INK,width=2)                         # the calm smile
+    for ex in (ox-12,ox+54):                                          # the two long ears
+        d.polygon([(ex+6,16),(ex+16,18),(ex+14,58),(ex+8,64),(ex,56),(ex+2,24)],fill=DPAL['3'],outline=(90,50,26))
+    d.rounded_rectangle([ox,14,ox+58,H+10],radius=14,fill=SKIN)          # the head
+    d.rounded_rectangle([ox+52,14,ox+58,H],radius=4,fill=SKIN_D)
+    d.ellipse([ox+20,38,ox+46,58],fill=DPAL['4'])                         # the muzzle
+    d.ellipse([ox+29,37,ox+37,43],fill=DPAL['5']); d.point((ox+31,38),fill=(120,100,100))   # the nose
+    d.arc([ox+24,44,ox+42,56],20,160,fill=INK,width=2)                     # the calm smile
+    for ex in (ox+18,ox+42):                                          # eyes: two black ovals, a glint
+        d.ellipse([ex-3,26,ex+3,34],fill=(24,14,12)); d.point((ex-1,28),fill=(255,220,160))
+    d.ellipse([ox+10,-6,ox+48,16],fill=DPAL['1'],outline=(80,50,26))      # the bowler: the dome...
+    d.rectangle([ox+10,9,ox+48,13],fill=DPAL['2'])                         # ...the band...
+    d.rounded_rectangle([ox+2,13,ox+56,17],radius=2,fill=DPAL['1'],outline=(80,50,26))   # ...the brim
     mx,my=ox+66,46                                                   # the mug, up for a sip
     d.rectangle([mx-7,my-10,mx+7,my+6],fill=(240,240,236),outline=(120,120,120)); d.arc([mx+4,my-6,mx+12,my+2],270,90,fill=(120,120,120),width=2)
+    d.ellipse([mx-12,my-2,mx-2,my+8],fill=SKIN,outline=SKIN_D)              # the paw round it
+    for k in range(3): ph=(f+k*4)%12; d.point((mx-4+k*4+int(math.sin(ph*0.5)),my-12-ph),fill=(250,250,250))
     if t>=0.3:
         big_text(im,"THIS IS",8,(255,255,255),scale=2,cx=150,outline=(60,20,10))
         big_text(im,"FINE.",26,(255,255,255),scale=2,cx=150,outline=(60,20,10))
