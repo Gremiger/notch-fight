@@ -30,6 +30,8 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 case "${1:-}" in
   start)
     [[ -n "$sid" ]] && echo "$(claude_pid)" > "$DIR/$sid"
+    # paused, quiet hours or screen sharing (nf pause / quiet / share): keep the marker, don't show
+    python3 "$(dirname "$0")/nf.py" gate >/dev/null 2>&1 || exit 0
     open -g "$2" >/dev/null 2>&1 || true
     ;;
   stop)

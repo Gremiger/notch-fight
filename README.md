@@ -14,7 +14,8 @@ Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Too
 git clone <this repo> && cd notch-fight
 ./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
 ./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
-./clips.sh          # choose which clips play (see "Choosing clips")
+nf clips            # choose which clips play (see "Choosing clips"); install.sh links `nf` into ~/.local/bin
+nf pause 1h         # and the rest of the controls (see "The nf command")
 # several Claude profiles? NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh (same for uninstall)
 ```
 
@@ -146,6 +147,32 @@ mkdir -p ~/.config/notch-fight && cp config.example.json ~/.config/notch-fight/c
 
 Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name is logged
 (with the list of valid names) and ignored. Clip names = folder names under `build/clips/`.
+
+## The nf command
+
+`install.sh` links `nf` into `~/.local/bin` (it leaves an existing `nf` that isn't ours alone), so it
+works from any folder:
+
+```bash
+nf clips [...]              # which clips play: the checklist, list, enable, disable, mode (= ./clips.sh)
+nf pause                    # a menu: 15 min, 30 min, 1 h, 4 h, 8 h, until resumed, or N minutes
+nf pause 45m                # or straight away: 15m, 1h, 1h30m, 90 (minutes), forever
+nf resume                   # show it again (right away if a Claude session is working)
+nf status                   # paused?, quiet hours, screen sharing, clips, scale, hooks, sessions, app
+nf preview odyssey          # play a clip or a whole theme in the notch now, then close (no focus change)
+nf quiet 22:00-08:00        # never show it in that window (add `weekdays` for Monday to Friday; `off`)
+nf share on|off             # hide it while sharing the screen (on by default)
+```
+
+Whether the panel may show is decided in one place, `nf gate` (`scripts/nf.py`): the Claude Code hook
+asks before opening it, and the app asks every few seconds while it is up, so a pause, quiet hours or a
+screen share hides a panel that is already out. Sessions keep being tracked meanwhile. The pause lives
+in `~/.config/notch-fight/paused`; quiet hours and `pauseOnShare` in `config.json`.
+
+Screen sharing is detected by process: Zoom runs `CptHost` while sharing and macOS runs
+`screencaptureui` while recording. A share from a browser tab (Meet, Teams on the web) looks like any
+other tab from outside, so it isn't caught: list your own process names in `"shareProcesses"` in
+`config.json`, or `nf pause` for the call.
 
 ## Choosing clips
 

@@ -47,12 +47,21 @@ fi
 echo "Registering Claude Code hooks"
 python3 "$ROOT/scripts/hooks.py" install "$ROOT/build/NotchFight.app"
 
+echo "Linking the nf command"
+BIN="$HOME/.local/bin"; mkdir -p "$BIN"
+if [[ -L "$BIN/nf" && "$(readlink "$BIN/nf")" == "$ROOT/nf" ]] || [[ ! -e "$BIN/nf" ]]; then
+  ln -sfn "$ROOT/nf" "$BIN/nf"; ok "nf -> $BIN/nf (nf help)"
+  case ":$PATH:" in *":$BIN:"*) ;; *) echo "  - $BIN is not in your PATH: add  export PATH=\"\$HOME/.local/bin:\$PATH\"  to your shell profile";; esac
+else
+  echo "  - $BIN/nf already exists and is not ours: left alone (run $ROOT/nf directly)"
+fi
+
 # Which clips play: offer the checklist when a person is at the terminal (never when scripted).
 if [[ -t 0 && -t 1 ]]; then
   read -r -p "Choose which clips to show now? [y/N] " ans
-  [[ "$ans" =~ ^[yY] ]] && "$ROOT/clips.sh"
+  [[ "$ans" =~ ^[yY] ]] && "$ROOT/nf" clips
 else
-  echo "  - to choose which clips play: ./clips.sh (in a terminal)"
+  echo "  - to choose which clips play: nf clips (in a terminal)"
 fi
 
 cat <<MSG
