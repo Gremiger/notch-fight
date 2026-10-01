@@ -1,8 +1,18 @@
 """Deadpool: Claude as Deadpool vs Wolverine, in the Void (Deadpool & Wolverine).
 SNIKT. Katanas vs claws; an arm pops off and a tiny one grows back. Then Deadpool turns to us, in his
 yellow boxes: A NOTCH? SERIOUSLY? — and knocks on the top edge of the panel. Close-up: MAXIMUM EFFORT.
-He offers a chimichanga; Wolverine takes it and leaves: BUB."""
+He offers a chimichanga; Wolverine takes it and leaves: BUB.
+notchverse: a TVA door opens in the Void and Deadpool goes visiting the app's other themes: steals
+Madara's gunbai in the Hidden Leaf (and leaves with his pants on fire), tells the Cyclops his name is
+NOBODY and gets thrown out, stands in front of Cell's Kamehameha (close-up: OH NO.) — and comes home
+charred, gunbai in hand: WORTH IT.
+webcam: he notices the MacBook camera above the panel (WAIT. IS THAT A CAMERA?), presses his face to
+the glass (fisheye close-up: HI MOM!), pushes the panel's edges (LET ME OUT!), gets bored watching
+Claude think (STILL THINKING?) and falls asleep — the panel starts closing on him: HEY! NOT YET!"""
 from engine import *
+from themes.nrt import MADARA, MADARA_AURA      # notchverse: the other themes' worlds and casts
+from themes.dbz import CE, CELL_KI
+import themes.odyssey                             # registers the cave, the fire and the Cyclops
 
 THEME = 'deadpool'
 N_ = 376
@@ -211,4 +221,230 @@ def clip_bub(f):
     s['actors']=acts
     return s
 
-CLIPS = [clip('bub', N_, clip_bub)]
+# ==== notchverse ======================================================================================
+TVA=(255,140,40)
+
+@fx('dp_door')
+def _fx_door(d,im,e,f):
+    """A TVA time door: a glowing orange frame, the portal rippling inside (k 0..1: how open)."""
+    _,x,k=e
+    if k<=0: return
+    x=int(x); h=int(28*k); top=GROUND-h
+    g=Image.new('L',(W,H),0); ImageDraw.Draw(g).rectangle([x-10,top-4,x+10,GROUND+2],fill=120)
+    im.paste(TVA,(0,0),g.filter(ImageFilter.GaussianBlur(4))); d=ImageDraw.Draw(im)
+    d.rectangle([x-7,top,x+7,GROUND],fill=(255,190,90),outline=(255,240,200))
+    for j in range(4):
+        yy=top+((f*2+j*7)%max(1,h)); d.line([x-6,yy,x+6,yy],fill=(255,236,170))
+
+@fx('dp_burn')
+def _fx_burn(d,im,e,f):
+    """Flames on the seat of his pants."""
+    _,x,y=e; rr=random.Random(f)
+    for _ in range(4): d.point((int(x)+rr.randint(-2,2),int(y)-rr.randint(0,4)),fill=rr.choice([(255,200,60),(255,120,30)]))
+
+def closeup_ohno(t,f):
+    """Primer plano: the mask lit blue from the right as the Kamehameha comes — OH NO."""
+    im=Image.new('RGB',(W,H),(20,24,40)); d=ImageDraw.Draw(im)
+    k=ease(t)
+    g=Image.new('L',(W,H),0); ImageDraw.Draw(g).ellipse([W-40-100*k,-40,W+80,H+40],fill=int(60+170*k))
+    im.paste(CELL_KI[0],(0,0),g.filter(ImageFilter.GaussianBlur(12))); d=ImageDraw.Draw(im)
+    d.rectangle([22,6,86,64],fill=RED); d.rectangle([80,6,86,64],fill=RED_D); d.line([54,6,54,64],fill=RED_D)
+    wide=ease((t-0.2)/0.2)
+    for x0 in (30,58):                                              # the eyes go wide
+        d.polygon([(x0-2,18),(x0+22,18),(x0+20,44),(x0,44)],fill=(18,16,18))
+        r=int(6+4*wide); d.ellipse([x0+10-r,31-r,x0+10+r,31+r],fill=(250,250,250))
+    if t>=0.15: FX['dp_box'](d,im,('dp_box',"OH NO.",140,26),f)
+    if t<0.06: zoom_lines(d)
+    if t>0.85: im=fade_to(im,(255,255,255),(t-0.85)/0.15)
+    return im
+
+DOOR_X=60
+def clip_notchverse(f):
+    kind=THEME
+    if 70<=f<130: kind='nrt'
+    elif 130<=f<196: kind='odyssey'
+    elif 196<=f<280: kind='dbz'
+    s=scene(f,kind)
+    x,y,pose,mood,flip,show,tint=30,GROUND,guard_pose(f),'normal',False,True,None
+    acts=[]; gunbai=None
+    # 1) the Void: the door opens
+    if 14<=f<70: s['under'].append(('dp_door',DOOR_X,min(1,(f-14)/8)))
+    if 14<=f<70: s['fx'].append(('dp_box',["THIS APP HAS","50 OTHER THEMES."],30 if f<58 else x,4)); mood='happy'
+    if 58<=f<70: x,pose=ez(30,DOOR_X,(f-58)/10),guard_pose(f)
+    if 68<=f<70: show=False
+    # 2) the Hidden Leaf: the gunbai, the Katon
+    if kind=='nrt':
+        s['under'].append(('nrt_clouds',)); s['under'].append(('dp_door',30,1 if f<76 or f>=120 else 0))
+        mx,mpose,aura=152,'idle',None
+        x=30
+        if 74<=f<106: s['fx'].append(('dp_box',"OOH. NINJAS.",60,4)); mood='happy'
+        if 92<=f<100: x,pose=ez(30,138,(f-92)/8),'dash'
+        if 100<=f<106: x,pose,gunbai=138,'armsup',(140,GROUND-16)
+        if 104<=f<126:
+            mpose,aura='attack',(MADARA_AURA,1+(f%2)); mood='squint'
+            x,flip,pose=ez(138,30,(f-106)/14),True,'dash'; gunbai=(x+2,GROUND-14)
+            fx_=lerp(140,x+14,(f-106)/14); s['fx'].append(('nrt_fireball',fx_,GROUND-12,9))
+            if f>=114: s['fx'].append(('dp_burn',x+3,GROUND-4))
+            callout(s,"KATON!",c=(255,170,70))
+        if f>=126: show=False
+        acts.append(actor(MADARA[mpose],mx,flip=True,aura=aura))
+        if gunbai is None: s['under'].append(('nrt_gunbai_back',mx,GROUND))
+    # 3) the Cyclops' cave: NOBODY.
+    if kind=='odyssey':
+        s['under'].append(('od_fire',92)); s['under'].append(('dp_door',30,1))
+        cpose,ck='stand',0.0
+        x=30; gunbai=(x-6,GROUND-14)
+        if 134<=f<172: s['fx'].append(('big',"WHO ARE YOU?",3,(236,214,180)))
+        if 168<=f<198: s['fx'].append(('dp_box',"NOBODY.",x+10,18)); mood='happy'
+        if 172<=f<196:
+            cpose='reach'; ck=min(1,(f-172)/10)
+            if f>=184: show=False                                  # in the fist...
+            if 188<=f<196: ck=1-(f-188)/8                           # ...and thrown at the door
+        s['under'].append(('od_cyclops',148,cpose,'open',ck))
+        if f>=184: gunbai=None
+    # 4) the Cell Games: KAMEHAMEHA; close-up: OH NO.
+    if kind=='dbz':
+        s['under'].append(('dp_door',30,1 if f>=266 else 0))
+        x=60; gunbai=(x-6,GROUND-14); cpose='guard'
+        if 200<=f<206: show=f>=202
+        if 200<=f<230:
+            cpose='charge'; s['fx'].append(('dbzc_ball',138,GROUND-10,2+(f-200)//6,CELL_KI))
+            s['fx'].append(('big',"KAMEHAMEHA",3,CELL_KI[0]))
+        if 230<=f<268: s['image']=closeup_ohno((f-230)/38,f); return s
+        if 268<=f<280:
+            cpose='charge'; s['fx'].append(('beam',0,136,GROUND-9,CELL_KI)); s['shake']=rshake(2)
+            x,pose,tint=ez(60,30,(f-268)/7),'hurt',(40,30,30)
+            if f>=276: show=False
+        acts.append(actor(CE[cpose],150,flip=True))
+    # 5) home: charred, gunbai in hand
+    if 280<=f<366:
+        s['under'].append(('dp_door',DOOR_X,1 if f<344 else max(0,1-(f-344)/8)))
+        if 280<=f<296: x,pose,tint=ez(DOOR_X,44,(f-280)/10),'hurt',(40,30,30); s['fx'].append(('smoke',x+random.randint(-4,4),GROUND-12-random.randint(0,6),2,(80,80,86)))
+        elif f<344: x,mood=44,'happy'
+        if 296<=f<334: pose='armsup'; gunbai=(x+2,GROUND-20); s['fx'].append(('dp_box',"WORTH IT.",x+20,4))
+        if 334<=f<344: p=(f-334)/10; s['fx'].append(('gunbai',lerp(x+2,DOOR_X,p),GROUND-20+10*math.sin(p*math.pi)))
+        if 344<=f<354: x,pose=ez(44,30,(f-344)/10),guard_pose(f)
+        if f>=354: x=30
+    if gunbai: s['fx'].append(('gunbai',*gunbai))
+    if show:
+        acts.append(actor(DP[mood][pose],x,y,flip=flip,pal=DPAL,tint=tint))
+        if pose in GRIP and tint is None and not gunbai:
+            hx,hy=hand_at(DP[mood][pose],x,int(y),flip,*GRIP[pose],h=11)
+            s['fx'].append(('dp_katana',hx,hy,180 if flip else 0))
+    s['actors']=acts
+    return s
+
+# ==== webcam ==========================================================================================
+def fisheye(src,k=0.55):
+    """Barrel distortion round the centre: the middle swells, the edges squeeze (a webcam lens)."""
+    sp=src.load(); out=Image.new('RGB',(W,H)); op=out.load(); cx,cy=W/2,H/2; R=W/2
+    for y in range(H):
+        for x in range(W):
+            dx,dy=(x-cx)/R,(y-cy)/R; r=math.hypot(dx,dy); m=(1-k)+k*r*r
+            sx,sy=int(cx+dx*m*R),int(cy+dy*m*R)
+            op[x,y]=sp[min(W-1,max(0,sx)),min(H-1,max(0,sy))]
+    return out
+
+def closeup_webcam(t,f):
+    """Primer plano, from inside the camera: his mask squashed on the glass, a waving glove — HI MOM!"""
+    im=Image.new('RGB',(W,H),(60,40,30)); d=ImageDraw.Draw(im)
+    d.rectangle([40,0,146,H],fill=RED); d.rectangle([40,0,48,H],fill=RED_D); d.line([93,0,93,H],fill=RED_D)
+    for x0 in (56,100):
+        d.polygon([(x0-6,10),(x0+30,10),(x0+28,40),(x0-4,40)],fill=(18,16,18))
+        d.ellipse([x0+2,16,x0+22,34],fill=(250,250,250))
+    d.ellipse([84,44,102,56],fill=(220,40,50))                      # the nose, squashed flat
+    wave=int(6*math.sin(f*0.6))
+    d.rectangle([146+wave,14,164+wave,36],fill=RED_D,outline=(18,16,18))   # the glove, waving
+    for j in range(4): d.rectangle([146+wave+j*5,6,149+wave+j*5,16],fill=RED_D,outline=(18,16,18))
+    for j in range(3): d.line([20+j*6,10,30+j*6,50],fill=(150,130,120))   # smudges on the glass
+    im=fisheye(im,0.45); d=ImageDraw.Draw(im)
+    for r in range(6):                                              # the lens vignette
+        d.rounded_rectangle([r,r,W-1-r,H-1-r],radius=26,outline=tuple(int(v*(r/6)) for v in (20,20,24)))
+    if (f//6)%2: d.ellipse([6,6,10,10],fill=(240,30,40))
+    text(d,"REC",13,6,(240,240,240))
+    if t>=0.3: FX['dp_box'](d,im,('dp_box',"HI MOM!",150,46),f)
+    if t<0.05: im=fade_to(im,(255,255,255),0.8)
+    return im
+
+@fx('dp_edge')
+def _fx_edge(d,im,e,f):
+    """The panel's glass edge on one side, bulging out where he pushes (k 0..1)."""
+    _,side,k,y0=e; x0=2 if side<0 else W-3
+    pts=[(x0+side*int(2*k*math.exp(-((y-y0)/7)**2)),y) for y in range(0,H)]
+    d.line(pts,fill=(220,230,255)); d.line([(px-side,py) for px,py in pts],fill=(120,130,160))
+    if k>0.5:
+        for j in (-6,0,6): d.line([x0-side*3,y0+j,x0-side*6,y0+j+(j//3)],fill=(220,230,255))
+
+@fx('dp_term')
+def _fx_term(d,im,e,f):
+    """A little terminal hanging in the Void: Claude, THINKING..."""
+    _,a=e
+    if a<=0: return
+    x0,y0,x1,y1=120,16,180,40
+    d.rectangle([x0,y0,x1,y1],fill=(16,14,18),outline=(90,90,100))
+    d.line([x0,y0+5,x1,y0+5],fill=(60,60,70))
+    for c,cx in (((240,90,80),x0+3),((240,200,80),x0+6),((110,200,90),x0+9)): d.point((cx,y0+2),fill=c)
+    text(d,"THINKING"+"."*((f//6)%4),x0+3,y0+8,(217,119,87),shadow=None)
+    rr=random.Random(f//4)
+    for j in range(3):
+        d.line([x0+3,y0+16+j*4,x0+3+rr.randint(10,50),y0+16+j*4],fill=(90,110,90))
+
+@fx('dp_bars')
+def _fx_bars(d,im,e,f):
+    """The panel closing: it shrinks up into the notch, its bottom edge rising (k 0..1)."""
+    _,k=e; h=int(H*k)
+    if h>0: d.rectangle([0,H-h,W,H],fill=(0,0,0)); d.line([0,H-h,W,H-h],fill=(70,70,80))
+
+@fx('dp_z')
+def _fx_z(d,im,e,f):
+    _,x,y=e
+    for j in range(3):
+        ph=((f+j*10)%30)/30; text(d,"Z",int(x+ph*8),int(y-ph*12),(240,240,250) if ph<0.7 else (150,150,160))
+
+def clip_webcam(f):
+    s=scene(f,THEME)
+    x,y,pose,mood,flip=30,GROUND,guard_pose(f),'normal',False
+    # 1) WAIT. IS THAT A CAMERA?
+    if 16<=f<66: s['fx'].append(('dp_box',["WAIT.","IS THAT A CAMERA?"],60,20)); mood='squint'
+    if 30<=f<66: pose='armsup'
+    # 2) up to the top edge, face to the glass
+    if 66<=f<80:
+        p=(f-66)/14; x,pose,mood=ez(30,92,p),'armsup','happy'; y=int(lerp(GROUND,16,math.sin(p*math.pi/2)))
+    if 80<=f<140: s['image']=closeup_webcam((f-80)/60,f); return s
+    if 140<=f<150: p=(f-140)/10; x,y,pose=92,int(lerp(16,GROUND,p*p)),'hurt'
+    # 3) LET ME OUT!: the edges
+    if 150<=f<214: s['fx'].append(('dp_box',"LET ME OUT!",92,4)); mood='angry'
+    if 150<=f<160: x,flip,pose=ez(92,12,(f-150)/10),True,'dash'
+    if 160<=f<180:
+        x,flip,pose=12,True,'punch' if (f//4)%2 else 'guard'
+        s['fx'].append(('dp_edge',-1,0.5+0.5*((f//4)%2),GROUND-8))
+    if 180<=f<192: x,pose=ez(12,172,(f-180)/12),'dash'
+    if 192<=f<214:
+        x,pose=172,'punch' if (f//4)%2 else 'guard'
+        s['fx'].append(('dp_edge',1,0.5+0.5*((f//4)%2),GROUND-8))
+    # 4) waiting on Claude
+    if 214<=f<226: x,flip,pose=ez(172,92,(f-214)/12),True,guard_pose(f)
+    if 214<=f<336: s['under'].append(('dp_term',1))
+    if 226<=f<318: x,mood=92,'squint'
+    if 226<=f<276: s['fx'].append(('dp_box',["WHAT IS CLAUDE","EVEN DOING?"],60,4))
+    if 276<=f<308: s['fx'].append(('dp_box',"STILL THINKING?",60,4))
+    # 5) asleep; the panel starts to close on him
+    if 300<=f<322: mood='happy'; s['fx'].append(('dp_z',x+4,GROUND-16))
+    bars=0
+    if 306<=f<322: bars=min(0.45,(f-306)/16*0.45)
+    if 322<=f<336: bars=max(0,0.45-(f-324)/12*0.45)
+    if bars: s['fx'].append(('dp_bars',bars))
+    if 320<=f<360: s['fx'].append(('dp_box',"HEY! NOT YET!",80,4)); mood='angry'
+    if 320<=f<330: x,pose=92,'armsup'                               # stamping it back down
+    if 330<=f<360: x=92
+    if 360<=f<372: x,flip,pose,mood=ez(92,30,(f-360)/12),True,guard_pose(f),'normal'
+    if f>=372: x,flip=30,False
+    if bars: y=min(y,H-int(H*bars)-1)                              # he rides up on the rising edge
+    acts=[actor(DP[mood][pose],x,y,flip=flip,pal=DPAL)]
+    if pose in GRIP:
+        hx,hy=hand_at(DP[mood][pose],x,int(y),flip,*GRIP[pose],h=11)
+        s['fx'].append(('dp_katana',hx,hy,180 if flip else 0))
+    s['actors']=acts
+    return s
+
+CLIPS = [clip('bub', N_, clip_bub), clip('notchverse', 366, clip_notchverse), clip('webcam', 378, clip_webcam)]
