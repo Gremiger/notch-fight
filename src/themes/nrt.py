@@ -6,6 +6,8 @@ and walks back for the loop."""
 from engine import *
 
 THEME = 'nrt'
+# deadpool's notchverse crossover uses MADARA, MADARA_AURA, the background and nrt_clouds, nrt_fireball,
+# nrt_gunbai_back: changing them changes that clip too (rebuild with ONLY=nrt,deadpool).
 N_ = 336
 CX, EX = 30, 152                                                    # the loop keyframe positions
 

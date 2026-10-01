@@ -13,6 +13,10 @@ review: Claude's pull request on Etendo_schema_forge drops in as a
 terminal; Deadpool reads the diff out loud, judges the Etendo rebrand in close-up (the yellow logo turns
 the lime tile with the black < >: NEW LOGO. HUH? / EDGY. I DIG IT.), stamps it LGTM and merges it with a katana."""
 from engine import *
+# Crossover (an exception to one-theme-per-file): notchverse visits nrt, odyssey and dbz and uses their
+# backgrounds, sprites and fx (nrt_clouds, nrt_fireball, nrt_gunbai_back, od_fire, od_cyclops, dbzc_ball);
+# review uses the etendo theme's logos. Changing any of those changes these clips too: rebuild them
+# (ONLY=deadpool) and check their sheets.
 from themes.nrt import MADARA, MADARA_AURA      # notchverse: the other themes' worlds and casts
 from themes.dbz import CE, CELL_KI
 import themes.odyssey                             # registers the cave, the fire and the Cyclops

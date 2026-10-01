@@ -43,7 +43,7 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
 ## Themes and loop keyframes
 
 Each theme has its own neutral pose (the "loop keyframe"). Every clip of a theme starts and
-ends on it, so clips of the same theme chain seamlessly. Switching theme plays a
+ends on it. Switching theme plays a
 pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 
 | Theme | Claude as | Opponent | Clips |

@@ -6,7 +6,7 @@ form. Close-up: through the seeing stone, the ghost children's eyes light up one
 the cat ahead of her, the needle hand behind; she slams the little door and turns the button key: CLICK."""
 import zlib
 from engine import *
-from themes.spidey import twos      # characters on twos, like the Spider-Verse look
+from themes.spidey import twos      # characters on twos, like the Spider-Verse look (changing it in spidey changes this clip)
 
 THEME = 'coraline'
 N_ = 330
