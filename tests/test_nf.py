@@ -23,6 +23,12 @@ class Durations(unittest.TestCase):
         for s in ('', 'soon', '1d', 'h'):
             with self.assertRaises(nf.NfError): nf.parse_duration(s)
 
+class Seconds(unittest.TestCase):
+    def test_the_forms(self):
+        for s, n in (('10s', 10), ('30', 30), ('1m', 60), ('2min', 120), ('off', 0)):
+            self.assertEqual(nf.parse_seconds(s), n, s)
+        with self.assertRaises(nf.NfError): nf.parse_seconds('soon')
+
 class Pause(Temp):
     def test_a_pause_closes_the_gate_until_it_ends(self):
         now = time.time()
@@ -83,6 +89,14 @@ class CommandLine(unittest.TestCase):
         r = self.run_nf(path, 'gate'); self.assertEqual(r.returncode, 1); self.assertIn('quiet hours', r.stdout)
         self.run_nf(path, 'quiet', 'off')
         self.assertEqual(self.run_nf(path, 'gate').returncode, 0)
+    def test_delay_and_click_write_the_config(self):
+        d = tempfile.mkdtemp(); path = os.path.join(d, 'config.json')
+        self.assertEqual(self.run_nf(path, 'delay', '10s').returncode, 0)
+        self.assertEqual(self.run_nf(path, 'click', 'next').returncode, 0)
+        self.assertEqual({k: v for k, v in json.load(open(path)).items()}, {'delay': 10, 'click': 'next'})
+        self.run_nf(path, 'delay', 'off'); self.run_nf(path, 'click', 'close')
+        self.assertEqual(json.load(open(path)), {})
+        self.assertEqual(self.run_nf(path, 'click', 'sideways').returncode, 1)
     def test_pause_needs_a_time_when_not_in_a_terminal(self):
         d = tempfile.mkdtemp(); path = os.path.join(d, 'config.json')
         r = self.run_nf(path, 'pause'); self.assertEqual(r.returncode, 1); self.assertIn('how long', r.stderr)

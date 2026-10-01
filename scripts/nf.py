@@ -9,12 +9,16 @@
     nf quiet [HH:MM-HH:MM [all|weekdays] | off]
                                    never show it in that window, every day or Monday to Friday
     nf share [hide|show]           while you share your screen: hide the panel (default) or keep showing it
+    nf delay [<N>s|<N>m|off]       only show it once Claude has been working that long (quick answers stay quiet)
+    nf click [close|next]          what a click on the panel does: close it (default) or skip to the next clip
+                                   (with "next", a double click closes it)
+    nf menu [on|off]               a menu bar icon with all of this (starts at login)
 
 Whether the panel may show right now is decided in one place, `gate()`, which the Claude Code hook
 (scripts/notch-hook.sh) and the app (every few seconds while it is up) both ask: `nf gate` exits 0
 when it may show, 1 when it may not, and prints why.
-State: ~/.config/notch-fight/paused ({"until": <epoch> | null}) and, in config.json, "quiet" and
-"pauseOnShare". NOTCH_FIGHT_CONFIG moves config.json, and the paused file next to it (tests/dev).
+State: ~/.config/notch-fight/paused ({"until": <epoch> | null}) and, in config.json, "quiet",
+"pauseOnShare", "delay" (seconds) and "click". NOTCH_FIGHT_CONFIG moves config.json, and the paused file next to it (tests/dev).
 """
 import datetime, json, os, re, subprocess, sys, time
 
@@ -28,6 +32,8 @@ STATE_DIR = os.path.dirname(CONFIG)
 PAUSED = os.path.join(STATE_DIR, 'paused')
 SESSIONS = os.path.expanduser('~/.config/notch-fight/sessions')
 APP = os.path.join(ROOT, 'build', 'NotchFight.app')
+MENU_APP = os.path.join(ROOT, 'build', 'NotchFightMenu.app')
+AGENT = os.path.expanduser('~/Library/LaunchAgents/local.notchfight.menu.plist')
 PRESETS = [('15 minutes', 15), ('30 minutes', 30), ('1 hour', 60), ('4 hours', 240), ('8 hours', 480), ('until I resume', None)]
 # Processes that only run while the screen is being shared or recorded. Zoom starts CptHost to share;
 # screencaptureui is macOS's own capture (Cmd-Shift-5). Browser-based calls (Meet, Teams on the web)
@@ -176,7 +182,9 @@ def cmd_status(args):
     dirs = sorted(set(claude_dirs()) | set(glob.glob(os.path.expanduser('~/.claude*'))))   # every profile on this Mac
     hooked = [d for d in dirs if os.path.isdir(d) and has_hook(d)]
     rows = [('now', 'may show' if ok else f'hidden: {why}'), ('paused', pause), ('quiet hours', quiet),
-            ('when sharing', share), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
+            ('when sharing', share), ('delay', f"{cfg.get('delay')} s" if cfg.get('delay') else 'off'),
+            ('click', 'next clip (double click closes)' if cfg.get('click') == 'next' else 'closes it'),
+            ('menu icon', ('on' if os.path.exists(AGENT) else 'off') + (' (running)' if menu_running() else '')), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
             ('hooks', ', '.join(d.replace(os.path.expanduser('~'), '~') for d in hooked) or 'not installed (./install.sh)'),
             ('sessions', f'{live_sessions()} working'), ('app', ('running' if app_running() else 'built') if os.path.isdir(APP) else 'not built (./build.sh)')]
     for k, v in rows: print(f'  {k:<15}{v}')
@@ -220,11 +228,89 @@ def cmd_share(args):
     print(f"While sharing the screen: {share_line(cfg['pauseOnShare'])}")
     if cfg['pauseOnShare'] and not gate(cfg)[0]: hide_app()
 
+def parse_seconds(s):
+    s = s.strip().lower()
+    if s in ('off', '0', 'none', 'no'): return 0
+    m = re.fullmatch(r'(\d+)\s*(s|sec|secs|seconds|m|min|mins|minutes)?', s)
+    if not m: raise NfError(f"can't read '{s}': try 10s, 30, 1m or off")
+    return int(m.group(1)) * (60 if (m.group(2) or 's').startswith('m') else 1)
+
+def cmd_delay(args):
+    cfg = load_cfg()
+    if not args:
+        d = cfg.get('delay', 0); print(f'Delay: {d} s (shows once Claude has worked that long)' if d else 'Delay: off (shows right away)'); return
+    d = parse_seconds(args[0])
+    if d: cfg['delay'] = d
+    else: cfg.pop('delay', None)
+    save_cfg(cfg); print(f'Delay: {d} s' if d else 'Delay: off (shows right away)')
+
+def cmd_click(args):
+    cfg = load_cfg()
+    if not args: print(f"A click on the panel: {'skips to the next clip (double click closes)' if cfg.get('click') == 'next' else 'closes it'}"); return
+    if args[0] not in ('close', 'next'): raise NfError('nf click close|next')
+    if args[0] == 'next': cfg['click'] = 'next'
+    else: cfg.pop('click', None)
+    save_cfg(cfg); print(f"A click on the panel: {'skips to the next clip (double click closes)' if args[0] == 'next' else 'closes it'} (from the next time it shows)")
+
+def show(app, sid, delay):
+    """What the hook runs on a prompt: show the panel now, or after `delay` seconds if that session is
+    still working by then (a detached sleeper, so the hook returns at once)."""
+    if not gate()[0]: return
+    if delay <= 0: subprocess.run(['open', '-g', app], capture_output=True); return
+    subprocess.Popen([sys.executable, os.path.abspath(__file__), '_show_later', app, sid, str(delay)],
+                     start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def cmd_show(args):
+    app, sid = args[0], (args[1] if len(args) > 1 else '')
+    show(app, sid, load_cfg().get('delay', 0))
+
+def cmd_show_later(args):
+    app, sid, delay = args[0], args[1], float(args[2])
+    time.sleep(delay)
+    working = os.path.exists(os.path.join(SESSIONS, sid)) if sid else live_sessions() > 0
+    if working and gate()[0] and not app_running(): subprocess.run(['open', '-g', app], capture_output=True)
+
+def menu_running(): return subprocess.run(['pgrep', '-x', 'NotchFightMenu'], capture_output=True).returncode == 0
+
+def cmd_menu(args):
+    if not args: print(f"Menu bar icon: {'on' if os.path.exists(AGENT) else 'off'}{' (running)' if menu_running() else ''}"); return
+    uid = str(os.getuid())
+    if args[0] == 'on':
+        binary = os.path.join(MENU_APP, 'Contents', 'MacOS', 'NotchFightMenu')
+        if not os.path.exists(binary): raise NfError('the menu app is not built yet: run ./build.sh')
+        os.makedirs(os.path.dirname(AGENT), exist_ok=True)
+        with open(AGENT, 'w') as fh:
+            fh.write(f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>local.notchfight.menu</string>
+<key>ProgramArguments</key><array><string>{binary}</string></array>
+<key>RunAtLoad</key><true/>
+</dict></plist>
+""")
+        subprocess.run(['launchctl', 'bootout', f'gui/{uid}', AGENT], capture_output=True)
+        subprocess.run(['launchctl', 'bootstrap', f'gui/{uid}', AGENT], capture_output=True)
+        if not menu_running(): subprocess.run(['open', '-g', MENU_APP], capture_output=True)
+        print('Menu bar icon: on (it starts at login too)')
+    elif args[0] == 'off':
+        subprocess.run(['launchctl', 'bootout', f'gui/{uid}', AGENT], capture_output=True)
+        try: os.remove(AGENT)
+        except OSError: pass
+        subprocess.run(['pkill', '-x', 'NotchFightMenu'], capture_output=True)
+        print('Menu bar icon: off')
+    else: raise NfError('nf menu on|off')
+
+def cmd_themes(args):
+    """For the menu: one theme per line (from the build)."""
+    for t in sorted({clipsmod.theme_of(c) for c in clipsmod.clip_names(clipsmod.CLIPS_DIR)}): print(t)
+
 def cmd_gate(args):
     ok, why = gate(); print(why); sys.exit(0 if ok else 1)
 
 COMMANDS = {'pause': cmd_pause, 'resume': cmd_resume, 'status': cmd_status, 'preview': cmd_preview,
-            'quiet': cmd_quiet, 'share': cmd_share, 'gate': cmd_gate, '_after_preview': cmd_after_preview}
+            'quiet': cmd_quiet, 'share': cmd_share, 'gate': cmd_gate, '_after_preview': cmd_after_preview,
+            'delay': cmd_delay, 'click': cmd_click, 'menu': cmd_menu, '_show': cmd_show, '_show_later': cmd_show_later,
+            '_themes': cmd_themes}
 
 def main(argv):
     if not argv or argv[0] in ('-h', '--help', 'help'): print(__doc__.split('\n\nWhether')[0]); return 0
