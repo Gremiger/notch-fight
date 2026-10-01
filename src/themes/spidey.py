@@ -21,7 +21,7 @@ MPAL = {'s':(38,38,48), 'w':(66,66,82), 'r':(220,36,48), 'e':(250,250,250)}
 # the Prowler: hood and cape, purple armour, green eyes and gauntlets
 PPAL = {'p':(112,62,156), 'q':(150,96,196), 'k':(26,24,34), 'v':GREEN}
 
-def twos(f): return f-f%2       # characters move on twos: the Spider-Verse stutter
+def twos(f): return f-f%2       # characters move on twos: the Spider-Verse stutter (coraline uses it too)
 
 def _miles(spr):
     g=[list(r) for r in spr]

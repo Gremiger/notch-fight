@@ -8,6 +8,8 @@ Claude powers down, back to the stare-down."""
 from engine import *
 
 THEME = 'dbz'
+# deadpool's notchverse crossover uses CE (Cell), CELL_KI, the background and dbzc_ball: changing them
+# changes that clip too (rebuild with ONLY=dbz,deadpool).
 N_ = 456
 CX, EX = 30, 150                                                    # the loop keyframe positions
 

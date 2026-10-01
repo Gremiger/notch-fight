@@ -8,6 +8,8 @@ Odysseus rides out clinging under the big ram. The tale goes dark and starts aga
 from engine import *
 
 THEME = 'odyssey'
+# deadpool's notchverse crossover uses the background, od_fire and od_cyclops: changing them changes that
+# clip too (rebuild with ONLY=odyssey,deadpool).
 N_ = 400
 CX, PX = 30, 148                                                    # Odysseus; Polyphemus
 

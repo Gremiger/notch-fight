@@ -10,6 +10,9 @@ webcam: he notices the MacBook camera above the panel (WAIT. IS THAT A CAMERA?),
 the glass (fisheye close-up: HI MOM!), pushes the panel's edges (LET ME OUT!), gets bored watching
 Claude think (STILL THINKING?) and falls asleep — the panel starts closing on him: HEY! NOT YET!"""
 from engine import *
+# Crossover (an exception to one-theme-per-file): notchverse visits nrt, odyssey and dbz and uses their
+# backgrounds, sprites and fx (nrt_clouds, nrt_fireball, nrt_gunbai_back, od_fire, od_cyclops, dbzc_ball).
+# Changing any of those changes this clip too: rebuild it (ONLY=deadpool) and check its sheet.
 from themes.nrt import MADARA, MADARA_AURA      # notchverse: the other themes' worlds and casts
 from themes.dbz import CE, CELL_KI
 import themes.odyssey                             # registers the cave, the fire and the Cyclops
