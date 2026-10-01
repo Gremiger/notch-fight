@@ -112,6 +112,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `arg` | the albiceleste number 10 in the 2022 World Cup final (Dibu's leg on Kolo Muani at 123 in close-up, PENALES with the TV scoreboard, GOL, Montiel's last penalty, CAMPEONES DEL MUNDO, the Cup and the third star) | France | final |
 | `arg-86` | Diego at the Azteca, 1986 (sub-theme of `arg`), with the TV scoreboard: `mano` (the one-two with Valdano, Hodge's loop, up against the taller Shilton, the fist in close-up, the English round the referee, LA MANO DE DIOS) and `siglo` (the spin in his own half, the camera following his run past a slide, two lunges and the keeper, Butcher from behind; TA TA TA TA, GOLAZO, BARRILETE COSMICO, DE QUE PLANETA VINISTE) | England | mano, siglo |
 | `arg-mate` | No fight: a ronda de mate in a patio under the parra, the flag with the Sol de Mayo on the wall: the first one for the cebador (EL PRIMERO ES DEL CEBADOR), the mate going round with facturas (RRRP), the yerba in close-up until ESTA LAVADO, a GRACIAS, the golden hour | three friends | ronda |
+| `arg-colapinto` | Franco Colapinto, number 43, in the dark-blue Williams: the five red lights (AND AWAY WE GO!), four cars passed as the TV tower takes COL from P12 to P8, team radio (GOOD JOB FRANCO. P8. POINTS.), the chequered flag, the helmet in close-up with the stands in its visor (VAMOS FRANCO), a lap of honour under the flags | the rest of the grid | debut |
 | `cai` | Independiente, the Rojo (red shirt, blue shorts), in the clasico de Avellaneda at the Libertadores de America: past three Racing defenders (OLE!: a nutmeg, a lob, a feint), the strike in close-up, top corner (GOL DEL ROJO, red flares), the trophy cabinet in close-up as the seven Libertadores light up: REY DE COPAS | Racing | clasico |
 | `eternauta` | Juan Salvo in the home-made insulated suit (El Eternauta), on a street in Vicente Lopez under the deadly snowfall: the bullets spark off the shell (PAC! PAC! PAC!), a Mano at its console in close-up driving the beetles, Favalli, Lucas and Polsky come out of the snow and fire together (FUEGO!), four visors in close-up: NADIE SE SALVA SOLO | a cascarudo, the giant beetle (the snow buries it) | nevada |
 
@@ -199,7 +200,7 @@ src/
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
