@@ -111,6 +111,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `phm` | Ryland Grace in the Hail Mary's lab, no fight: `rocky` (the Blip-A, the xenonite tunnel, chords that become AMAZE AMAZE AMAZE, FIST MY BUMP close-up) and `astrophage` (the star dims, the bench, Taumoeba under the microscope, IT WORKS!); off by default | Rocky, a friend; Astrophage, the problem | rocky, astrophage |
 | `arg` | the albiceleste number 10 in the 2022 World Cup final (Dibu's leg on Kolo Muani at 123 in close-up, PENALES with the TV scoreboard, GOL, Montiel's last penalty, CAMPEONES DEL MUNDO, the Cup and the third star) | France | final |
 | `arg-86` | Diego at the Azteca, 1986 (sub-theme of `arg`), with the TV scoreboard: `mano` (the one-two with Valdano, Hodge's loop, up against the taller Shilton, the fist in close-up, the English round the referee, LA MANO DE DIOS) and `siglo` (the spin in his own half, the camera following his run past a slide, two lunges and the keeper, Butcher from behind; TA TA TA TA, GOLAZO, BARRILETE COSMICO, DE QUE PLANETA VINISTE) | England | mano, siglo |
+| `eternauta` | Juan Salvo in the home-made insulated suit (El Eternauta), on a street in Vicente Lopez under the deadly snowfall: the bullets spark off the shell (PAC! PAC! PAC!), a Mano at its console in close-up driving the beetles, Favalli, Lucas and Polsky come out of the snow and fire together (FUEGO!), four visors in close-up: NADIE SE SALVA SOLO | a cascarudo, the giant beetle (the snow buries it) | nevada |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
@@ -199,7 +200,7 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  dnd.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  dnd.py  eternauta.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
 │   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
