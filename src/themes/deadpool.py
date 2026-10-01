@@ -20,7 +20,7 @@ N_ = 376
 RED, RED_D = (196,30,40), (128,16,26)
 BOX, INK = (250,220,70), (20,16,16)
 # Deadpool: red suit, black patches round white eyes, katana hilts over the shoulders
-DPAL = {'r':RED, 'R':RED_D, 'x':(18,16,18), 'e':(250,250,250), 'h':(120,120,130)}
+DPAL = {'r':RED, 'R':RED_D, 'x':(18,16,18), 'e':(250,250,250), 'h':(150,150,160), '9':(40,36,40), '7':(70,58,50), '8':(220,190,90)}
 # Wolverine (Deadpool & Wolverine): yellow suit, blue, the mask's black wings
 WPAL = {'y':(236,196,40), 'b':(44,74,160), 'P':(226,182,140), 'W':(250,250,250)}
 
@@ -31,24 +31,32 @@ EYES = {                     # which of the 2x2 eye pixels are white, per expres
     'squint':  ('00','11'),
 }
 
+HILTS=["9.9...",".h.h..","..h.h."]                                  # two katana hilts over the back shoulder
+
 def _deadpool(spr, mood='normal'):
-    g=[list(r) for r in overlay(spr,["h.......h"],0,0)]            # katana hilts over the shoulders
+    g=[list(r) for r in overlay(spr,HILTS,-2,0)]
+    top,l,r=body_box(S([''.join(x) for x in g]))
     ks=sorted((x,y) for y,row in enumerate(g) for x,c in enumerate(row) if c=='K')
     for y,row in enumerate(g):
         for x,c in enumerate(row):
-            if c=='O': g[y][x]='r'
+            if c=='O': g[y][x]='R' if x==l else 'r'                     # the back of the mask in shadow
             elif c=='o': g[y][x]='R'
+    def put(x,y,c,over='rR'):
+        if 0<=y<len(g) and 0<=x<len(g[0]) and g[y][x] in over: g[y][x]=c
+    for y in (top+5,top+6): put(l,y,'x'); put(l+1,y,'x')               # the black side panel
+    for x in range(l,r+1): put(x,top+7,'7')                            # the belt...
+    put((l+r)//2+1,top+7,'8'); put(l+1,top+8,'7')                       # ...its round buckle, a pouch
     if ks:
         cols=sorted({x for x,_ in ks}); y0=min(y for _,y in ks)
-        top,bot=EYES[mood]
-        for i,cx in enumerate(cols):                                # one eye per K column
-            for dy in (-1,0,1,2):                                   # the black patch
-                for dx in (-1,0,1):
-                    yy,xx=y0+dy,cx+dx
-                    if 0<=yy<len(g) and 0<=xx<len(g[0]) and g[yy][xx] in 'rR': g[yy][xx]='x'
-            t=top if i==0 else top[::-1]
+        tp,bt=EYES[mood]
+        for i,cx in enumerate(cols):                                    # two patches, a red bridge between
+            for dy in (-1,0,1,2):
+                put(cx,y0+dy,'x'); put(cx-1,y0+dy,'x')
+            if i==0: put(cx-2,y0-1,'x'); put(cx-2,y0,'x')                # the back one flares out at the top
+            else: put(cx+1,y0-1,'x')
+            t=tp if i==0 else tp[::-1]
             g[y0][cx]='e' if t[0]=='1' else 'x'
-            g[y0+1][cx]='e' if bot[0]=='1' else 'x'
+            g[y0+1][cx]='e' if bt[0]=='1' else 'x'
     return S([''.join(r) for r in g])
 DP={mood:variant(lambda s,m=mood: _deadpool(s,m)) for mood in EYES}
 
