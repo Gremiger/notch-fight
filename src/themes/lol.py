@@ -10,22 +10,30 @@ THEME = 'lol'
 N_ = 372                                                            # a multiple of 12
 CX, TX = 30, 168                                                    # Quinn; the enemy turret
 BLUE, BLUE_D, GOLDL, WHITE_ = (60,100,200), (36,60,130), (236,190,70), (236,240,248)
-# Quinn: blue hood, brown fringe, blue armour with a gold belt
-QPAL = {'1':(110,70,40),'2':BLUE,'3':GOLDL,'4':BLUE_D}
-HOOD = ["...222222...","..22222222..",".2222221111."]
+# Quinn: the blue hood with its gold trim and a peak, brown fringe, blue armour with gold pauldrons and
+# belt, a dark cape off the back shoulder, brown leather leggings and boots
+QPAL = {'1':(110,70,40),'2':BLUE,'3':GOLDL,'4':BLUE_D,'5':(28,40,96),'6':(110,76,50),'7':(56,40,30)}
+HOOD = ["..2.........","..222222....",".22222222...",".2222223111."]
 MPAL = {'r':(200,50,60),'R':(140,30,40),'m':(170,170,180),'s':(230,200,170),'k':(40,30,30),'y':(250,220,90)}
 MELEE = S(["..mmm...","..mrm..m",".rrrr.m.","rrRrrm..",".rrrr...",".R..R...",".k..k..."])
 CASTER = S(["...rrr...y","..rrrrr..m","...sss...m","..RrrrR..m","..rrrrr..m","..R...R..m","..k...k..."])
 
 def _quinn(spr):
     g=[list(r) for r in overlay(spr,HOOD,-1,0)]
-    top,l,r=body_box(S([''.join(x) for x in g]))
-    for y in range(len(g)):
-        for x in range(len(g[0])):
+    top,l,r=body_box(S([''.join(x) for x in g])); h=len(g); w=len(g[0])
+    for y in range(h):
+        for x in range(w):
             c=g[y][x]
-            if c=='O' and y>=top+5: g[y][x]='3' if y==top+7 else '4'
-            elif c=='o' and y>=top+5 and y<top+8: g[y][x]='2'
-            elif c=='O' and y<=top+4 and x<=l+1: g[y][x]='2'          # the hood down the back
+            if c=='O' and y<=top+4 and x<=l+1: g[y][x]='2'               # the hood down the back...
+            elif c=='O' and y<=top+4 and x==l+2: g[y][x]='3'             # ...its gold trim round the face
+            elif c=='O' and y==top+5: g[y][x]='3' if x in (l,l+1,r) else '4'   # pauldrons
+            elif c=='O' and y==top+7: g[y][x]='3'                        # the belt
+            elif c=='O' and y>top+4: g[y][x]='4' if (x+y)%4 else '2'
+            elif c=='o' and y<top+8: g[y][x]='2'
+            elif c=='o': g[y][x]='7' if y==h-1 else '6'
+    for y in range(top+5,min(top+10,h)):                                 # the cape, off the back shoulder
+        for x in (l-2,l-1):
+            if 0<=x<w and g[y][x]=='.' and (y-top-5)>=(l-1-x): g[y][x]='5'
     return S([''.join(x) for x in g])
 QUINN=variant(_quinn)
 GRIP={'guard':(13,4),'guard2':(13,4),'punch':(16,5),'charge':(15,5),'dash':(16,5),'armsup':(12,0)}
@@ -79,8 +87,12 @@ def _fx_bolt(d,im,e,f):
 
 @fx('lq_crossbow')
 def _fx_crossbow(d,im,e,f):
-    _,x,y,flip=e; s=-1 if flip else 1; x,y=int(x),int(y)
-    d.line([x,y,x+s*5,y],fill=(110,80,50)); d.line([x+s*4,y-2,x+s*4,y+2],fill=(190,196,206))
+    """Her crossbow on the forearm: the stock, the silver limbs and string, a bolt loaded."""
+    _,x,y,flip=e; s_=-1 if flip else 1; x,y=int(x),int(y)
+    d.line([x-s_,y,x+s_*6,y],fill=(110,80,50))
+    d.line([x+s_*5,y-3,x+s_*5,y+3],fill=(200,206,216)); d.point((x+s_*6,y-3),fill=GOLDL); d.point((x+s_*6,y+3),fill=GOLDL)
+    d.line([x+s_*4,y-3,x+s_*2,y,x+s_*4,y+3],fill=(230,230,236))
+    d.line([x+s_*3,y,x+s_*8,y],fill=(220,226,236))
 
 @fx('lq_mark')
 def _fx_mark(d,im,e,f):
@@ -88,19 +100,33 @@ def _fx_mark(d,im,e,f):
     _,x,y=e; x,y=int(x),int(y)
     d.polygon([(x-4,y),(x,y-2),(x+4,y),(x,y+1)],fill=BLUE,outline=(170,200,255)); d.point((x,y-1),fill=WHITE_)
 
+VALOR_D, VALOR_L = (36,60,150), (120,160,236)
 def valor(d,x,y,f,state='perch',scale=1):
-    """Valor: blue and white, the gold beak; perched, or flying with the wings beating (state 'fly')."""
+    """Valor: a blue eagle with a white head and the gold beak. Perched: wings folded, the tail down.
+    Flying: broad wings with fingered primaries beating up and down, the tail fanned."""
     x,y=int(x),int(y); k=scale
     if state=='perch':
-        d.ellipse([x-2,y-3,x+2,y+2],fill=BLUE,outline=(20,30,60)); d.ellipse([x,y-5,x+3,y-2],fill=WHITE_)
-        d.point((x+4,y-4),fill=GOLDL); d.point((x+2,y-4),fill=(20,20,20)); return
-    flap=math.sin(f*0.9)*4*k
-    for s in (-1,1):
-        d.polygon([(x,y),(x+s*10*k,y-2*k-flap),(x+s*14*k,y+1*k-flap*0.6),(x+s*6*k,y+2*k)],fill=BLUE,outline=(20,30,60))
-        d.line([x+s*6*k,y+1*k-flap*0.4,x+s*13*k,y+1*k-flap*0.6],fill=WHITE_)
-    d.ellipse([x-3*k,y-2*k,x+3*k,y+3*k],fill=WHITE_,outline=(20,30,60))
-    d.polygon([(x+3*k,y-1*k),(x+6*k,y),(x+3*k,y+1*k)],fill=GOLDL); d.point((x+2*k,y-1*k),fill=(20,20,20))
-    d.polygon([(x-3*k,y),(x-7*k,y-2*k),(x-7*k,y+2*k)],fill=BLUE)
+        d.polygon([(x-2,y-3),(x+2,y-3),(x+3,y+2),(x-1,y+4),(x-3,y+1)],fill=BLUE,outline=(16,24,60))   # the body
+        d.line([x-2,y-1,x-1,y+3],fill=VALOR_D); d.point((x-2,y+3),fill=WHITE_)                         # folded wing
+        d.line([x-1,y+4,x-2,y+6],fill=VALOR_D)                                                          # the tail
+        d.ellipse([x,y-6,x+3,y-3],fill=WHITE_,outline=(16,24,60))                                       # the head
+        d.polygon([(x+3,y-5),(x+5,y-4),(x+3,y-3)],fill=GOLDL); d.point((x+2,y-5),fill=(20,20,20))
+        d.point((x+1,y+3),fill=GOLDL)                                                                    # talons
+        return
+    ph=math.sin(f*0.9); up=-4*k*ph                                    # wingtips up and down
+    for s_ in (-1,1):
+        lead=[(x,y-1*k),(x+s_*7*k,y-3*k+up*0.5),(x+s_*14*k,y-2*k+up)]       # the leading edge
+        trail=[(x+s_*13*k,y+1*k+up*0.8),(x+s_*7*k,y+2*k+up*0.3),(x,y+2*k)]
+        d.polygon(lead+trail,fill=BLUE)
+        d.line(lead,fill=VALOR_L)                                     # light along the front of the wing
+        d.line(trail,fill=VALOR_D)
+        for j in range(3):                                            # fingered primaries at the tip
+            px,py=x+s_*(12+j)*k,y+(j-1)*k+up*0.9
+            d.line([px,py,px+s_*2*k,py+1*k],fill=VALOR_D)
+    d.polygon([(x-3*k,y),(x-8*k,y-2*k),(x-9*k,y+1*k),(x-8*k,y+3*k)],fill=VALOR_D)   # tail fan
+    d.ellipse([x-3*k,y-2*k,x+3*k,y+2*k],fill=BLUE)                                   # body
+    d.ellipse([x+1*k,y-4*k,x+5*k,y],fill=WHITE_)                                     # head
+    d.polygon([(x+5*k,y-3*k),(x+8*k,y-2*k),(x+5*k,y-1*k)],fill=GOLDL); d.point((x+4*k,y-3*k),fill=(20,20,20))
 
 @fx('lq_valor')
 def _fx_valor(d,im,e,f):
@@ -222,7 +248,8 @@ def clip_valor(f):
         s['fx'].append(('lq_crossbow',hx,hy,qflip))
         if vstate=='perch':
             ox,oy=origin(QUINN[qpose],qx,int(qy))
-            s['fx'].append(('lq_valor',ox+(11 if not qflip else 3),oy+2,'perch',1))
+            top,l,r=body_box(QUINN[qpose]); bx=ox+(l-2 if not qflip else len(QUINN[qpose][0])-l+1)
+            s['fx'].append(('lq_valor',bx,oy+top+5,'perch',1))                 # on the back shoulder
     if vstate=='fly' and vx is not None: s['fx'].append(('lq_valor',vx,vy,'fly',1))
     if banner: s['fx'].append(('lq_banner',banner))                     # over everything
     s['actors']=acts
