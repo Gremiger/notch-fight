@@ -155,7 +155,7 @@ nf resume                   # show it again (right away if a Claude session is w
 nf status                   # paused?, quiet hours, screen sharing, clips, scale, hooks, sessions, app
 nf preview odyssey          # play a clip or a whole theme in the notch now, then close (no focus change)
 nf quiet 22:00-08:00        # never show it in that window (add `weekdays` for Monday to Friday; `off`)
-nf share on|off             # hide it while sharing the screen (on by default)
+nf share hide|show          # while sharing the screen: hide the panel (default) or keep showing it
 ```
 
 Whether the panel may show is decided in one place, `nf gate` (`scripts/nf.py`): the Claude Code hook

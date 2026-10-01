@@ -76,7 +76,7 @@ class CommandLine(unittest.TestCase):
         return subprocess.run([os.path.join(ROOT, 'nf'), *args], env=env, capture_output=True, text=True, stdin=subprocess.DEVNULL)
     def test_quiet_and_share_write_the_config_and_gate_reads_it(self):
         d = tempfile.mkdtemp(); path = os.path.join(d, 'config.json'); json.dump({'scale': 1.5}, open(path, 'w'))
-        self.assertEqual(self.run_nf(path, 'share', 'off').returncode, 0)
+        r = self.run_nf(path, 'share', 'show'); self.assertEqual(r.returncode, 0); self.assertIn('keep showing', r.stdout)
         self.assertEqual(self.run_nf(path, 'quiet', '00:00-23:59').returncode, 0)
         cfg = json.load(open(path))
         self.assertEqual((cfg['scale'], cfg['pauseOnShare'], cfg['quiet']['from']), (1.5, False, '00:00'))
