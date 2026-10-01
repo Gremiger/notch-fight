@@ -3,7 +3,7 @@ and the termo, three friends round the table with a plate of facturas, the parra
 the Sol de Mayo on the wall. He ceba the first mate and spits it out (EL PRIMERO ES DEL CEBADOR); the
 mate goes round, friend by friend, each one finishing it with the bombilla's rattle (RRRP). Close-up:
 the yerba from above, the water from the termo, the foam — until it is pale: ESTA LAVADO; he pours in
-fresh yerba. One friend hands it back with a GRACIAS (YA NO QUIERE MAS); the golden hour comes and goes."""
+fresh yerba. One friend hands it back with a GRACIAS; the golden hour comes and goes."""
 from engine import *
 from themes.arg import PLAYER, CELESTE, WHITE                       # same country: the generic people
 
@@ -106,14 +106,6 @@ def _fx_bubble(d,im,e,f):
     d.rectangle([x,y,x+w,y+h],fill=(250,250,250),outline=(40,30,30)); d.polygon([(tx-2,y+h),(tx+2,y+h),(tx+1,y+h+4)],fill=(250,250,250))
     for i,l in enumerate(lines): text(d,l,x+3,y+2+i*7,(40,30,30),shadow=None)
 
-@fx('mate_caption')
-def _fx_caption(d,im,e,f):
-    """A narrator's caption along the bottom (parentheses are drawn by hand: the font has none)."""
-    _,txt=e; inner=txt.strip('()'); w=len(inner)*4+10; x=(W-w)//2; y=H-9
-    d.rectangle([x,y,x+w,y+8],fill=(30,26,26))
-    d.arc([x+1,y+1,x+5,y+7],90,270,fill=(230,230,230)); d.arc([x+w-5,y+1,x+w-1,y+7],270,90,fill=(230,230,230))
-    text(d,inner,x+5,y+2,(230,230,230),shadow=None)
-
 @fx('mate_warm')
 def _fx_warm(d,im,e,f):
     """The golden hour washing over the patio (a 0..1)."""
@@ -188,7 +180,6 @@ def clip_ronda(f):
     if 256<=f<296:
         fx_,fy=friend_hand(2,'attack'); p=min(1,(f-256)/8); mate=(lerp(fx_,hx,p),lerp(fy,hy,p)-6*math.sin(p*math.pi))
         s['fx'].append(('mate_bubble',"GRACIAS",FRIENDS[2][0],18))
-    if 262<=f<300: s['fx'].append(('mate_caption',"(GRACIAS: YA NO QUIERE MAS)"))
     # 5) one more for himself; the golden hour comes and goes
     if 300<=f<330: termo=(hx+4,hy-6,1.0) if f<310 else (CX-9,SEAT,0.0); mate=(hx+1,hy-3) if f>=312 else mate
     if 314<=f<336: s['fx'].append(('mate_bubble',"AAAH",CX+8,24))
