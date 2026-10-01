@@ -59,9 +59,10 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `naruto-edo` | Naruto on the Fourth Great Ninja War battlefield (clones, Rasengan, Sage Mode close-up, Rasenshuriken wind dome) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up, paper-dust regeneration) | edotensei |
 | `naruto-shikamaru` | Shikamaru in the Nara clan forest: hops the scythe, the thinking-pose close-up (WHAT A DRAG...), Kagemane catches Hidan mid-run and he copies every move, Asuma's lighter in close-up (FOR ASUMA.), the tags go up: CHECKMATE. | Hidan (FOR JASHIN!, I CANT MOVE!, climbs out of the pit: I AM IMMORTAL!) | kagemane |
 | `naruto-zabuza` | Kakashi (Sharingan close-up, copied jutsu) | Zabuza on the lake (Water Dragons clash, Great Waterfall) | waterdragon |
-| `naruto-lee` | Rock Lee in the Chunin Exam hall: Konoha Senpu, the leg weights in close-up (LEE! TAKE THEM OFF!, DOSUN!), too fast for the sand, the Eight Gates close-up (KAIMON! KYUMON! SEIMON!), Kage Buyo and the bandage drill: OMOTE RENGE! | Gaara (the sand shield rises by itself, sand stream, sand armour flakes off, gathers back from a heap of sand) | lotus |
 | `dbz-buu` | Claude, then Clodex (fusion dance with Codex, FU-SION-HA! close-up, goes blue for the Final Kamehameha) on the Supreme Kai's world | Kid Buu (grin close-up, planet-destroying ball, regenerates) | fusion |
 | `jjk-sukuna` | Gojo in ruined Shibuya under a red moon (hand-sign close-up with one Six Eye, Unlimited Void swallows the shrine, four Black Flashes) | Sukuna (grin close-up with four eyes, Malevolent Shrine, Dismantle + Cleave storm) | domain |
+| `jjk-toji` | Toji (Inventory curse, Inverted Spear of Heaven, SORCERER KILLER close-up) | young Gojo: the spear shatters his Infinity | sakahoko |
+| `jjk-maki` | Maki, awakened (glasses crack close-up, afterimage cuts) | the Zen'in clan, then her father Ogi | zenin |
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
 | `fma` | Colonel Mustang (glove snap close-up, flame alchemy) | Envy (disguised as Claude, burned to his true form) | flame |
 | `dbz-jiren` | Claude in Ultra Instinct (silver-eyes close-up, dodges everything, instant hits from everywhere) at the Tournament of Power | Jiren (red glare close-up, knocked off the arena) | ultra |
@@ -82,23 +83,10 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `bb` | Heisenberg (SAY MY NAME: CLAUDENBERG) | Tuco | saymyname |
 | `snk-colosal` | Survey Corps scout (ODM gear) | the Colossal Titan behind the Wall (eye close-up) | colossal |
 | `jojo` | Jotaro-style Stand user (ORA ORA barrage, moves in stopped time) | DIO and The World (ZA WARUDO, clock close-up) | theworld |
-| `jojo-golden` | Giorno at the Colosseum at night (sub-theme of `jojo`): golden curls and braid, pink suit with the ladybug brooch, Gold Experience; hit while time is erased without ever seeing it, the Arrow pierces his Stand in close-up (GOLD EXPERIENCE REQUIEM), RETURN TO ZERO., MUDA MUDA MUDA with damage numbers, the last MUDA!, ARRIVEDERCI. | Diavolo and King Crimson (KING CRIMSON!, TIME HAS BEEN ERASED! with a red glitch and afterimages; blown away, he never reaches death: falls, and falls again, the loop restarting) | requiem |
-| `jojo-diamond` | Josuke (sub-theme of `jojo`) with Crazy Diamond in a Morioh street at dusk: MY NAME IS YOSHIKAGE KIRA..., Killer Queen's coin goes CLICK and BOOM, Sheer Heart Attack rolls in (LOOK HERE!) and gets punched into the wall, the hair gets mocked: the rage close-up (WHAT DID YOU SAY ABOUT MY HAIR?!), DORARARARA, Crazy Diamond repairs the wall and the blood drops fly back into Kira as bullets | Yoshikage Kira and Killer Queen | kira |
-| `jojo-stone` | Jolyne (sub-theme of `jojo`) in the Green Dolphin Street prison yard at night (searchlight, the wall, the sea, the fence): Whitesnake pulls a DISC out of her head and she falls asleep, she unravels into string and a thread pulls the disc back, the tattooed arm in close-up coming undone into taut strings (STONE FREE!); MADE IN HEAVEN: time accelerates (sun and moon race across the sky, day and night flicker, shadows spin), she weaves a string net and Pucci flies right into it: CAUGHT!, ORA ORA ORA, YARE YARE DAWA. | Enrico Pucci, with Whitesnake and Made in Heaven (a blur hitting from everywhere, slammed into the fence) | heaven |
 | `etendo` | Claude the brand designer | the old Etendo logo (grabbed, spun, morphed into the new star in a close-up — NEW ETENDO!) | rebrand |
 | `sl` | Sung Jinwoo, the Shadow Monarch (twin daggers, ARISE! close-up, shadow army) | Igris the Blood-Red Knight, extracted as a shadow (System windows) | arise |
 | `memes` | Claude on a vaporwave stage (hug, uppercut, blast, deal-with-it shades) | a meme boss rush: Forever Alone, Tung Tung Tung Sahur, then the FINAL BOSS "6 7" (close-up, weighing-gesture attacks) | bossrush |
 | `ben10` | Ben Tennyson with the Omnitrix (HERO TIME close-up, Heatblast, Four Arms, XLR8, the watch times out, Diamondhead) | Vilgax in the desert at night | hero |
-| `ppg` | the fourth Powerpuff Girl over Townsville at dusk (big shiny eyes, flies on an orange streak, flying punch; Blossom, Bubbles and Buttercup dive in and hit one after another, POW! into orbit, AND SO, ONCE AGAIN, THE DAY IS SAVED!) | Mojo Jojo with a ray gun (I, MOJO JOJO, SHALL DESTROY YOU!, shoots Claude out of the sky, crashes back down: CURSE YOU, POWERPUFF CLAUDE!) | townsville |
-| `dexter` | Dexter in CLAUDE'S LABORATORY (glasses, lab coat, purple gloves; DEE DEE! GET OUT OF MY LABORATORY!, pulls the lever and the mech drops around him, stomps and fires lasers; comes out of the smoke black with soot: DEE DEEEE!) | Dee Dee (OOOH! WHAT DOES THIS BUTTON DO?, pirouettes through every shot, presses the big red button: SELF DESTRUCT, KABOOM!) | lab |
-| `samuraijack` | Jack in the desert at sunset with Aku's city on the horizon (LONG AGO, IN A DISTANT LAND..., Genndy-style split screen as the robots creep in, eyes and katana-gleam close-up, one cut and the robots slide apart leaking black oil, leaps the giant hand and takes a finger off, sheathes slowly: CLICK.) | Aku (HA HA HA!, three beetle robots, ENOUGH! and turns into a giant hand, dissolves in smoke: CURSE YOU, SAMURAI!) | aku |
-| `foster` | the new imaginary friend in Foster's grand hall, no fight (staircase, gilt portraits, chandelier, red carpet): BET YOU CANT BEAT THIS!, a paddle-ball contest with counters while Eduardo (NO ME GUSTA!), Coco (lays a plastic egg: COCO! COCO!) and Wilt (SORRY! SORRY!) go by; Bloo's string snaps, the ball ricochets round the hall and smashes the vase (CRASH!); Mr. Herriman's monocle in close-up (MASTER CLAUDE! RULE 37!); wins 99 TO 98, Frankie sweeps up with a SIGH... and puts out a new vase | Bloo (HE DID IT!, NO FAIR!, REMATCH!) | bloo |
-| `simuladores` | the fifth simulador in a dark suit and dark glasses, on a Buenos Aires street at night with the team's van: no fight, an operation (the client wrings his hands: ME ESTAFARON..., UN NUEVO CASO card, the plan on the whiteboard name by name with every arrow into CODEX, Ravenna turns inspector in a puff of smoke, Lamponne with his toolcase, a three-panel montage: CONFIE EN MI, FIRME ACA, ERA TODO SIMULADO; the handshake in close-up: GRACIAS, MUCHACHOS; the five walk in slow motion; the CUESTIONARIO DE SATISFACCION, every box ticked) | Codex, the crook with the briefcase of money (QUE TAL, AMIGO?) | operativo |
-| `jakelong` | Jake Long, the American Dragon, on the Chinatown rooftops of New York at night (black hair with green tips, red jacket; ollies the first staff blast on his skateboard, the DRAGON UP! close-up as the fire runs up his body into the red dragon, flies through the blasts and breathes fire; Fu Dog on the pagoda roof: YO, JAKE! LOOK OUT!, burns his way out of the Huntsclan net, a tail-whip: WHAM!, lands back as Jake: HAHA, DRAGON!) | the Huntsman, with the bone mask and the green-blast staff (THE DRAGON WILL BE MINE!, HOLD STILL, DRAGON!, GOT YOU!; whipped into the sky, drops back dizzy) | dragon |
-| `spongebob` | SpongeBob at the grill outside the Krusty Krab under Bikini Bottom's flower clouds (I'M READY! I'M READY!, flips Krabby Patties, hops the robot's claw without leaving the grill and flips patties into it: SPLAT!; Squidward at the door: UGH., Mr. Krabs bursts out: MONEY! MONEY! MONEY!; the ORDER UP! close-up with the spatula and shining eyes; one last patty into the cockpit, a bubble wipe and the 2000 YEARS LATER... title card) | Plankton in his giant robot (THE FORMULA WILL BE MINE!, HEH HEH HEH!, falls apart and flies back to the Chum Bucket: I'LL GET YOU NEXT TIME!, trudges back: SIGH...) | krabby |
-| `dannyphantom` | Danny Fenton in Amity Park at night, Fenton Works and the green portal swirling at its door (the ghost sense's blue wisp, the GOIN' GHOST! close-up: two white rings sweep him into the black-and-white jumpsuit, white hair, green eyes; floats, goes intangible and the missiles fly right through: MISSED ME!, a green ecto-blast, the Ghostly Wail close-up: AAAAAAA! shockwaves fill the screen; the Fenton Thermos vortex: GOTCHA!, the rings take him back to human) | Skulker, the armoured ghost hunter with the flaming mohawk and the shoulder launcher (I'LL HAVE YOUR PELT, WHELP!; pops the thermos lid and reforms: I'LL BE BACK, WHELP!) | ghost |
-| `cyberpunk` | V in the Samurai jacket inside the Maelstrom plant in Watson (red neon, rain on the windows, Night City through a blown-out wall): the scan tags him THREAT: EXTREME, the SHORT CIRCUIT quickhack fries him in a glitch, SANDEVISTAN slows the world and V leaves colour trails landing three mantis-blade cuts (3X CRIT!), leaps the arm cannon's shot; Johnny Silverhand flickers in like a broken hologram in close-up (WAKE UP, SAMURAI. WE HAVE A CITY TO BURN.), one shot of the Malorian: BANG!, FLATLINED. | Royce, the Maelstrom boss (red optics, jaw mask, powered exoskeleton with an arm cannon: YOU'RE DEAD, CHOOM!) | nightcity |
-| `cyberpunk-edgerunners` | David Martinez (sub-theme of `cyberpunk`) in the Arasaka plaza at night, rain and neon under a huge moon: the yellow ambulance jacket, the green streak, the Sandevistan down his spine; SANDEVISTAN: the world goes green and slow, the bullets hang in the air and he walks between them trailing afterimages; Lucy fades out of her optical camo and hacks the tower (BREACH PROTOCOL, the drones drop: I GOT YOU, DAVID.); the arm gets crushed (CRUNCH, the red CYBERPSYCHOSIS glitch, red eyes), the Militech cyberskeleton closes on him plate by plate in close-up (I'M GONNA GET TO THE TOP), the brawl to the edge (AAAAARGH!); Lucy on the Moon in close-up, the Earth in the sky: I WANT TO GO TO THE MOON. | Adam Smasher (opens fire, HEH., the crushing grip, pushed to the edge of the plaza) | moon |
 | `sonic` | Claude as a blue hedgehog in Green Hill (rings, spin dash, loop-de-loop, ring loss, 7 Chaos Emeralds, SUPER CLAUDE) | Dr. Eggman in the Egg Mobile with the wrecking ball (GOT THROUGH ACT 1 tally) | greenhill |
 | `tetris` | Claude in an ushanka (punches and kicks the falling pieces into place, FINALLY! I-piece close-up, TETRIS!) | the falling tetrominoes on an NES/Game Boy playfield in front of the Kremlin (4-line clear, Game Boy rocket ending) | tetris |
 | `clippy` | Claude on a Windows 98 desktop (clicks NO, punches error dialogs, END TASK, bends him straight into the Recycle Bin) | Clippy in a DEATH MATCH (NEED HELP? spam, grows huge, turns into a bicycle/bell/question mark, crazy-eyes close-up) | deathmatch |
@@ -109,9 +97,6 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `simpsons` | a Sector 7G worker (D'OH!, stomps the uranium rod back in, MMM... ROSQUILLAS) | Mr. Burns and his hounds in the nuclear plant (EXCELENTE... close-up) | meltdown |
 | `portal` | the test subject with the Portal Gun in an Aperture test chamber (drops through blue/orange portals, turns the turret fire back through them, shoots a portal at the MOON; THIS WAS A TRIUMPH card, the cake is a lie) | GLaDOS on her ceiling arm (turrets, neurotoxin, yellow-to-red eye close-up — YOU MONSTER; her cores pop off, Wheatley babbles, SPAAACE!; sucked out into space) | triumph |
 | `amongus` | an orange crewmate with Codex in The Skeld cafeteria (fix-wiring close-up, spots Codex venting ?!, lights out, DEAD BODY REPORTED, CODEX VENTED! meeting, VICTORY) | Codex, the impostor (I WAS IN ELECTRICAL, sweating close-up, voted off: CODEX WAS THE IMPOSTOR.) | impostor |
-| `pvz` | Crazy Dave with a saucepan on his head, on his front lawn (grabs suns, plants a wall-nut, lobs a cherry bomb: KABOOM; rides the lawn mower over THE ZOMBIES ATE YOUR BRAINS!; BECAUSE IM CRAAAZY! close-up, YOU GOT A NEW PLANT! card) | a wave of zombies (arm and head shot off, conehead, buckethead; CHOMP wall-nut close-up), then Codex as Dr. Zomboss on the Zombot (> RM -RF LAWN, hurls an imp; blown off the screen) | lastwave |
-| `jjk-toji` | Toji (Inventory curse, Inverted Spear of Heaven, SORCERER KILLER close-up) | young Gojo: the spear shatters his Infinity | sakahoko |
-| `jjk-maki` | Maki, awakened (glasses crack close-up, afterimage cuts) | the Zen'in clan, then her father Ogi | zenin |
 | `meshi` | Laios (sword, I WONDER HOW IT TASTES... close-up) | the Red Dragon, then Senshi cooks it: DRAGON STEW | dragonstew |
 | `terraria` | the Terrarian: Terra Blade beams, or a staff + whip with a Stardust Dragon | the Eye of Cthulhu (servants, phase 2 close-up, coins) | melee, summoner |
 | `mist` | Vin, Mistborn (mistcloak, Steel Pushes on coins, ATIUM close-up with her future shadows) | a Steel Inquisitor in Luthadel's mists and ash (she Pulls the spike from his back); off by default | inquisitor |
@@ -129,6 +114,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `arg-86` | Diego at the Azteca, 1986 (sub-theme of `arg`), with the TV scoreboard: `mano` (the one-two with Valdano, Hodge's loop, up against the taller Shilton, the fist in close-up, the English round the referee, LA MANO DE DIOS) and `siglo` (the spin in his own half, the camera following his run past a slide, two lunges and the keeper, Butcher from behind; TA TA TA TA, GOLAZO, BARRILETE COSMICO, DE QUE PLANETA VINISTE) | England | mano, siglo |
 | `arg-mate` | No fight: a ronda de mate in a patio under the parra, the flag with the Sol de Mayo on the wall: the first one for the cebador (EL PRIMERO ES DEL CEBADOR), the mate going round with facturas (RRRP), the yerba in close-up until ESTA LAVADO, a GRACIAS, the golden hour | three friends | ronda |
 | `arg-colapinto` | Franco Colapinto, number 43, in the dark-blue Williams: the five red lights (AND AWAY WE GO!), four cars passed as the TV tower takes COL from P12 to P8, team radio (GOOD JOB FRANCO. P8. POINTS.), the chequered flag, the helmet in close-up with the stands in its visor (VAMOS FRANCO), a lap of honour under the flags | the rest of the grid | debut |
+| `arg-alejo` | No fight: Carlitox from Alejo y Valentina (LocoArts), green hair everywhere, on the couch next to Alejo with Valentina by, the TV and the CUADRITO: `patas` (MIRA COMO REVOLEO LAS PATAS: the legs spin like a fan; close-up: HOLA, VENGO A REVOLEAR LAS PATAS!) and `flotar` (the curtain set: HOLA, VENGO A FLOTAR) | Alejo and Valentina, watching | patas, flotar |
 | `cai` | Independiente, the Rojo (red shirt, blue shorts), in the clasico de Avellaneda at the Libertadores de America: past three Racing defenders (OLE!: a nutmeg, a lob, a feint), the strike in close-up, top corner (GOL DEL ROJO, red flares), the trophy cabinet in close-up as the seven Libertadores light up: REY DE COPAS | Racing | clasico |
 | `eternauta` | Juan Salvo in the home-made insulated suit (El Eternauta), on a street in Vicente Lopez under the deadly snowfall: the bullets spark off the shell (PAC! PAC! PAC!), a Mano at its console in close-up driving the beetles, Favalli, Lucas and Polsky come out of the snow and fire together (FUEGO!), four visors in close-up: NADIE SE SALVA SOLO | a cascarudo, the giant beetle (the snow buries it) | nevada |
 | `thebear` | Carmy (The Bear) at the pass, the blue LED clock and its EVERY SECOND COUNTS plaque over the line: the printer spits tickets (ORDERS IN!), the brigade's YES CHEF!, a pan in flames, BEHIND!, a smashed plate, the clock racing through a whole day; the clock and the plaque in close-up, glowing with every second; the last plate with the tweezers (HANDS!) and the quiet after | the dinner service (Sydney, Marcus, Tina and Richie on the line) | service |
@@ -230,51 +216,6 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
   so no panel shows and the focused window keeps focus. `NOTCH_FIGHT_TEST_PANEL=1` adds real launches
   (in the background with `open -g`: the panel shows, focus stays).
 
-## Inside Claude Code (mod)
-
-`mod/` is a Claude Code mod (a plugin of function hooks) that plays the same clips in the band
-above the prompt while Claude works, at the right end, and hides them when the turn ends. It reads
-`build/clips` and `build/transitions` from this checkout (run `./build.sh` first) and honours the
-same `config.json` selection as the app. Terminal only: the desktop app's Code tab has no pixel
-elements for mods.
-
-```bash
-claude --plugin-dir ~/Workspace/notch-fight/mod      # one session
-```
-
-To load it in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
-`~/.claude/settings.json` (`{"env": {"CLAUDE_CODE_PLUGIN_DIRS": "~/Workspace/notch-fight/mod"}}`).
-Options (`/config` → `notch-fight`):
-
-| Option | Default | Effect |
-|---|---|---|
-| `enabled` | `true` | Off: the mod plays nothing (the band never shows); turn it back on from the same menu. |
-| `display` | `image` | `image`: the real PNG frames. `raster`: coloured quadrant blocks (2x2 pixels a cell), any terminal. `sextant`: coloured sextant blocks (2x3 pixels a cell, 50% more detail than `raster`). `octant`: coloured octant blocks (2x4 pixels a cell, twice `raster`'s rows). |
-| `rows` | `14` | Height in terminal rows (4 to 24); the width follows the clip (81 columns at 14, 93 at 16, 121 at 21). Native 185x64: `octant` at 16 rows, `sextant` at 21. |
-| `repo` | the checkout `mod/` is in | Where `build/clips` lives. |
-
-`image` needs a terminal that draws kitty graphics **Unicode placeholders** (`U=1`), which is what
-Claude Code uses for a mod's `Image`: **kitty** and **Ghostty** do. Anywhere else the mod falls
-back to `raster` by itself (a toast says so). **Orca** (any version so far, 1.4.218 included) only
-gets the cell modes: its "Inline Images" setting (1.4.206+) uses xterm.js's image addon, whose kitty
-support has no Unicode placeholders yet ([xterm.js#6198](https://github.com/xtermjs/xterm.js/pull/6198)
-adds them).
-
-Where `image` does not work, pick a cell mode, sharpest first:
-
-1. **`octant`** (recommended), with **16 rows**: the clips at their native 185x64. It draws the
-   Unicode 16 octants (U+1CD00–1CDE5), which kitty, Ghostty and WezTerm draw themselves; anywhere
-   else (Orca, VS Code: xterm.js does not draw them yet) **the terminal font must have them**, or
-   they show as boxes. **Cascadia Mono** 2404.23+ does: `brew install --cask font-cascadia-mono`,
-   pick it as the terminal font (Orca: "Tipografía del terminal" → "Familia de fuentes"), and
-   restart the terminal app after installing a font. An older Cascadia Code has no octants.
-2. **`sextant`**: no font needed in kitty, Ghostty, WezTerm and xterm.js's WebGL renderer (Orca,
-   VS Code), which draw U+1FB00–1FB3B themselves. 21 rows reach the native resolution.
-3. **`raster`**: quadrant blocks, any terminal and any font.
-
-The cell modes pack each clip once with `scripts/mod_cells.py` (about one second for `raster`, two
-for `sextant`, five for `octant`) into `build/mod/`.
-
 ## Panel shape
 
 The panel takes its size and position from the real notch of each Mac. Two looks can be tuned in
@@ -304,15 +245,14 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py  naruto_lee.py  lol_yasuo.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  arg_mate.py  arg_colapinto.py  arg_alejo.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  snk_colosal.py  lol_yasuo.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
 └── legacy/single_clip.py   # the original standalone 10 s clip (--black for the notch version)
 app/main.swift, app/Info.plist   # the notch app
-mod/                             # the Claude Code mod (band above the prompt)
 media/                           # rendered previews
 ```
 
