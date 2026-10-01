@@ -7,9 +7,9 @@
 - If the user has Vorssaint (a notch app with a wider bar), `install.sh` sets `"scale": 1.5` in
   `~/.config/notch-fight/config.json` unless a scale is already set; mention it in the report.
 - If `swiftc` is missing, tell the user to run `xcode-select --install` (interactive, needs them).
-- Not macOS: say the app is macOS-only; the generator still runs (`python3 src/build.py` in `build/`).
+- Not macOS: say the app is macOS-only; the generator still runs (`mkdir -p build && cd build && python3 ../src/build.py`).
 - Uninstall: `./uninstall.sh` (`--purge` also removes `build/` and `~/.config/notch-fight`).
-- Never hand-edit the hooks: `scripts/hooks.py` owns them (it matches entries mentioning `NotchFight`).
+- Never hand-edit the hooks: `scripts/hooks.py` owns them (it matches entries mentioning `NotchFight` or `notch-hook.sh`).
 - Showing / hiding clips ("hide the Maki clip", "only new clips I pick"): use `./clips.sh list | enable |
   disable <clip|theme> | mode enabled|disabled`, never edit the config by hand. The checklist (`./clips.sh`
   with no args) needs a real terminal: tell the user to run it themselves.
