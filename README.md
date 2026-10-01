@@ -120,6 +120,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `lol-yasuo` | No fight: Yasuo (League of Legends) at sunset in Ionia, on a rock under a cherry tree, playing the bamboo flute, the notes drifting off as petals; eyes closed in the wind in close-up (DEATH IS LIKE THE WIND. ALWAYS BY MY SIDE.); a bird lands on his katana, a sip of sake | nobody | flute |
 | `thisisfine` | No fight: the This Is Fine dog (KC Green's Gunshow) in his bowler hat, sipping coffee at the kitchen table while the fire climbs the walls and the pictures turn into BUILD FAILED, PROD IS DOWN and DEPLOY FRIDAY; the calm smile in close-up (THIS IS FINE.), IM OKAY WITH THE EVENTS THAT ARE UNFOLDING CURRENTLY., then the smoke clears | the fire | fine |
 | `wednesday` | No fight, as in the meme's panel: Captain Haddock a bit worse for wear (hair everywhere, red nose) slumped over the bar with a pint, in Herge's clear line: WHAT A WEEK, HUH? / CAPTAIN, IT'S WEDNESDAY; his bleary face in close-up (the eyes pop: BLISTERING BARNACLES!), Snowy sniffing the beer | Tintin and Snowy | wednesday |
+| `memento` | Leonard Shelby, and the film's structure as the clip: colour running backwards (the polaroid un-develops, the casing flies back into the gun), black and white forwards (the motel phone: REMEMBER SAMMY JANKIS.), the chest tattoo in close-up (JOHN G. RAPED AND MURDERED MY WIFE), Teddy's polaroid (DON'T BELIEVE HIS LIES), and the end meets the start: a polaroid develops and the colour comes back | John G., whoever he is | polaroids |
 
 Playback (per launch): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
@@ -208,7 +209,7 @@ src/
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
-│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
+│   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
 │   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  arg_mate.py  arg_colapinto.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  snk_colosal.py  lol_yasuo.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
