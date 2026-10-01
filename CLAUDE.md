@@ -13,6 +13,9 @@
 - Showing / hiding clips ("hide the Maki clip", "only new clips I pick"): use `./clips.sh list | enable |
   disable <clip|theme> | mode enabled|disabled`, never edit the config by hand. The checklist (`./clips.sh`
   with no args) needs a real terminal: tell the user to run it themselves.
+- Pausing it, quiet hours, hiding it while screen sharing, previewing a clip: `./nf pause <time> | resume |
+  quiet HH:MM-HH:MM [weekdays] | share on|off | preview <clip|theme> | status` (`nf` once installed).
+  `nf pause` with no time is an interactive menu: give the time instead.
 - Hooks added mid-session may need `/hooks` opened once to reload — tell the user.
 
 ## Adding content ("add a One Piece fight", "add a clip to DBZ")
