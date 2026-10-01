@@ -204,7 +204,7 @@ src/
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  odyssey.py  dnd.py  eternauta.py  cai.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py  phm.py  arg.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  snk_colosal.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  naruto_shikamaru.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  jjk_toji.py  jjk_maki.py  ghibli_totoro.py  arg_86.py  arg_mate.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  snk_colosal.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
