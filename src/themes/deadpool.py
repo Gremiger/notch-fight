@@ -11,7 +11,7 @@ the glass (fisheye close-up: HI MOM!), pushes the panel's edges (LET ME OUT!), g
 Claude think (STILL THINKING?) and falls asleep — the panel starts closing on him: HEY! NOT YET!
 review: Claude's pull request on Etendo_schema_forge drops in as a
 terminal; Deadpool reads the diff out loud, judges the Etendo rebrand in close-up (the yellow logo turns
-green and black: NEW LOGO. HUH? / EDGY. I DIG IT.), stamps it LGTM and merges it with a katana."""
+the lime tile with the black < >: NEW LOGO. HUH? / EDGY. I DIG IT.), stamps it LGTM and merges it with a katana."""
 from engine import *
 from themes.nrt import MADARA, MADARA_AURA      # notchverse: the other themes' worlds and casts
 from themes.dbz import CE, CELL_KI
@@ -460,7 +460,8 @@ def clip_webcam(f):
 
 # ==== review ==========================================================================================
 ETENDO_YELLOW, ETENDO_NAVY = (250,214,20), (32,36,82)                  # the old logo
-ETENDO_GREEN, ETENDO_BLACK = (34,170,84), (20,20,20)                   # the new one
+ETENDO_GREEN, ETENDO_BLACK = (180,236,80), (22,22,22)                  # the new one: a lime tile, black < >
+ETENDO_GREEN_D = (150,200,60)
 DIFF=[("+","EXPORT FUNCTION FORGE"),("-","IF A IF B IF C IF D"),("+","CONST THINGY2: ANY"),      # only what the font has
       ("+","TODO: FIX LATER. MAYBE."),("-","CONSOLE.LOG ASDFASDF"),("+","RETURN SCHEMA"),("+","TESTS: 412 PASSED")]
 
@@ -502,14 +503,31 @@ def _fx_term_pr(d,im,e,f):
     im.paste(bot.rotate(8*cut,expand=False),(x0+int(8*cut),y0+23+drop))
     if cut<0.3: ImageDraw.Draw(im).line([x0-4,y0+24,x1+4,y0+22],fill=(255,255,255),width=2)
 
+def etendo_tile_old(d,x,y,S):
+    """The old logo: a yellow tile with the navy E-and-X mark."""
+    d.rectangle([x,y,x+S,y+S],fill=ETENDO_YELLOW)
+    etendo_mark(d,x+S*0.2,y+S*0.2,S*0.6,ETENDO_NAVY,w=3)
+
+def etendo_tile_new(d,x,y,S):
+    """The new logo: a lime rounded tile, a darker band at its foot, two thick black chevrons < > round a
+    diamond of green."""
+    d.rounded_rectangle([x,y,x+S,y+S],radius=S//6,fill=ETENDO_GREEN)
+    d.rounded_rectangle([x,y+S*0.86,x+S,y+S],radius=S//10,fill=ETENDO_GREEN_D)
+    d.rectangle([x,y+S*0.84,x+S,y+S*0.9],fill=ETENDO_GREEN_D)
+    left=[(0.34,0.17),(0.47,0.17),(0.47,0.33),(0.37,0.48),(0.47,0.63),(0.47,0.80),(0.34,0.80),(0.30,0.70),(0.17,0.56),(0.17,0.41),(0.30,0.27)]
+    for side in (1,-1):
+        pts=[(x+S*(u if side>0 else 1-u),y+S*v) for u,v in left]
+        d.polygon(pts,fill=ETENDO_BLACK)
+
 def closeup_logo(t,f):
     """Primer plano: the Etendo logo on a card, Deadpool's mask peeking in from the right. The old yellow
-    logo; a swipe; the new green and black one — NEW LOGO. HUH? / EDGY. I DIG IT."""
+    logo; a swipe; the new lime one with the black < > — NEW LOGO. HUH? / EDGY. I DIG IT."""
     im=Image.new('RGB',(W,H),(30,18,14)); d=ImageDraw.Draw(im)
     d.rectangle([6,8,132,58],fill=(250,250,250),outline=(200,200,200))
     new=t>=0.32
     sw=min(1,max(0,(t-0.3)/0.06))
-    etendo_mark(d,14,16,34,ETENDO_GREEN if new else ETENDO_YELLOW,w=4)
+    if new: etendo_tile_new(d,14,14,38)
+    else: etendo_tile_old(d,14,14,38)
     big_text(im,"ETENDO",27,ETENDO_BLACK if new else ETENDO_NAVY,scale=2,cx=96,shadow=None)
     if 0<sw<1: d.rectangle([6,8,6+int(126*sw),58],fill=ETENDO_GREEN)           # the rebrand, swiped in
     d.rectangle([150,10,W+10,H],fill=RED); d.line([166,10,166,H],fill=RED_D)  # the mask, peeking in
