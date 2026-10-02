@@ -1,0 +1,30 @@
+{
+  "name": "notch-fight",
+  "version": "0.1.0",
+  "description": "Plays the Notch Fight clips in a band above the prompt while Claude works",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "display": {
+      "type": "string",
+      "title": "Display",
+      "description": "image: the real PNG frames (kitty, Ghostty), falls back to raster elsewhere. raster: coloured quadrant-block cells, any terminal",
+      "default": "image",
+      "options": [
+        "image",
+        "raster"
+      ]
+    },
+    "rows": {
+      "type": "number",
+      "title": "Height",
+      "description": "Terminal rows the clip takes (4 to 14); the width follows the clip's shape",
+      "default": 14
+    },
+    "repo": {
+      "type": "string",
+      "title": "notch-fight checkout",
+      "description": "Where the notch-fight checkout is (its build/clips). Empty: the checkout this plugin is in",
+      "default": ""
+    }
+  }
+}

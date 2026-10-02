@@ -175,6 +175,35 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
   so no panel shows and the focused window keeps focus. `NOTCH_FIGHT_TEST_PANEL=1` adds real launches
   (in the background with `open -g`: the panel shows, focus stays).
 
+## Inside Claude Code (mod)
+
+`mod/` is a Claude Code mod (a plugin of function hooks) that plays the same clips in the band
+above the prompt while Claude works, at the right end, and hides them when the turn ends. It reads
+`build/clips` and `build/transitions` from this checkout (run `./build.sh` first) and honours the
+same `config.json` selection as the app. Terminal only: the desktop app's Code tab has no pixel
+elements for mods.
+
+```bash
+claude --plugin-dir ~/Workspace/notch-fight/mod      # one session
+```
+
+To load it in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
+`~/.claude/settings.json` (`{"env": {"CLAUDE_CODE_PLUGIN_DIRS": "~/Workspace/notch-fight/mod"}}`).
+Options (`/config` → `notch-fight`):
+
+| Option | Default | Effect |
+|---|---|---|
+| `display` | `image` | `image`: the real PNG frames. `raster`: coloured quadrant blocks (2x2 pixels a cell), any terminal. |
+| `rows` | `14` | Height in terminal rows (4 to 14); the width follows the clip (81 columns at 14). |
+| `repo` | the checkout `mod/` is in | Where `build/clips` lives. |
+
+`image` needs a terminal that draws kitty graphics **Unicode placeholders** (`U=1`), which is what
+Claude Code uses for a mod's `Image`: **kitty** and **Ghostty** do. Anywhere else the mod falls
+back to `raster` by itself (a toast says so). **Orca** (any version so far, 1.4.218 included) only
+gets `raster`: its "Inline Images" setting (1.4.206+) uses xterm.js's image addon, whose kitty
+support has no Unicode placeholders yet. `raster` packs each clip once with
+`scripts/mod_cells.py` (about a second) into `build/mod/`.
+
 ## Panel shape
 
 The panel takes its size and position from the real notch of each Mac. Two looks can be tuned in
@@ -212,6 +241,7 @@ src/
 ├── build.py           # entry point used by build.sh
 └── legacy/single_clip.py   # the original standalone 10 s clip (--black for the notch version)
 app/main.swift, app/Info.plist   # the notch app
+mod/                             # the Claude Code mod (band above the prompt)
 media/                           # rendered previews
 ```
 
