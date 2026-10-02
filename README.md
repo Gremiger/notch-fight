@@ -195,7 +195,7 @@ Options (`/config` → `notch-fight`):
 | Option | Default | Effect |
 |---|---|---|
 | `display` | `image` | `image`: the real PNG frames. `raster`: coloured quadrant blocks (2x2 pixels a cell), any terminal. `sextant`: coloured sextant blocks (2x3 pixels a cell, 50% more detail than `raster`). `octant`: coloured octant blocks (2x4 pixels a cell, twice `raster`'s rows). |
-| `rows` | `14` | Height in terminal rows (4 to 24); the width follows the clip (81 columns at 14, 121 at 21). `sextant` at 21 rows shows the clips at their native 185x64. |
+| `rows` | `14` | Height in terminal rows (4 to 24); the width follows the clip (81 columns at 14, 93 at 16, 121 at 21). Native 185x64: `octant` at 16 rows, `sextant` at 21. |
 | `repo` | the checkout `mod/` is in | Where `build/clips` lives. |
 
 `image` needs a terminal that draws kitty graphics **Unicode placeholders** (`U=1`), which is what
@@ -203,17 +203,22 @@ Claude Code uses for a mod's `Image`: **kitty** and **Ghostty** do. Anywhere els
 back to `raster` by itself (a toast says so). **Orca** (any version so far, 1.4.218 included) only
 gets the cell modes: its "Inline Images" setting (1.4.206+) uses xterm.js's image addon, whose kitty
 support has no Unicode placeholders yet ([xterm.js#6198](https://github.com/xtermjs/xterm.js/pull/6198)
-adds them); pick `sextant` there for the sharpest cells.
+adds them).
 
-`sextant` draws the Symbols for Legacy Computing blocks (U+1FB00–1FB3B). kitty, Ghostty, WezTerm
-and xterm.js's WebGL renderer (Orca, VS Code) draw them themselves; elsewhere they need a font
-that has them, or they show as boxes: use `raster` then. `octant` draws the Unicode 16 octants
-(U+1CD00–1CDE5): sharper still, but only where the terminal or font knows them (kitty, Ghostty,
-WezTerm); xterm.js does not draw them itself yet, so Orca and VS Code need a font that has them:
-**Cascadia Mono** 2404.23+ (`brew install --cask font-cascadia-mono`, then Orca's terminal font
-family; restart Orca after installing a font). At 16 rows `octant` matches the clips' native 185x64. The cell modes pack each
-clip once with `scripts/mod_cells.py` (about one second for `raster`, two for `sextant`, five for
-`octant`) into `build/mod/`.
+Where `image` does not work, pick a cell mode, sharpest first:
+
+1. **`octant`** (recommended), with **16 rows**: the clips at their native 185x64. It draws the
+   Unicode 16 octants (U+1CD00–1CDE5), which kitty, Ghostty and WezTerm draw themselves; anywhere
+   else (Orca, VS Code: xterm.js does not draw them yet) **the terminal font must have them**, or
+   they show as boxes. **Cascadia Mono** 2404.23+ does: `brew install --cask font-cascadia-mono`,
+   pick it as the terminal font (Orca: "Tipografía del terminal" → "Familia de fuentes"), and
+   restart the terminal app after installing a font. An older Cascadia Code has no octants.
+2. **`sextant`**: no font needed in kitty, Ghostty, WezTerm and xterm.js's WebGL renderer (Orca,
+   VS Code), which draw U+1FB00–1FB3B themselves. 21 rows reach the native resolution.
+3. **`raster`**: quadrant blocks, any terminal and any font.
+
+The cell modes pack each clip once with `scripts/mod_cells.py` (about one second for `raster`, two
+for `sextant`, five for `octant`) into `build/mod/`.
 
 ## Panel shape
 

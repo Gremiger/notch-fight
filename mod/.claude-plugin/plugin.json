@@ -7,7 +7,7 @@
     "display": {
       "type": "string",
       "title": "Display",
-      "description": "image: the real PNG frames (kitty, Ghostty), falls back to raster elsewhere. raster: coloured quadrant-block cells, any terminal. sextant: 2x3-pixel block cells, 50% more detail than raster (kitty, Ghostty, WezTerm, Orca, VS Code). octant: 2x4-pixel cells, twice raster's detail (Unicode 16: kitty, Ghostty, WezTerm; boxes in Orca)",
+      "description": "image: the real PNG frames (kitty, Ghostty), falls back to raster elsewhere. Where image does not work: octant (recommended: 2x4-pixel cells, native resolution at 16 rows; needs a font with the Unicode 16 octants, e.g. Cascadia Mono, outside kitty/Ghostty/WezTerm), sextant (2x3, no font needed in Orca/VS Code), raster (2x2, any terminal)",
       "default": "image",
       "options": [
         "image",
@@ -19,7 +19,7 @@
     "rows": {
       "type": "number",
       "title": "Height",
-      "description": "Terminal rows the clip takes (4 to 24); the width follows the clip's shape. sextant at 21 rows shows the clips at their native resolution",
+      "description": "Terminal rows the clip takes (4 to 24); the width follows the clip's shape. Native resolution: octant at 16 rows, sextant at 21",
       "default": 14
     },
     "repo": {
