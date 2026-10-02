@@ -15,7 +15,7 @@
   with no args) needs a real terminal: tell the user to run it themselves.
 - Hooks added mid-session may need `/hooks` opened once to reload — tell the user.
 - Clips inside Claude Code ("show it in the terminal", no notch): the mod in `mod/` (README "Inside Claude
-  Code"): `claude --plugin-dir <repo>/mod`. Pixel-perfect only in kitty/Ghostty; elsewhere (Orca included) it draws cells.
+  Code"): `claude --plugin-dir <repo>/mod`. Pixel-perfect only in kitty/Ghostty; elsewhere (Orca included) it draws cells (`display: sextant` is the sharpest).
 
 ## Adding content ("add a One Piece fight", "add a clip to DBZ")
 - New theme = new file `src/themes/<id>.py` (see README "Adding a clip"); new clip in an existing

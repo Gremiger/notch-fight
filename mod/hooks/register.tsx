@@ -2,7 +2,13 @@
 // notch app plays (same build/clips, same config.json selection, theme-to-theme transitions).
 // display "image" shows the real PNG frames (kitty graphics protocol: kitty, Ghostty) and falls back
 // to "raster" where the terminal draws the Image's alt; "raster" packs each frame into coloured
-// quadrant-block cells, 2x2 pixels each (scripts/mod_cells.py), which every terminal shows.
+// quadrant-block cells, 2x2 pixels each (scripts/mod_cells.py), which every terminal shows;
+// "sextant" packs sextant cells, 2x3 pixels each: 50% more rows, for terminals whose renderer or
+// font draws U+1FB00..1FB3B (kitty, Ghostty, WezTerm, xterm.js's WebGL renderer: VS Code, Orca).
+// "octant" packs octant cells, 2x4 pixels each (Unicode 16, U+1CD00..1CDE5): twice raster's rows,
+// where the terminal draws them (kitty, Ghostty, WezTerm; xterm.js not yet: boxes in Orca, VS Code).
+// A Raster only takes BMP characters, so sextant and octant frames are drawn as coloured Text runs,
+// one row each, redrawn by bumping the `tick` atom.
 // The clip sits at the right end of the band.
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
@@ -11,12 +17,14 @@ import type { Mode } from '../types'
 
 const isPlaying = atom({ plugin: 'notch-fight', key: 'isPlaying' } as const, false)
 const mode = atom({ plugin: 'notch-fight', key: 'mode' } as const, 'image' as Mode)
+const tickNo = atom({ plugin: 'notch-fight', key: 'tick' } as const, 0)
 
 const FPS = 20
 const MAX_PER_VISIT = 2                   // clips in one theme before moving on, like the app
 const KEY = 'clip'
 
 type Item = { name: string; dir: string; count: number }
+type Run = { text: string; fg: string; bg: string }
 type Config = { newClips?: string; enabled?: string[]; disabled?: string[]; first?: string | string[] }
 
 const themeOf = (name: string) => name.split('_')[0]
@@ -38,9 +46,12 @@ let queue: Item[] = []
 let item: Item | null = null
 let frame = 0
 let png = ''                                            // the frame on screen, image mode
-let cells = ''                                          // the frame on screen, raster mode
-let packed: Uint8Array | null = null                    // the current item's raster frames
-let stop: (() => void) | null = null
+let cells = ''                                          // the frame on screen, cell modes
+let packDir = ''                                        // the current item's cell frames: chunks of PER frames
+let packed: Uint8Array | null = null                    // the chunk in memory
+let chunk = -1
+let runs: Run[][] = []                                  // the frame on screen, sextant mode: one list a row
+let timer: { cancel(): void } | null = null
 let isBusy = false
 let hasWarned = false
 
@@ -97,30 +108,66 @@ async function enqueue($: EngineInterface, name: string) {
   remaining = remaining.filter(c => c !== name)
 }
 
-async function loadPacked($: EngineInterface, it: Item) {
-  const out = `${root}/build/mod/${it.name}.${columns}x${rows}.q.cells`
+const isCells = (m: Mode) => m !== 'image'
+const isText = (m: Mode) => m === 'sextant' || m === 'octant'
+
+// $.fs.read takes files up to 4 MB, so mod_cells.py writes a pack as chunks of whole frames
+const CHUNK_BYTES = 3_000_000                           // the same number as scripts/mod_cells.py
+const perChunk = () => Math.max(1, Math.floor(CHUNK_BYTES / (columns * rows * 9)))
+
+async function loadPacked($: EngineInterface, it: Item, m: Mode) {
+  const glyphs = isText(m) ? m : 'quad'
+  const out = `${root}/build/mod/${it.name}.${columns}x${rows}.${glyphs}`
   const src = await $.fs.stat(`${it.dir}/000.png`)
-  const have = (await $.fs.exists(out)) && (await $.fs.stat(out)).mtimeMs >= src.mtimeMs
+  const have = (await $.fs.exists(`${out}/000.cells`)) && (await $.fs.stat(`${out}/000.cells`)).mtimeMs >= src.mtimeMs
   if (!have) {
-    const r = await $.process.run(['python3', `${root}/scripts/mod_cells.py`, it.dir, String(columns), String(rows), out], { timeoutMs: 120000 })
+    const r = await $.process.run(['python3', `${root}/scripts/mod_cells.py`, it.dir, String(columns), String(rows), out, glyphs], { timeoutMs: 120000 })
     if (r.exitCode !== 0) throw new Error(`mod_cells.py: ${r.stderr.slice(0, 200)}`)
   }
-  packed = Uint8Array.fromBase64((await $.fs.read(out, { as: 'bytes' })).base64)
+  packDir = out; packed = null; chunk = -1
 }
 
-function cellsOf(i: number) {
+// Frame i's first byte in `packed`, reading its chunk first when another one is in memory.
+async function frameAt($: EngineInterface, i: number) {
+  const per = perChunk(), c = Math.floor(i / per)
+  if (c !== chunk || !packed) {
+    packed = Uint8Array.fromBase64((await $.fs.read(`${packDir}/${String(c).padStart(3, '0')}.cells`, { as: 'bytes' })).base64)
+    chunk = c
+  }
+  return (i - c * per) * columns * rows * 9
+}
+
+function cellsOf(start: number) {
   const n = columns * rows, p = packed!, words = new Uint32Array(n * 3)
-  for (let k = 0, b = i * n * 8; k < n; k++, b += 8) {     // a quadrant character, its fg, its bg
-    words[k * 3] = p[b] | (p[b + 1] << 8)
-    words[k * 3 + 1] = (p[b + 2] << 16) | (p[b + 3] << 8) | p[b + 4]
-    words[k * 3 + 2] = (p[b + 5] << 16) | (p[b + 6] << 8) | p[b + 7]
+  for (let k = 0, b = start; k < n; k++, b += 9) {     // a block character, its fg, its bg
+    words[k * 3] = p[b] | (p[b + 1] << 8) | (p[b + 2] << 16)
+    words[k * 3 + 1] = (p[b + 3] << 16) | (p[b + 4] << 8) | p[b + 5]
+    words[k * 3 + 2] = (p[b + 6] << 16) | (p[b + 7] << 8) | p[b + 8]
   }
   return new Uint8Array(words.buffer).toBase64()
 }
 
+const hex = (p: Uint8Array, b: number) => '#' + ((p[b] << 16) | (p[b + 1] << 8) | p[b + 2]).toString(16).padStart(6, '0')
+
+// Frame i as rows of runs: neighbouring cells that share both colours make one Text.
+function runsOf(start: number): Run[][] {
+  const p = packed!, out: Run[][] = []
+  for (let y = 0, b = start; y < rows; y++) {
+    const row: Run[] = []
+    for (let x = 0; x < columns; x++, b += 9) {
+      const ch = String.fromCodePoint(p[b] | (p[b + 1] << 8) | (p[b + 2] << 16)), fg = hex(p, b + 3), bg = hex(p, b + 6)
+      const last = row[row.length - 1]
+      if (last && last.bg === bg && (last.fg === fg || ch === ' ')) last.text += ch
+      else row.push({ text: ch, fg, bg })
+    }
+    out.push(row)
+  }
+  return out
+}
+
 // One frame: move to the next item when this one is done, read the frame, swap it into the band.
 async function tick($: EngineInterface) {
-  if (isBusy) return                                     // a slow read or a raster pack: skip, never pile up
+  if (isBusy) return                                     // a slow read or a cell pack: skip, never pile up
   isBusy = true
   try {
     const m = await read($, mode)
@@ -132,11 +179,15 @@ async function tick($: EngineInterface) {
       }
       item = queue.shift() ?? null; frame = 0
       if (!item) return
-      if (m === 'raster') await loadPacked($, item)
+      if (isCells(m)) await loadPacked($, item, m)
     }
-    if (m === 'raster') {
-      if (!packed) await loadPacked($, item)
-      cells = cellsOf(frame)
+    if (isText(m)) {
+      if (!packDir) await loadPacked($, item, m)
+      runs = runsOf(await frameAt($, frame))
+      await update($, tickNo, n => n + 1)                 // redraws the band
+    } else if (isCells(m)) {
+      if (!packDir) await loadPacked($, item, m)
+      cells = cellsOf(await frameAt($, frame))
       if (site) await $.ui.blit({ requestId: site, key: KEY, cells })
     } else {
       png = (await $.fs.read(`${item.dir}/${pad(frame)}.png`, { as: 'bytes' })).base64
@@ -144,8 +195,7 @@ async function tick($: EngineInterface) {
         const r = await $.ui.blit({ requestId: site, key: KEY, source: { png } })
         if (r.deny && /alt|placeholder|cannot/i.test(r.deny)) {     // this terminal shows no pictures
           if (!hasWarned) { hasWarned = true; $.ui.toast('Notch Fight: no inline images in this terminal, drawing cells instead') }
-          packed = null
-          await loadPacked($, item); cells = cellsOf(frame)
+          await loadPacked($, item, 'raster'); cells = cellsOf(await frameAt($, frame))
           await update($, mode, () => 'raster')
         }
       }
@@ -156,12 +206,13 @@ async function tick($: EngineInterface) {
 
 
 export const register: Register = (on, options) => {
-  rows = Math.max(4, Math.min(14, Math.round(Number(options.rows) || 10)))
+  rows = Math.max(4, Math.min(24, Math.round(Number(options.rows) || 10)))
   columns = Math.round((rows * 2 * 185) / 64)             // the clip is 185x64; a cell is twice as tall as wide
   repo = String(options.repo || '')
 
   on('session.start', async ($, e, next) => {
-    await update($, mode, () => (options.display === 'raster' ? 'raster' : 'image'))
+    const display = String(options.display)
+    await update($, mode, (): Mode => (display === 'raster' || display === 'sextant' || display === 'octant' ? display : 'image'))
     await update($, isPlaying, () => false)
     return next(e)
   })
@@ -172,15 +223,15 @@ export const register: Register = (on, options) => {
       if (allowed.length || forced.length) {
         await tick($)                                      // the first frame, before the band draws
         await update($, isPlaying, () => true)
-        stop?.()
-        stop = $.clock.every(1000 / FPS, () => { void tick($).catch(err => $.ui.log(`notch-fight: ${err}`)) })
+        timer?.cancel()
+        timer = $.clock.every(1000 / FPS, () => { void tick($).catch(err => $.ui.log(`notch-fight: ${err}`)) })
       }
     } catch (err) { $.ui.log(`notch-fight: ${err}`) }
     return next(e)
   })
 
   on('turn.complete', async ($, e, next) => {
-    stop?.(); stop = null
+    timer?.cancel(); timer = null
     await update($, isPlaying, () => false)
     return next(e)
   })
@@ -188,6 +239,22 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.surface !== 'terminal' || !(await read($, isPlaying)) || e.props.hasSurvey || e.props.bodyColumns < columns) return next(e)
     const m = await read($, mode)
+    if (isText(m)) {
+      await read($, tickNo)                               // subscribes: every frame redraws
+      if (!runs.length) return next(e)
+      const { Box, Text } = $.ui.resolve(e)
+      return (
+        <Box width={e.props.bodyColumns} justifyContent="flex-end">
+          <Box flexDirection="column" width={columns}>
+            {runs.map((row, y) => (
+              <Text key={`r${y}`} wrap="truncate">
+                {row.map((r, x) => <Text key={`c${x}`} color={r.fg} backgroundColor={r.bg}>{r.text}</Text>)}
+              </Text>
+            ))}
+          </Box>
+        </Box>
+      )
+    }
     if (m === 'image' ? !png : !cells) return next(e)
     site = e.requestId
     const { Box, Image, Raster } = $.ui.resolve(e)
