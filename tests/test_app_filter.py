@@ -21,7 +21,7 @@ def selection(cfg, binary=BIN):
     """Run the app with --print-selection against this config; return (output, seconds, exit code)."""
     env = dict(os.environ, NOTCH_FIGHT_CONFIG=config_file(cfg)); env.pop('NOTCH_FIGHT_FIRST', None)
     t0 = time.time()
-    r = subprocess.run([binary, '--print-selection'], env=env, capture_output=True, text=True, timeout=20)
+    r = subprocess.run([binary, '--print-selection'], env=env, capture_output=True, text=True, timeout=90)   # a fresh copy's first launch is slow: macOS checks the whole bundle
     return r.stdout + r.stderr, time.time() - t0, r.returncode
 
 @unittest.skipUnless(HAS_APP, 'needs macOS and ./build.sh')
