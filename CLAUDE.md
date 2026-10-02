@@ -13,7 +13,12 @@
 - Showing / hiding clips ("hide the Maki clip", "only new clips I pick"): use `./clips.sh list | enable |
   disable <clip|theme> | mode enabled|disabled`, never edit the config by hand. The checklist (`./clips.sh`
   with no args) needs a real terminal: tell the user to run it themselves.
+- Pausing it, quiet hours, hiding it while screen sharing, previewing a clip: `./nf pause <time> | resume |
+  quiet HH:MM-HH:MM [weekdays] | share hide|show | delay <N>s | click close|next | menu on|off | preview <clip|theme> | status` (`nf` once installed).
+  `nf pause` with no time is an interactive menu: give the time instead.
 - Hooks added mid-session may need `/hooks` opened once to reload — tell the user.
+- Clips inside Claude Code ("show it in the terminal", no notch): the mod in `mod/` (README "Inside Claude
+  Code"): `claude --plugin-dir <repo>/mod`. Pixel-perfect only in kitty/Ghostty; elsewhere (Orca included) it draws cells: suggest `display: octant` + `rows: 16` with a font that has the octants (Cascadia Mono 2404.23+), else `sextant` (README "Inside Claude Code").
 
 ## Adding content ("add a One Piece fight", "add a clip to DBZ")
 - New theme = new file `src/themes/<id>.py` (see README "Adding a clip"); new clip in an existing

@@ -56,18 +56,6 @@ YPAL = cpal((240,220,60), (190,150,30))
 PPAL = cpal((240,110,190), (180,60,140))
 CPAL = cpal((60,226,220), (30,158,170))
 
-def sprite_img(spr, pal, scale=1):
-    """The sprite (with the same 1px dark outline core.draw gives it) as an RGBA image, for the
-    cards that scale or rotate it."""
-    m, w, h = mask_of(spr, False)
-    im = Image.new('RGBA', (w+2, h+2), (0,0,0,0)); px = im.load()
-    for x, y in dilate(set(m), 1): px[x+1, y+1] = OUT+(255,)
-    for (x, y), ch in m.items(): px[x+1, y+1] = pal[ch]+(255,)
-    return im.resize((im.width*scale, im.height*scale), Image.NEAREST) if scale > 1 else im
-
-def paste_feet(im, spr_im, cx, feet):
-    im.paste(spr_im, (int(cx-spr_im.width/2), int(feet-spr_im.height)), spr_im)
-
 def walk(f): return 'walk1' if (f//3) % 2 else 'walk2'
 
 # ---- background: the cafeteria of The Skeld ------------------------------------------------------

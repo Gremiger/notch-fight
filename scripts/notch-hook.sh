@@ -30,7 +30,9 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 case "${1:-}" in
   start)
     [[ -n "$sid" ]] && echo "$(claude_pid)" > "$DIR/$sid"
-    open -g "$2" >/dev/null 2>&1 || true
+    # nf decides: paused, quiet hours or screen sharing keep it hidden (the marker stays); with a
+    # "delay" it shows only if this session is still working by then
+    python3 "$(dirname "$0")/nf.py" _show "$2" "$sid" >/dev/null 2>&1 || true
     ;;
   stop)
     [[ -n "$sid" ]] && rm -f "$DIR/$sid"

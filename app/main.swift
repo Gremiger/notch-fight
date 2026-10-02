@@ -79,6 +79,9 @@ final class App: NSObject, NSApplicationDelegate {
             notchH = screen.safeAreaInsets.top
             notchW += CGFloat(Self.cfgNumber("widthTweak") ?? Double(Self.notchWidthTweak[Self.hwModel] ?? 0))
         }
+        if !preview, let why = Self.gateClosed() {
+            NSLog("NotchFight: not showing (\(why))"); NSApp.terminate(nil); return
+        }
         for name in planSelection() { enqueue(name) }
         if allowed.isEmpty && queue.isEmpty {
             NSLog("NotchFight: no clips active (see ./clips.sh); not showing the panel"); NSApp.terminate(nil); return
@@ -92,7 +95,12 @@ final class App: NSObject, NSApplicationDelegate {
         win.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
 
         let v = ClickView(frame: NSRect(origin: .zero, size: win.frame.size))
-        v.onClick = { [weak self] in self?.close() }
+        // Config "click": "close" (default) closes on a click; "next" skips to the next clip, a double click closes.
+        let skips = (Self.config["click"] as? String) == "next"
+        v.onClick = { [weak self] count in
+            guard let self else { return }
+            if skips && count < 2 { self.idx = self.current.count } else { self.close() }   // idx past the end: tick picks the next
+        }
         v.wantsLayer = true
         root = v.layer!
         root.backgroundColor = NSColor.black.cgColor
@@ -118,6 +126,7 @@ final class App: NSObject, NSApplicationDelegate {
         playTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in self?.tick() }
         watchSessions()
         Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.watchSessions() }
+        if !preview { Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in self?.watchGate() } }
         animate(to: bodyH, duration: 0.55, spring: true)
         preload()
     }
@@ -214,13 +223,37 @@ final class App: NSObject, NSApplicationDelegate {
         }
     }
 
+    // `nf preview` (--only): just the forced clips, once, then close; no rotation, no gate, no sessions.
+    let preview = CommandLine.arguments.contains("--only")
+
+    // `nf gate` (scripts/nf.py) decides whether the panel may show: paused, quiet hours, screen sharing.
+    // Asked at launch and every few seconds while up; the reason when it may not, nil when it may (or
+    // when the script is missing: a copied app never hides itself for that).
+    static func gateClosed() -> String? {
+        let script = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("scripts/nf.py")
+        guard FileManager.default.fileExists(atPath: script.path) else { return nil }
+        let p = Process(), out = Pipe()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/env"); p.arguments = ["python3", script.path, "gate"]
+        p.standardOutput = out; p.standardError = FileHandle.nullDevice
+        guard (try? p.run()) != nil else { return nil }
+        p.waitUntilExit()
+        let why = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return p.terminationStatus == 0 ? nil : why
+    }
+    func watchGate() {
+        DispatchQueue.global(qos: .utility).async {
+            if let why = Self.gateClosed() { DispatchQueue.main.async { NSLog("NotchFight: hiding (\(why))"); self.close() } }
+        }
+    }
+
     // Loads the clip list, works out the rotation (allowed) and resolves the forced clips, which play
     // first, in order, even when not active. Shared by the launch and by --print-selection.
     func planSelection() -> [String] {
         let res = Bundle.main.resourceURL!
         clipDirs = Self.subdirs(res.appendingPathComponent("clips"))
         transDirs = Self.subdirs(res.appendingPathComponent("transitions"))
-        allowed = activeClips()
+        allowed = preview ? [] : activeClips()
         remaining = allowed
         var forced: [String] = [], left = Set(remaining)
         for first in forcedFirst() {
@@ -306,6 +339,7 @@ final class App: NSObject, NSApplicationDelegate {
     // (manual `open --args --first ...`) are left alone.
     var sawSession = false
     func watchSessions() {
+        if preview { return }
         let fm = FileManager.default
         let dir = fm.homeDirectoryForCurrentUser.appendingPathComponent(".config/notch-fight/sessions")
         let files = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
@@ -330,8 +364,8 @@ final class App: NSObject, NSApplicationDelegate {
 }
 
 final class ClickView: NSView {
-    var onClick: (() -> Void)?
-    override func mouseDown(with e: NSEvent) { onClick?() }
+    var onClick: ((Int) -> Void)?
+    override func mouseDown(with e: NSEvent) { onClick?(e.clickCount) }
     override func acceptsFirstMouse(for e: NSEvent?) -> Bool { true }
 }
 

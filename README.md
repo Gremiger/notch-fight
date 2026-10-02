@@ -14,7 +14,8 @@ Requirements: **macOS** (ideally a MacBook with a notch), Xcode Command Line Too
 git clone <this repo> && cd notch-fight
 ./install.sh        # checks requirements, builds, registers the Claude Code hooks (idempotent)
 ./uninstall.sh      # removes the hooks and stops the app (--purge also deletes build/ + config)
-./clips.sh          # choose which clips play (see "Choosing clips")
+nf clips            # choose which clips play (see "Choosing clips"); install.sh links `nf` into ~/.local/bin
+nf pause 1h         # and the rest of the controls (see "The nf command")
 # several Claude profiles? NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh (same for uninstall)
 ```
 
@@ -58,6 +59,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `naruto-edo` | Naruto on the Fourth Great Ninja War battlefield (clones, Rasengan, Sage Mode close-up, Rasenshuriken wind dome) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up, paper-dust regeneration) | edotensei |
 | `naruto-shikamaru` | Shikamaru in the Nara clan forest: hops the scythe, the thinking-pose close-up (WHAT A DRAG...), Kagemane catches Hidan mid-run and he copies every move, Asuma's lighter in close-up (FOR ASUMA.), the tags go up: CHECKMATE. | Hidan (FOR JASHIN!, I CANT MOVE!, climbs out of the pit: I AM IMMORTAL!) | kagemane |
 | `naruto-zabuza` | Kakashi (Sharingan close-up, copied jutsu) | Zabuza on the lake (Water Dragons clash, Great Waterfall) | waterdragon |
+| `naruto-lee` | Rock Lee in the Chunin Exam hall: Konoha Senpu, the leg weights in close-up (LEE! TAKE THEM OFF!, DOSUN!), too fast for the sand, the Eight Gates close-up (KAIMON! KYUMON! SEIMON!), Kage Buyo and the bandage drill: OMOTE RENGE! | Gaara (the sand shield rises by itself, sand stream, sand armour flakes off, gathers back from a heap of sand) | lotus |
 | `dbz-buu` | Claude, then Clodex (fusion dance with Codex, FU-SION-HA! close-up, goes blue for the Final Kamehameha) on the Supreme Kai's world | Kid Buu (grin close-up, planet-destroying ball, regenerates) | fusion |
 | `jjk-sukuna` | Gojo in ruined Shibuya under a red moon (hand-sign close-up with one Six Eye, Unlimited Void swallows the shrine, four Black Flashes) | Sukuna (grin close-up with four eyes, Malevolent Shrine, Dismantle + Cleave storm) | domain |
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
@@ -94,6 +96,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `simpsons` | a Sector 7G worker (D'OH!, stomps the uranium rod back in, MMM... ROSQUILLAS) | Mr. Burns and his hounds in the nuclear plant (EXCELENTE... close-up) | meltdown |
 | `portal` | the test subject with the Portal Gun in an Aperture test chamber (drops through blue/orange portals, turns the turret fire back through them, shoots a portal at the MOON; THIS WAS A TRIUMPH card, the cake is a lie) | GLaDOS on her ceiling arm (turrets, neurotoxin, yellow-to-red eye close-up — YOU MONSTER; her cores pop off, Wheatley babbles, SPAAACE!; sucked out into space) | triumph |
 | `amongus` | an orange crewmate with Codex in The Skeld cafeteria (fix-wiring close-up, spots Codex venting ?!, lights out, DEAD BODY REPORTED, CODEX VENTED! meeting, VICTORY) | Codex, the impostor (I WAS IN ELECTRICAL, sweating close-up, voted off: CODEX WAS THE IMPOSTOR.) | impostor |
+| `pvz` | Crazy Dave with a saucepan on his head, on his front lawn (grabs suns, plants a wall-nut, lobs a cherry bomb: KABOOM; rides the lawn mower over THE ZOMBIES ATE YOUR BRAINS!; BECAUSE IM CRAAAZY! close-up, YOU GOT A NEW PLANT! card) | a wave of zombies (arm and head shot off, conehead, buckethead; CHOMP wall-nut close-up), then Codex as Dr. Zomboss on the Zombot (> RM -RF LAWN, hurls an imp; blown off the screen) | lastwave |
 | `jjk-toji` | Toji (Inventory curse, Inverted Spear of Heaven, SORCERER KILLER close-up) | young Gojo: the spear shatters his Infinity | sakahoko |
 | `jjk-maki` | Maki, awakened (glasses crack close-up, afterimage cuts) | the Zen'in clan, then her father Ogi | zenin |
 | `meshi` | Laios (sword, I WONDER HOW IT TASTES... close-up) | the Red Dragon, then Senshi cooks it: DRAGON STEW | dragonstew |
@@ -147,6 +150,40 @@ mkdir -p ~/.config/notch-fight && cp config.example.json ~/.config/notch-fight/c
 Priority: `--first` arg > `NOTCH_FIGHT_FIRST` env > config file. An unknown name is logged
 (with the list of valid names) and ignored. Clip names = folder names under `build/clips/`.
 
+## The nf command
+
+`install.sh` links `nf` into `~/.local/bin` (it leaves an existing `nf` that isn't ours alone), so it
+works from any folder:
+
+```bash
+nf clips [...]              # which clips play: the checklist, list, enable, disable, mode (= ./clips.sh)
+nf pause                    # a menu: 15 min, 30 min, 1 h, 4 h, 8 h, until resumed, or N minutes
+nf pause 45m                # or straight away: 15m, 1h, 1h30m, 90 (minutes), forever
+nf resume                   # show it again (right away if a Claude session is working)
+nf status                   # paused?, quiet hours, screen sharing, clips, scale, hooks, sessions, app
+nf preview odyssey          # play a clip or a whole theme in the notch now, then close (no focus change)
+nf quiet 22:00-08:00        # never show it in that window (add `weekdays` for Monday to Friday; `off`)
+nf share hide|show          # while sharing the screen: hide the panel (default) or keep showing it
+nf delay 10s                # only show it once Claude has worked that long (quick answers stay quiet; `off`)
+nf click next               # a click skips to the next clip, a double click closes it (`close`: the default)
+nf menu on                  # a menu bar icon with all of the above (and "Choose clips…"); starts at login; `off`
+```
+
+Whether the panel may show is decided in one place, `nf gate` (`scripts/nf.py`): the Claude Code hook
+asks before opening it, and the app asks every few seconds while it is up, so a pause, quiet hours or a
+screen share hides a panel that is already out. Sessions keep being tracked meanwhile. The pause lives
+in `~/.config/notch-fight/paused`; quiet hours and `pauseOnShare` in `config.json`.
+
+With a delay, the hook hands the prompt to a detached sleeper and returns at once: after the delay, the
+panel shows only if that session is still working (its marker is still there). The menu bar icon is a
+separate tiny app (`build/NotchFightMenu.app`, a LaunchAgent once on): a sparkle when the panel may
+show, a pause sign when it is hidden, and every item just runs `nf`.
+
+Screen sharing is detected by process: Zoom runs `CptHost` while sharing and macOS runs
+`screencaptureui` while recording. A share from a browser tab (Meet, Teams on the web) looks like any
+other tab from outside, so it isn't caught: list your own process names in `"shareProcesses"` in
+`config.json`, or `nf pause` for the call.
+
 ## Choosing clips
 
 ```bash
@@ -180,6 +217,50 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
   so no panel shows and the focused window keeps focus. `NOTCH_FIGHT_TEST_PANEL=1` adds real launches
   (in the background with `open -g`: the panel shows, focus stays).
 
+## Inside Claude Code (mod)
+
+`mod/` is a Claude Code mod (a plugin of function hooks) that plays the same clips in the band
+above the prompt while Claude works, at the right end, and hides them when the turn ends. It reads
+`build/clips` and `build/transitions` from this checkout (run `./build.sh` first) and honours the
+same `config.json` selection as the app. Terminal only: the desktop app's Code tab has no pixel
+elements for mods.
+
+```bash
+claude --plugin-dir ~/Workspace/notch-fight/mod      # one session
+```
+
+To load it in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
+`~/.claude/settings.json` (`{"env": {"CLAUDE_CODE_PLUGIN_DIRS": "~/Workspace/notch-fight/mod"}}`).
+Options (`/config` → `notch-fight`):
+
+| Option | Default | Effect |
+|---|---|---|
+| `display` | `image` | `image`: the real PNG frames. `raster`: coloured quadrant blocks (2x2 pixels a cell), any terminal. `sextant`: coloured sextant blocks (2x3 pixels a cell, 50% more detail than `raster`). `octant`: coloured octant blocks (2x4 pixels a cell, twice `raster`'s rows). |
+| `rows` | `14` | Height in terminal rows (4 to 24); the width follows the clip (81 columns at 14, 93 at 16, 121 at 21). Native 185x64: `octant` at 16 rows, `sextant` at 21. |
+| `repo` | the checkout `mod/` is in | Where `build/clips` lives. |
+
+`image` needs a terminal that draws kitty graphics **Unicode placeholders** (`U=1`), which is what
+Claude Code uses for a mod's `Image`: **kitty** and **Ghostty** do. Anywhere else the mod falls
+back to `raster` by itself (a toast says so). **Orca** (any version so far, 1.4.218 included) only
+gets the cell modes: its "Inline Images" setting (1.4.206+) uses xterm.js's image addon, whose kitty
+support has no Unicode placeholders yet ([xterm.js#6198](https://github.com/xtermjs/xterm.js/pull/6198)
+adds them).
+
+Where `image` does not work, pick a cell mode, sharpest first:
+
+1. **`octant`** (recommended), with **16 rows**: the clips at their native 185x64. It draws the
+   Unicode 16 octants (U+1CD00–1CDE5), which kitty, Ghostty and WezTerm draw themselves; anywhere
+   else (Orca, VS Code: xterm.js does not draw them yet) **the terminal font must have them**, or
+   they show as boxes. **Cascadia Mono** 2404.23+ does: `brew install --cask font-cascadia-mono`,
+   pick it as the terminal font (Orca: "Tipografía del terminal" → "Familia de fuentes"), and
+   restart the terminal app after installing a font. An older Cascadia Code has no octants.
+2. **`sextant`**: no font needed in kitty, Ghostty, WezTerm and xterm.js's WebGL renderer (Orca,
+   VS Code), which draw U+1FB00–1FB3B themselves. 21 rows reach the native resolution.
+3. **`raster`**: quadrant blocks, any terminal and any font.
+
+The cell modes pack each clip once with `scripts/mod_cells.py` (about one second for `raster`, two
+for `sextant`, five for `octant`) into `build/mod/`.
+
 ## Panel shape
 
 The panel takes its size and position from the real notch of each Mac. Two looks can be tuned in
@@ -211,12 +292,13 @@ src/
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py  lol_yasuo.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py  naruto_lee.py  lol_yasuo.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
 └── legacy/single_clip.py   # the original standalone 10 s clip (--black for the notch version)
 app/main.swift, app/Info.plist   # the notch app
+mod/                             # the Claude Code mod (band above the prompt)
 media/                           # rendered previews
 ```
 

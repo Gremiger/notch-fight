@@ -1,0 +1,32 @@
+{
+  "name": "notch-fight",
+  "version": "0.1.0",
+  "description": "Plays the Notch Fight clips in a band above the prompt while Claude works",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "display": {
+      "type": "string",
+      "title": "Display",
+      "description": "image: the real PNG frames (kitty, Ghostty), falls back to raster elsewhere. Where image does not work: octant (recommended: 2x4-pixel cells, native resolution at 16 rows; needs a font with the Unicode 16 octants, e.g. Cascadia Mono, outside kitty/Ghostty/WezTerm), sextant (2x3, no font needed in Orca/VS Code), raster (2x2, any terminal)",
+      "default": "image",
+      "options": [
+        "image",
+        "raster",
+        "sextant",
+        "octant"
+      ]
+    },
+    "rows": {
+      "type": "number",
+      "title": "Height",
+      "description": "Terminal rows the clip takes (4 to 24); the width follows the clip's shape. Native resolution: octant at 16 rows, sextant at 21",
+      "default": 14
+    },
+    "repo": {
+      "type": "string",
+      "title": "notch-fight checkout",
+      "description": "Where the notch-fight checkout is (its build/clips). Empty: the checkout this plugin is in",
+      "default": ""
+    }
+  }
+}
