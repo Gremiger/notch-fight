@@ -58,6 +58,7 @@ pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
 | `naruto-edo` | Naruto on the Fourth Great Ninja War battlefield (clones, Rasengan, Sage Mode close-up, Rasenshuriken wind dome) | Kabuto + Edo Tensei'd Codex, OpenCode, Grok (coffin close-up, paper-dust regeneration) | edotensei |
 | `naruto-shikamaru` | Shikamaru in the Nara clan forest: hops the scythe, the thinking-pose close-up (WHAT A DRAG...), Kagemane catches Hidan mid-run and he copies every move, Asuma's lighter in close-up (FOR ASUMA.), the tags go up: CHECKMATE. | Hidan (FOR JASHIN!, I CANT MOVE!, climbs out of the pit: I AM IMMORTAL!) | kagemane |
 | `naruto-zabuza` | Kakashi (Sharingan close-up, copied jutsu) | Zabuza on the lake (Water Dragons clash, Great Waterfall) | waterdragon |
+| `naruto-lee` | Rock Lee in the Chunin Exam hall: Konoha Senpu, the leg weights in close-up (LEE! TAKE THEM OFF!, DOSUN!), too fast for the sand, the Eight Gates close-up (KAIMON! KYUMON! SEIMON!), Kage Buyo and the bandage drill: OMOTE RENGE! | Gaara (the sand shield rises by itself, sand stream, sand armour flakes off, gathers back from a heap of sand) | lotus |
 | `dbz-buu` | Claude, then Clodex (fusion dance with Codex, FU-SION-HA! close-up, goes blue for the Final Kamehameha) on the Supreme Kai's world | Kid Buu (grin close-up, planet-destroying ball, regenerates) | fusion |
 | `jjk-sukuna` | Gojo in ruined Shibuya under a red moon (hand-sign close-up with one Six Eye, Unlimited Void swallows the shrine, four Black Flashes) | Sukuna (grin close-up with four eyes, Malevolent Shrine, Dismantle + Cleave storm) | domain |
 | `hxh` | Gon (fishing rod, adult form close-up) | Neferpitou (Terpsichora) | jajanken |
@@ -235,7 +236,7 @@ src/
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py
 │   ├── sf.py  mario.py  mc.py  ds.py  sw.py  matrix.py  term.py  bb.py
-│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py   # sub-themes
+│   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py  naruto_lee.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
 ├── build.py           # entry point used by build.sh
