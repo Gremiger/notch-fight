@@ -4,6 +4,12 @@
   "description": "Plays the Notch Fight clips in a band above the prompt while Claude works",
   "types": "./types/index.d.ts",
   "userConfig": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Play the clips above the prompt while Claude works. Off: the mod does nothing",
+      "default": true
+    },
     "display": {
       "type": "string",
       "title": "Display",

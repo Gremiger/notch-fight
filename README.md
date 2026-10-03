@@ -237,6 +237,7 @@ Options (`/config` → `notch-fight`):
 
 | Option | Default | Effect |
 |---|---|---|
+| `enabled` | `true` | Off: the mod plays nothing (the band never shows); turn it back on from the same menu. |
 | `display` | `image` | `image`: the real PNG frames. `raster`: coloured quadrant blocks (2x2 pixels a cell), any terminal. `sextant`: coloured sextant blocks (2x3 pixels a cell, 50% more detail than `raster`). `octant`: coloured octant blocks (2x4 pixels a cell, twice `raster`'s rows). |
 | `rows` | `14` | Height in terminal rows (4 to 24); the width follows the clip (81 columns at 14, 93 at 16, 121 at 21). Native 185x64: `octant` at 16 rows, `sextant` at 21. |
 | `repo` | the checkout `mod/` is in | Where `build/clips` lives. |

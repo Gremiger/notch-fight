@@ -206,6 +206,7 @@ async function tick($: EngineInterface) {
 
 
 export const register: Register = (on, options) => {
+  if (options.enabled === false) return                    // turned off in /config: no hooks at all
   rows = Math.max(4, Math.min(24, Math.round(Number(options.rows) || 10)))
   columns = Math.round((rows * 2 * 185) / 64)             // the clip is 185x64; a cell is twice as tall as wide
   repo = String(options.repo || '')
