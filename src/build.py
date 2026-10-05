@@ -1,8 +1,8 @@
 """Renders every clip of every theme + all theme-to-theme transitions into the cwd:
-clips/<theme>__<clip>/NNN.png, transitions/<theme>__out|in/NNN.png, sheet_<theme>_<clip>.png.
-Each clip and transition folder also gets frames.png, all its frames packed in one image (a grid of
-SHEET_COLS columns, in order, row by row), and count, how many: the app ships just those, one file per
-clip instead of hundreds (the loose NNN.png stay for the GIFs and the Claude Code mod).
+clips/<theme>__<clip>/ and transitions/<theme>__out|in/, plus sheet_<theme>_<clip>.png. Each folder
+holds frames.png, all its frames packed in one image (a grid of SHEET_COLS columns, in order, row by
+row), and count, how many: one file per clip instead of hundreds. scripts/frames.py reads them back
+(the GIFs, the Claude Code mod).
 
 A transition is per theme: the iris closing on the theme being left (<theme>__out), then opening on the
 next one (<theme>__in); both come from the theme's keyframe (its first clip's first frame).
@@ -38,7 +38,6 @@ def render_clip(theme, name, n, frame_fn, off):
     random.seed(zlib.crc32(name.encode()))
     frames=[frame_fn(f) for f in range(n)]
     dd=f'clips/{theme}__{name}'; shutil.rmtree(dd,ignore_errors=True); os.makedirs(dd)
-    for i,fr in enumerate(frames): fr.save(f'{dd}/{i:03d}.png')
     pack(dd,frames)
     if off: open(f'{dd}/.default-off','w').close()   # shipped off: ./clips.sh and the app read this
     big=[fr.resize((W*2,H*2),Image.NEAREST) for fr in frames]
@@ -73,14 +72,13 @@ if __name__=='__main__':
             for _ in pool.imap_unordered(_render,jobs): pass
     first={}                                                     # a theme's keyframe: its first clip's first frame
     for theme,(name,*_) in todo:
-        if name==THEMES[theme][0][0]: first[theme]=Image.open(f'clips/{theme}__{name}/000.png').convert('RGB')
+        if name==THEMES[theme][0][0]: first[theme]=Image.open(f'clips/{theme}__{name}/frames.png').convert('RGB').crop((0,0,W,H))
     os.makedirs('transitions',exist_ok=True)
     for dd in os.listdir('transitions'):                         # the old per-pair transitions, gone
         if not dd.endswith(('__out','__in')): shutil.rmtree(f'transitions/{dd}',ignore_errors=True)
     for theme,img in first.items():
         for half,frames in (('out',iris_out(img)),('in',iris_in(img))):
             dd=f'transitions/{theme}__{half}'; shutil.rmtree(dd,ignore_errors=True); os.makedirs(dd)
-            for i,fr in enumerate(frames): fr.save(f'{dd}/{i:03d}.png')
             pack(dd,frames)
     open('.built','w').write('\n'.join(f'{t}__{c[0]}' for t,c in todo)+'\n')
     print('transitions ok')

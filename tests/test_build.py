@@ -84,19 +84,15 @@ class PartialBuild(unittest.TestCase):
         r = build(self.src, self.out, 'ta'); self.assertEqual(r.returncode, 0, r.stderr)
         self.assertFalse(os.path.exists(os.path.join(self.out, 'transitions', 'ta__tb')))
 
-    def test_every_folder_packs_its_frames_in_order(self):
+    def test_every_folder_is_a_pack_and_its_count(self):
         from PIL import Image
-        for top in ('clips', 'transitions'):
+        for top, n in (('clips', 4), ('transitions', 11)):               # the synthetic clips are 4 frames
             for dd in os.listdir(os.path.join(self.out, top)):
                 d = os.path.join(self.out, top, dd)
-                loose = sorted(f for f in os.listdir(d) if f[:3].isdigit() and f.endswith('.png'))
-                n = int(open(os.path.join(d, 'count')).read())
-                self.assertEqual(n, len(loose), dd)
-                sheet = Image.open(os.path.join(d, 'frames.png')).convert('RGB')
-                cols = min(10, n); w, h = sheet.width // cols, sheet.height // ((n + cols - 1) // cols)
-                for i, f in enumerate(loose):
-                    tile = sheet.crop(((i % cols) * w, (i // cols) * h, (i % cols + 1) * w, (i // cols + 1) * h))
-                    self.assertEqual(tile.tobytes(), Image.open(os.path.join(d, f)).convert('RGB').tobytes(), f'{dd}/{f}')
+                self.assertEqual(sorted(f for f in os.listdir(d) if not f.startswith('.')), ['count', 'frames.png'], dd)
+                self.assertEqual(int(open(os.path.join(d, 'count')).read()), n, dd)
+                sheet = Image.open(os.path.join(d, 'frames.png'))
+                self.assertEqual(sheet.size, (185 * min(10, n), 64 * ((n + 9) // 10)), dd)
 
     def test_an_unknown_name_fails_and_lists_the_known_ones(self):
         r = build(self.src, self.out, 'nope')

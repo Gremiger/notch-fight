@@ -138,9 +138,33 @@ final class App: NSObject, NSApplicationDelegate {
             return c.isEmpty ? nil : c
         }
         guard let dir else { return nil }
-        let f = Self.loadFrames(dir); cache[key] = f; cacheOrder.append(key)
-        while cacheOrder.count > cacheSize { cache[cacheOrder.removeFirst()] = nil }   // (playing ones are held by the queue)
+        let f = Self.loadFrames(dir); store(key, f)
         return f.isEmpty ? nil : f
+    }
+
+    func store(_ key: String, _ f: [CGImage]) {
+        cache[key] = f; cacheOrder.removeAll { $0 == key }; cacheOrder.append(key)
+        while cacheOrder.count > cacheSize { cache[cacheOrder.removeFirst()] = nil }   // (playing ones are held by the queue)
+    }
+
+    // As soon as a clip starts, pick the next one and decode its frames (and the transition halves, on a
+    // change of theme) in the background, so the switch never waits on a PNG.
+    var preparing = false
+    func prepareNext() {
+        guard queue.isEmpty, !preparing, let next = pickNext() else { return }
+        let t = themeOf(next)
+        var keys: [(String, URL?)] = [("c:" + next, clipDirs[next])]
+        if !theme.isEmpty && t != theme { keys += [("t:\(theme)__out", transDirs["\(theme)__out"]), ("t:\(t)__in", transDirs["\(t)__in"])] }
+        let todo = keys.filter { cache[$0.0] == nil }
+        preparing = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            let loaded = todo.compactMap { k, dir in dir.map { (k, Self.loadFrames($0)) } }
+            DispatchQueue.main.async {
+                for (k, f) in loaded { self.store(k, f) }
+                self.preparing = false
+                self.enqueue(next)                                   // from the cache now
+            }
+        }
     }
 
     func rect(height h: CGFloat) -> NSRect {
@@ -329,9 +353,11 @@ final class App: NSObject, NSApplicationDelegate {
 
     func tick() {
         if idx >= current.count {
+            if preparing && queue.isEmpty { return }                  // the next one is nearly ready: hold this frame
             if queue.isEmpty, let next = pickNext() { enqueue(next) }
             guard !queue.isEmpty else { close(); return }             // only forced clips, and they are done
             current = queue.removeFirst(); idx = 0
+            prepareNext()
         }
         art.contents = current[idx]
         idx += 1
