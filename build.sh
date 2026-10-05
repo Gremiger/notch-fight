@@ -27,15 +27,14 @@ PY
   echo "First clip set to $FIRST (~/.config/notch-fight/config.json)"
 fi
 
-# The app is updated in place, not rebuilt: a partial build rsyncs just the frames it changed (and drops
-# the ones that are gone), and the Swift is compiled only when its source is newer than the binary.
+# The app is updated in place, not rebuilt: it ships just each folder's packed frames.png + count (and the
+# .default-off marks), a few hundred files rather than tens of thousands; rsync copies the ones that
+# changed and drops the rest. The Swift is compiled only when its source is newer than the binary.
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/"
 for d in clips transitions; do
-  if [[ -z "${ONLY:-}" ]]; then        # a full build: every frame is new, APFS clones (cp -c) are fastest
-    rm -rf "$APP/Contents/Resources/$d"
-    cp -cR "$OUT/$d" "$APP/Contents/Resources/" 2>/dev/null || cp -R "$OUT/$d" "$APP/Contents/Resources/"
-  else rsync -a --delete "$OUT/$d/" "$APP/Contents/Resources/$d/"; fi
+  rsync -a --delete --delete-excluded --include='*/' --include='frames.png' --include='count' --include='.default-off' \
+    --exclude='*' "$OUT/$d/" "$APP/Contents/Resources/$d/"
 done
 # pin the deployment target: some toolchains default to a macOS newer than the running one (LaunchServices error -10825)
 swift() { [[ -x "$2" && "$2" -nt "$1" ]] || swiftc -O -target "$(uname -m)-apple-macos13.0" "$1" -o "$2"; }
