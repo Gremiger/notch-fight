@@ -15,8 +15,8 @@ SKIN,SKIN_D,INK=(217,119,87),(168,80,54),(30,26,30)
 IRON, IRON_D = (150,152,162), (96,98,110)
 SOUL = ((255,170,70),(255,230,170))
 # the Dragonborn: horned iron helmet, fur armour with a pale trim, leather on the arms, dark trousers
-DPAL = {'1':IRON,'2':IRON_D,'3':(120,88,56),'4':(196,176,140),'5':(90,64,44),'6':(52,48,52)}
-HELM = ["1.........1.","1.........1.",".1.......1..",".11111111111","22111111111."]
+DPAL = {'1':IRON,'2':IRON_D,'3':(120,88,56),'4':(196,176,140),'5':(90,64,44),'6':(52,48,52),'7':(226,216,190),'8':(70,46,30),'9':(200,170,80)}
+HELM = ["7..........7","77........77",".7........7.",".1111111111.","221111111111"]
 
 def _dovah(spr):
     g=[list(r) for r in overlay(spr,HELM,-1,0,bangs="2222222222")]
@@ -25,9 +25,12 @@ def _dovah(spr):
         for x in range(len(g[0])):
             c=g[y][x]
             if c=='O' and y==top+1 and x>=l+2: g[y][x]='2'               # the helmet's brow
+            elif c=='O' and top+2<=y<=top+3 and x==r-2: g[y][x]='1'     # the nose guard
             elif c=='O' and y==top+5: g[y][x]='4'                       # the fur at the collar
+            elif c=='O' and y==top+7: g[y][x]='9' if x==(l+r)//2 else '8'   # the belt and its buckle
             elif c=='O' and y>top+5: g[y][x]='3'
             elif c=='o' and y<top+8: g[y][x]='5'
+            elif c=='o' and y==h-1: g[y][x]='4'                         # fur boots
             elif c=='o': g[y][x]='6'
     return S([''.join(x) for x in g])
 DOVAH=variant(_dovah)
@@ -87,13 +90,17 @@ def _fx_bars(d,im,e,f):
 @fx('sk_shield')
 def _fx_shield(d,im,e,f):
     """The round wooden shield, on the back arm (or held up in front, blocking)."""
-    _,x,y,front=e; x,y=int(x),int(y); r=5 if front else 4
-    d.ellipse([x-r,y-r,x+r,y+r],fill=(130,90,50),outline=IRON_D); d.ellipse([x-1,y-1,x+1,y+1],fill=IRON)
-    d.line([x-r+1,y,x+r-1,y],fill=(100,70,40))
+    _,x,y,front=e; x,y=int(x),int(y); r=6 if front else 5
+    d.ellipse([x-r,y-r,x+r,y+r],fill=(140,96,54),outline=INK)                  # planks
+    for k in (-2,1): d.line([x+k,y-r+1,x+k,y+r-1],fill=(108,72,40))
+    d.ellipse([x-r+1,y-r+1,x+r-1,y+r-1],outline=IRON_D)                       # the iron rim
+    d.ellipse([x-2,y-2,x+2,y+2],fill=IRON,outline=IRON_D); d.point((x-1,y-1),fill=(220,222,230))   # the boss
 
 @fx('sk_sword')
 def _fx_sword(d,im,e,f):
-    _,x,y=e; x,y=int(x),int(y); d.line([x,y,x+8,y-3],fill=(210,214,224)); d.line([x-1,y-1,x+1,y+1],fill=(120,90,50))
+    _,x,y=e; x,y=int(x),int(y)
+    d.line([x+1,y,x+10,y-4],fill=(210,214,224)); d.point((x+10,y-4),fill=(255,255,255))       # the blade
+    d.line([x,y-2,x+2,y+2],fill=(120,90,50)); d.line([x-2,y+1,x,y],fill=(80,56,36))           # guard, grip
 
 @fx('sk_fire')
 def _fx_fire(d,im,e,f):
@@ -126,46 +133,75 @@ def _fx_souls(d,im,e,f):
         d.line([x,y,x-3,y+1],fill=SOUL[i%2]); d.point((int(x),int(y)),fill=(255,255,255))
 
 # ---- the dragon ---------------------------------------------------------------------------------------
-SCALE_C, BELLY, WING = (96,104,84), (160,150,116), (110,86,74)
+SCALE_C, SCALE_D, BELLY = (104,108,88), (70,74,62), (176,164,128)
+WING, WING_D, BONE = (120,88,70), (86,60,48), (226,216,190)
 def dragon(d,x,y,f,state='perch',jaw=0.0,tilt=0.0,burn=0.0):
-    """The dragon, facing left. state: fly (wings beating) | perch (feet at y, wings folded up) |
-    tumble (spinning off, tilt radians) | dead (lying on the ground) | bones (burnt away)."""
+    """The dragon, facing left, feet at (x,y). state: fly (wings beating) | perch (wings folded) | tumble
+    (spinning off, tilt radians) | dead (on its side on the ground, burn 0..1 for the flesh burning away)
+    | bones (only the skeleton left). Returns the mouth."""
     x,y=int(x),int(y)
-    if state in ('dead','bones'):
-        body=SCALE_C if state=='dead' else (230,226,210)
-        if state=='dead':
-            d.polygon([(x-6,y-4),(x+6,y-14),(x+30,y-4),(x+16,y-1)],fill=WING,outline=INK)     # a flat wing
-            d.ellipse([x-14,y-7,x+14,y],fill=body,outline=INK)
-            d.line([x-14,y-3,x-26,y-1],fill=body,width=3); d.ellipse([x-32,y-5,x-24,y],fill=body,outline=INK)
-            d.line([x+14,y-3,x+34,y-1],fill=body,width=2)
-            if burn>0:                                                # the flesh burning away
-                rr=random.Random(f//2)
-                for _ in range(int(20*burn)): d.point((x+rr.randint(-14,30),y-rr.randint(0,10)),fill=rr.choice(SOUL))
+    if state in ('dead','bones'): tilt=-0.32                           # slumped, the head down in the snow
+    s_,c_=math.sin(tilt),math.cos(tilt)
+    P=lambda u,v: (x+u*c_-v*s_, y+u*s_+v*c_)
+    bones=state=='bones'
+    def poly(pts,fill,outline=INK):
+        q=[P(u,v) for u,v in pts]
+        if bones: d.polygon(q,outline=BONE)
+        else: d.polygon(q,fill=fill,outline=outline)
+    def line(pts,fill,width=1): d.line([P(u,v) for u,v in pts],fill=BONE if bones else fill,width=width)
+    flap=math.sin(f*0.5) if state=='fly' else 0
+    def wing(near):
+        """A wing: the arm (shoulder, elbow, wrist), the finger bones fanning out, the membrane between."""
+        if state=='fly':
+            up=-10*flap; o=0 if near else 5                              # the far wing sits a little behind
+            sh,el,wr=(2+o,-16),(6+o,-28+up*0.5),(14+o,-40+up)
+            tips=[(30+o,-36+up*0.8),(32+o,-26+up*0.4),(24+o,-16),(12+o,-13)]
         else:
-            d.line([x-14,y-3,x+14,y-3],fill=body); d.line([x-14,y-3,x-28,y-2],fill=body); d.line([x+14,y-3,x+34,y-1],fill=body)
-            for k in range(6): d.arc([x-12+k*4,y-9,x-6+k*4,y+1],180,360,fill=body)            # the ribs
-            d.ellipse([x-33,y-5,x-25,y],outline=body); d.point((x-31,y-3),fill=INK)
-        return
-    s=math.sin(tilt); c=math.cos(tilt)
-    P=lambda u,v: (x+u*c-v*s, y+u*s+v*c)                              # body coordinates -> screen
-    if state=='fly':
-        flap=math.sin(f*0.5)*8
-        for side,dx in ((-1,0),(1,4)):
-            d.polygon([P(-2+dx,-14),P(6+dx,-34-flap*side*0.5),P(26+dx,-26-flap*0.6),P(18+dx,-12)],fill=WING,outline=INK)
-    elif state in ('perch','tumble'):
-        d.polygon([P(-2,-14),P(4,-36),P(22,-30),P(16,-14)],fill=WING,outline=INK)               # folded up
-    d.line([P(14,-10),P(34,-6),P(42,-14)],fill=SCALE_C,width=3)                               # the tail
-    d.polygon([P(-14,-13),P(-6,-19),P(8,-20),P(16,-13),P(8,-6),P(-6,-6)],fill=SCALE_C,outline=INK)   # the body
-    d.line([P(-6,-8),P(10,-8)],fill=BELLY)
-    if state=='perch':
-        for lx in (-6,8): d.line([P(lx,-8),P(lx-2,0)],fill=SCALE_C,width=2)
-    d.line([P(-12,-16),P(-20,-24),P(-24,-26)],fill=SCALE_C,width=4)                              # the neck
-    hx,hy=P(-30,-26)
-    d.polygon([(hx-6,hy-2),(hx+4,hy-4),(hx+6,hy+1),(hx-4,hy+2)],fill=SCALE_C,outline=INK)       # the head
-    o=int(4*jaw); d.polygon([(hx-6,hy+2),(hx+4,hy+2),(hx-4,hy+3+o)],fill=(70,40,40),outline=INK)   # the jaw
-    for hk in (0,3): d.line([hx+2+hk,hy-4,hx+6+hk,hy-9],fill=(220,210,180))                     # horns
-    d.point((int(hx-1),int(hy-1)),fill=(255,200,60))
-    return hx-6,hy+1                                                   # the mouth
+            sh,el,wr=(2,-16),(6,-30),(16,-36)
+            tips=[(26,-30),(26,-20),(20,-14),(12,-13)]
+        mem=[sh,el,wr]+tips
+        poly(mem,WING if near else WING_D)
+        line([sh,el,wr],SCALE_D,2)
+        for t in tips[:3]: line([wr,t],SCALE_D)                         # the finger bones
+        for t in tips[:3]:                                             # a tattered edge
+            tx,ty=P(*t); d.point((int(tx),int(ty)+1),fill=(40,36,40) if not bones else BONE)
+    if state in ('fly',): wing(False)
+    # the tail, tapering, with spikes along it
+    tail=[(14,-12),(24,-10),(32,-12),(38,-17),(42,-22)]
+    poly([(14,-15),(24,-13),(32,-15),(38,-20),(43,-25),(40,-18),(32,-9),(24,-7),(14,-7)],SCALE_C)
+    for u,v in tail[1:]: poly([(u-1,v-2),(u+1,v-5),(u+2,v-2)],BONE,SCALE_D)
+    # legs and claws
+    if state!='fly':
+        poly([(8,-10),(13,-12),(14,-5),(12,0),(9,0),(10,-5)],SCALE_D)             # the hind leg
+        poly([(-8,-10),(-4,-10),(-5,-4),(-6,0),(-9,0),(-8,-4)],SCALE_D)            # the foreleg
+        for cx in (-10,-7,8,11): line([(cx,0),(cx-1,1)],BONE)
+    # the body, the belly plates, the spines
+    poly([(-12,-11),(-8,-17),(4,-19),(14,-16),(18,-11),(12,-6),(0,-5),(-10,-6)],SCALE_C)
+    poly([(-10,-7),(0,-6),(12,-7),(10,-9),(0,-8),(-9,-9)],BELLY,SCALE_D)
+    for u in range(-6,14,4): line([(u,-9),(u,-6)],SCALE_D)
+    for u,v in ((-6,-18),(0,-20),(6,-19),(12,-17)): poly([(u-2,v),(u,v-3),(u+2,v)],BONE,SCALE_D)
+    if state!='fly': wing(True)
+    # the neck, rising to the head
+    poly([(-8,-16),(-14,-22),(-20,-27),(-24,-29),(-22,-24),(-17,-19),(-11,-11)],SCALE_C)
+    line([(-12,-14),(-17,-19),(-21,-24)],BELLY)
+    for u,v in ((-12,-20),(-17,-25)): poly([(u-1,v),(u,v-3),(u+2,v)],BONE,SCALE_D)
+    # the head: a long snout, horns swept back, the jaw (open with jaw 0..1), a glowing eye
+    o=4*jaw
+    poly([(-24,-29),(-28,-32),(-34,-31),(-40,-28),(-40,-26),(-30,-26),(-22,-25)],SCALE_C)   # skull and snout
+    poly([(-22,-25),(-30,-25),(-39,-25+o),(-36,-23+o),(-26,-22)],SCALE_D)                  # the jaw
+    if jaw>0.3: line([(-38,-26),(-32,-25+o*0.6)],(200,60,40))
+    for k in range(3): line([(-36+k*3,-26),(-36+k*3,-25)],BONE)                           # teeth
+    line([(-26,-31),(-20,-36),(-16,-37)],BONE,2); line([(-28,-31),(-24,-37)],BONE)        # the horns
+    if not bones:
+        ex,ey=P(-30,-29); d.point((int(ex),int(ey)),fill=(255,210,60) if state!='dead' else INK)   # the eye, dark once dead
+        nx,ny=P(-39,-27); d.point((int(nx),int(ny)),fill=INK)
+    if state=='fly': wing(True)
+    if state=='dead' and burn>0:                                      # the flesh burning away, embers rising
+        rr=random.Random(f//2)
+        for _ in range(int(26*burn)):
+            u,v=rr.uniform(-38,40),rr.uniform(-30,-4); px,py=P(u,v)
+            d.point((int(px),int(py-rr.randint(0,6))),fill=rr.choice(SOUL))
+    mx,my=P(-39,-25); return mx,my
 
 @fx('sk_dragon')
 def _fx_dragon(d,im,e,f):
@@ -225,17 +261,17 @@ def clip_fusrodah(f):
         if f==196: s['shake']=rshake(3)
     if 196<=f<206: s['shake']=rshake(2); s['fx']+= [('dust',170+random.randint(-14,14),GROUND-random.randint(0,6)) for _ in range(3)]
     # 5) it burns away; its soul streams into him
-    if 200<=f<330: dstate,dx,dy,hp='dead' if f<280 else 'bones',150,GROUND+1,0.85
+    if 200<=f<330: dstate,dx,dy,hp='dead' if f<280 else 'bones',140,GROUND+2,0.85
     if 220<=f<280: burn=(f-220)/60
     if 240<=f<300:
-        pose='armsup'; s['fx'].append(('sk_souls',150,GROUND-6,CX,GROUND-8,(f-240)/60))
+        pose='armsup'; s['fx'].append(('sk_souls',140,GROUND-8,CX,GROUND-8,(f-240)/60))
     if 262<=f<300: s['fx'].append(('big',"DRAGON SOUL ABSORBED",44,(255,220,170)))
     if 320<=f<330: dstate=None
     # draw
     if dstate: s['under' if dstate in ('dead','bones') else 'fx'].append(('sk_dragon',dx,dy,dstate,jaw,tilt,burn))
     mouth=None
     if dstate=='perch':
-        mouth=(PERCH[0]-36,PERCH[1]-25)
+        mouth=(PERCH[0]-39,PERCH[1]-24)
         if f>=64: s['fx'].append(('sk_fire',mouth[0],mouth[1],CX+12,GROUND-8))
     hx,hy=hand_at(DOVAH[pose],CX,GROUND,False,*GRIP.get(pose,(13,4)),h=11)
     ox,oy=origin(DOVAH[pose],CX); top,l,r=body_box(DOVAH[pose])
