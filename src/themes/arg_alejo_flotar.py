@@ -25,10 +25,7 @@ def _fx_curtain(d,im,e,f):
 
 @fx('fl_bubble')
 def _fx_bubble(d,im,e,f):
-    _,txt,cx,y=e; w=len(txt)*4+7; x=max(1,min(W-w-2,int(cx-w/2))); tx=max(x+4,min(x+w-4,int(cx)))
-    d.rectangle([x,y,x+w,y+10],fill=(255,255,255),outline=INK)
-    d.polygon([(tx-2,y+10),(tx+2,y+10),(tx,y+15)],fill=(255,255,255),outline=INK); d.line([tx-1,y+10,tx+1,y+10],fill=(255,255,255))
-    text(d,txt,x+4,y+3,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(255,255,255),ink=INK)                     # the engine's bubble (engine/people.py)
 
 def clip_flotar(f):
     s=scene(f,THEME)

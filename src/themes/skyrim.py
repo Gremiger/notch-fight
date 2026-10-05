@@ -374,12 +374,7 @@ def _fx_rope(d,im,e,f):
 
 @fx('sk_bubble')
 def _fx_bubble(d,im,e,f):
-    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
-    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
-    d.rectangle([x,y,x+w,y+h],fill=(244,240,228),outline=INK)
-    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(244,240,228),outline=INK)
-    d.line([tx-1,y+h,tx+1,y+h],fill=(244,240,228))
-    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(244,240,228),ink=INK)                     # the engine's bubble (engine/people.py)
 
 def closeup_ralof(t,f):
     """Primer plano: Ralof across the cart — the blond hair, the beard, the blue Stormcloak cuirass with

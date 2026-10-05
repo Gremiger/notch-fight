@@ -25,11 +25,7 @@ POSES = {   # (back elbow, back hand, front elbow, front hand, lean, legs), from
 }
 L_, T_ = 9, 7
 HIP=GH-L_; TY=HIP-T_; HY=TY-5
-def _put(g,x,y,c):
-    if 0<=x<GW and 0<=y<GH: g[y][x]=c
-def _seg(g,x0,y0,x1,y1,c):
-    n=max(abs(x1-x0),abs(y1-y0),1)
-    for i in range(n+1): _put(g,round(x0+(x1-x0)*i/n),round(y0+(y1-y0)*i/n),c)
+_put, _seg = put, seg                                               # the engine's (engine/people.py)
 
 _built={}
 def build(who,pose):

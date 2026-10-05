@@ -28,11 +28,7 @@ ARMS = {    # pose -> (back elbow, back fist, front elbow, front fist), from (C,
  'self':  ((1,4),(4,-2),(7,2),(3,-4),-1,'stance'),
  'down':  ((0,6),(1,8),(2,6),(4,8),0,'stand'),
 }
-def _put(g,x,y,c):
-    if 0<=x<GW and 0<=y<GH: g[y][x]=c
-def _seg(g,x0,y0,x1,y1,c):
-    n=max(abs(x1-x0),abs(y1-y0),1)
-    for i in range(n+1): _put(g,round(x0+(x1-x0)*i/n),round(y0+(y1-y0)*i/n),c)
+_put, _seg = put, seg                                               # the engine's (engine/people.py)
 LEGS = {                                                            # (back foot dx, front foot dx, knee bend)
  'stance':(-3,3,0),'lunge':(-5,5,1),'reel':(-4,2,0),'stand':(-1,1,0)}
 
@@ -276,12 +272,7 @@ def _fx_sign(d,im,e,f):
 
 @fx('fc_bubble')
 def _fx_bubble(d,im,e,f):
-    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
-    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
-    d.rectangle([x,y,x+w,y+h],fill=(240,236,226),outline=INK)
-    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(240,236,226),outline=INK)
-    d.line([tx-1,y+h,tx+1,y+h],fill=(240,236,226))
-    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(240,236,226),ink=INK)                     # the engine's bubble (engine/people.py)
 
 @fx('fc_brawl')
 def _fx_brawl(d,im,e,f):

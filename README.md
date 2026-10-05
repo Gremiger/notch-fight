@@ -313,6 +313,7 @@ src/
 │   ├── text.py        # 3x5 pixel font
 │   ├── fx.py          # effect registry (@fx('name')) + effects used by several themes
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
+│   ├── people.py      # people built from a pose (grid, limbs, lean, far-away copies) + the speech bubble
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py  skyrim.py  haikyuu.py  fightclub.py  arcane.py  basterds.py  basterds_cinema.py  hp.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py

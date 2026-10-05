@@ -29,11 +29,7 @@ POSES = {   # pose -> (back elbow, back hand, front elbow, front hand, lean, leg
  'wind':  ((-3,2),(-5,0),(-1,3),(-4,0),-1,'stance'),
  'swing': ((4,3),(8,2),(5,3),(9,2),2,'lunge'),
 }
-def _put(g,x,y,c):
-    if 0<=x<GW and 0<=y<GH: g[y][x]=c
-def _seg(g,x0,y0,x1,y1,c):
-    n=max(abs(x1-x0),abs(y1-y0),1)
-    for i in range(n+1): _put(g,round(x0+(x1-x0)*i/n),round(y0+(y1-y0)*i/n),c)
+_put, _seg = put, seg                                               # the engine's (engine/people.py)
 
 def _legs(g,kind,hip,L):
     """The legs from the hip: standing (stand, stance, lunge) or down (kneel, crouch)."""
@@ -153,12 +149,7 @@ def _fx_toc(d,im,e,f):
 
 @fx('bs_bubble')
 def _fx_bubble(d,im,e,f):
-    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
-    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
-    d.rectangle([x,y,x+w,y+h],fill=(244,238,220),outline=INK)
-    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(244,238,220),outline=INK)
-    d.line([tx-1,y+h,tx+1,y+h],fill=(244,238,220))
-    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(244,238,220),ink=INK)                     # the engine's bubble (engine/people.py)
 
 # ---- close-up -------------------------------------------------------------------------------------------
 def closeup_bear(t,f):

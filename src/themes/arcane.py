@@ -34,11 +34,7 @@ POSES = {   # pose -> (back elbow, back hand, front elbow, front hand, lean, leg
 }
 LEGS = {'stand':(-1,1,0),'stance':(-3,3,0),'lunge':(-5,5,1),'reel':(-4,2,0),'knock':(0,0,0)}
 
-def _put(g,x,y,c):
-    if 0<=x<GW and 0<=y<GH: g[y][x]=c
-def _seg(g,x0,y0,x1,y1,c):
-    n=max(abs(x1-x0),abs(y1-y0),1)
-    for i in range(n+1): _put(g,round(x0+(x1-x0)*i/n),round(y0+(y1-y0)*i/n),c)
+_put, _seg = put, seg                                               # the engine's (engine/people.py)
 
 HIP=GH-9; TY=HIP-7; HY=TY-5                                         # legs 9 rows, torso 7, head 5
 _built={}
@@ -237,9 +233,7 @@ def _fx_monkey(d,im,e,f):
 
 @fx('ar_bubble')
 def _fx_bubble(d,im,e,f):
-    _,txt,cx,y,tail=e; w=len(txt)*4+5; x=max(1,min(W-w-2,int(cx-w/2))); tx=max(x+3,min(x+w-3,int(tail)))
-    d.rectangle([x,y,x+w,y+9],fill=(236,236,240),outline=INK); d.polygon([(tx-2,y+9),(tx+2,y+9),(tx,y+13)],fill=(236,236,240))
-    d.line([tx-1,y+9,tx+1,y+9],fill=(236,236,240)); text(d,txt,x+3,y+2,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(236,236,240),ink=INK)                     # the engine's bubble (engine/people.py)
 
 # ---- close-up -------------------------------------------------------------------------------------------
 def closeup_jinx(t,f):

@@ -32,11 +32,7 @@ POSES = {   # pose -> (back elbow, back hand, front elbow, front hand, lean, leg
  'walk1': ((-1,3),(-2,6),(3,3),(4,6),0,'stance'),
  'walk2': ((-1,3),(0,6),(3,3),(2,6),0,'stand'),
 }
-def _put(g,x,y,c):
-    if 0<=x<GW and 0<=y<GH: g[y][x]=c
-def _seg(g,x0,y0,x1,y1,c):
-    n=max(abs(x1-x0),abs(y1-y0),1)
-    for i in range(n+1): _put(g,round(x0+(x1-x0)*i/n),round(y0+(y1-y0)*i/n),c)
+_put, _seg = put, seg                                               # the engine's (engine/people.py)
 
 L_, T_ = 8, 6
 HIP=GH-L_; TY=HIP-T_; HY=TY-5
@@ -102,13 +98,6 @@ BAND = [(dict(name='keys',hair=SHORT,sleeves=True),{'s':(214,170,130),'K':INK,'m
          {'s':(214,160,120),'n':(150,90,60),'K':INK,'m':(120,50,40),'h':(26,20,18),'j':(214,160,120),'b':(240,240,240),'p':(20,20,24),'k':(20,20,24)}),
         (dict(name='perc',hair=SHORT),{'s':(200,150,110),'K':INK,'m':(150,70,60),'h':(40,30,24),'j':(240,240,240),'b':(20,20,24),'p':(30,30,36),'k':(20,20,24)})]
 
-_small={}
-def shrink(spr,k=0.8):
-    key=tuple(spr)
-    if key not in _small:
-        h,w=len(spr),len(spr[0]); nh,nw=round(h*k),round(w*k)
-        _small[key]=S([''.join(spr[min(h-1,int(y/k))][min(w-1,int(x/k))] for x in range(nw)) for y in range(nh)])
-    return _small[key]
 
 # ---- the hall -------------------------------------------------------------------------------------------
 def _hall(d):
@@ -218,9 +207,7 @@ def _fx_ice(d,im,e,f):
 
 @fx('co_bubble')
 def _fx_bubble(d,im,e,f):
-    _,txt,cx,y,tail=e; w=len(txt)*4+5; x=max(1,min(W-w-2,int(cx-w/2))); tx=max(x+3,min(x+w-3,int(tail)))
-    d.rectangle([x,y,x+w,y+9],fill=(244,240,232),outline=INK); d.polygon([(tx-2,y+9),(tx+2,y+9),(tx,y+13)],fill=(244,240,232))
-    d.line([tx-1,y+9,tx+1,y+9],fill=(244,240,232)); text(d,txt,x+3,y+2,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(244,240,232),ink=INK)                     # the engine's bubble (engine/people.py)
 
 # ---- close-up -------------------------------------------------------------------------------------------
 def closeup_fernet(t,f):
