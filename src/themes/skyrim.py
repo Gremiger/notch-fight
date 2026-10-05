@@ -3,7 +3,9 @@ wooden shield, a steel sword) at night in the snowy mountains, the aurora rippli
 watchtower, the compass across the top. Clip `fusrodah`: a dragon comes in over the peaks, lands on the
 tower and breathes fire (YOL TOOR SHUL) — Claude takes it on his shield; the combat bars come up.
 Close-up: the helmet, the mouth — FUS... RO... DAH! The shout's wave knocks the dragon off the tower;
-it crashes, its flesh burns away to bone, and its soul streams into Claude: DRAGON SOUL ABSORBED."""
+it crashes, its flesh burns away to bone, and its soul streams into Claude: DRAGON SOUL ABSORBED.
+Clip `awake` (no fight): the opening of the game — black, the eyes open on the cart to Helgen, hands tied,
+Ralof across: HEY, YOU. YOU'RE FINALLY AWAKE.; the border, Lokir, the gate of Helgen; back to the night."""
 from engine import *
 
 THEME = 'skyrim'
@@ -284,4 +286,159 @@ def clip_fusrodah(f):
     s['fx'].append(('sk_bars',hp,bars))
     return s
 
-CLIPS = [clip('fusrodah', N_, clip_fusrodah)]
+# ---- clip 2: awake — the opening of the game, on the cart to Helgen -----------------------------------
+from themes.arg import PLAYER                                       # the generic people, as prisoners
+N_AWAKE = 384                                                       # a multiple of 12 and of 64 (the aurora)
+RAGS = {'3':(150,128,96),'5':(196,150,110)}                         # the prisoner's roughspun
+def _prisoner(spr):
+    g=[list(r) for r in spr]; top,l,r=body_box(spr)
+    for y in range(len(g)):
+        for x in range(len(g[0])):
+            if g[y][x]=='O' and y>=top+5: g[y][x]='3'
+    return S([''.join(x) for x in g])
+PRISONER=_prisoner(CL['guard'])
+K_RALOF = {'j':(56,76,120),'J':(196,176,140),'s':(230,190,160),'h':(220,190,110),'p':(70,56,44)}   # Stormcloak blue, blond
+K_LOKIR = {'j':(120,100,76),'J':(120,100,76),'s':(226,184,150),'h':(50,36,28),'p':(90,76,60)}
+K_ULFRIC= {'j':(70,58,50),'J':(150,130,110),'s':(226,184,150),'h':(60,44,34),'p':(50,44,40)}
+K_DRIVER= {'j':(140,50,40),'J':(150,120,80),'s':(226,184,150),'h':(90,70,50),'p':(90,70,50)}
+SEATS = ((60,False,None),(74,False,K_ULFRIC),(102,True,K_RALOF),(116,True,K_LOKIR))   # x, facing left, kit (None: Claude)
+
+def night(f):
+    """The theme's neutral pose (as fusrodah holds it): the Dragonborn in the snow under the aurora."""
+    s=scene(f,THEME); s['under'].append(('sk_aurora',))
+    pose=guard_pose(f); hx,hy=hand_at(DOVAH[pose],CX,GROUND,False,*GRIP[pose],h=11)
+    ox,oy=origin(DOVAH[pose],CX); top,l,r=body_box(DOVAH[pose])
+    s['under'].append(('sk_shield',ox+l-1,oy+top+7,False))
+    s['actors']=[actor(DOVAH[pose],CX,pal=DPAL)]
+    s['fx']+=[('sk_sword',hx,hy),('sk_compass',None),('sk_bars',1.0,0.0)]
+    return s
+
+@fx('sk_road')
+def _fx_road(d,im,e,f):
+    """Daylight on the road to Helgen: grey sky, the snowy range, pines, the dirt road, all scrolling by
+    (the cart rolls right). gate: how far Helgen's wall has come in from the right (0..1)."""
+    _,scroll,gate=e
+    for y in range(40):
+        k=y/39; d.line([0,y,W,y],fill=(int(lerp(170,206,k)),int(lerp(186,214,k)),int(lerp(204,220,k))))
+    o=scroll*0.15
+    for i in range(-1,5):                                            # the range, far and slow
+        x=i*60-o%60; d.polygon([(x,36),(x+30,8+(i%2)*6),(x+60,36)],fill=(120,132,150))
+        d.polygon([(x+22,15+(i%2)*6),(x+30,8+(i%2)*6),(x+38,15+(i%2)*6)],fill=(236,240,246))
+    o=scroll*0.45
+    for i in range(-1,W//9+2):                                       # the forest
+        x=i*9-o%9; hgt=14+((i+int(o//9))*7)%6
+        d.polygon([(x,40-hgt),(x-5,42),(x+5,42)],fill=(40,70,52)); d.line([x,42,x,44],fill=(70,50,36))
+    d.rectangle([0,42,W,H],fill=(118,104,80))                        # the road
+    o=scroll
+    for i in range(-1,W//14+2):
+        x=i*14-o%14; d.point((x,55),fill=(90,78,60)); d.point((x+6,60),fill=(150,134,104)); d.line([x+3,62,x+5,62],fill=(96,84,64))
+    d.line([0,58,W,58],fill=(100,88,68))
+    if gate>0:                                                       # Helgen's wall and gatehouse, coming in
+        gx=int(lerp(W+10,128,gate))
+        d.rectangle([gx,10,W+40,44],fill=(132,126,118),outline=(80,76,72))
+        for y in range(12,44,5):
+            for bx in range(gx,W+40,8): d.rectangle([bx+(y//5)%2*4,y,bx+7+(y//5)%2*4,y+4],outline=(104,98,92))
+        for bx in range(gx,W+40,8): d.rectangle([bx,6,bx+4,10],fill=(132,126,118),outline=(80,76,72))
+        d.rectangle([gx+10,22,gx+30,44],fill=(40,32,28)); d.pieslice([gx+10,14,gx+30,30],180,360,fill=(40,32,28))
+
+@fx('sk_cart')
+def _fx_cart(d,im,e,f):
+    """The cart's side and wheels (over the prisoners' legs), the bench, the horse pulling in front."""
+    _,bob,f2=e
+    y0=40+bob
+    d.rectangle([48,y0,132,y0+10],fill=(120,82,48),outline=INK)
+    for x in range(56,132,10): d.line([x,y0+1,x,y0+9],fill=(96,64,36))
+    d.line([48,y0+5,132,y0+5],fill=(96,64,36))
+    for wx in (62,118):                                              # the wheels, turning
+        cy=y0+12; d.ellipse([wx-7,cy-7,wx+7,cy+7],outline=INK,width=2); d.ellipse([wx-6,cy-6,wx+6,cy+6],outline=(110,76,44))
+        for k in range(4):
+            a=f2*0.25+k*math.pi/4; d.line([wx-math.cos(a)*6,cy-math.sin(a)*6,wx+math.cos(a)*6,cy+math.sin(a)*6],fill=(110,76,44))
+        d.ellipse([wx-1,cy-1,wx+1,cy+1],fill=INK)
+    d.rectangle([132,y0-2,144,y0+1],fill=(96,64,36),outline=INK)    # the driver's bench
+    d.line([132,y0+6,150,y0+4],fill=(90,60,36),width=2)              # the shaft
+    # the horse, walking
+    hx,hy=162,42+bob
+    d.ellipse([hx-12,hy-6,hx+8,hy+6],fill=(110,74,46),outline=INK)
+    d.polygon([(hx+4,hy-4),(hx+12,hy-16),(hx+18,hy-14),(hx+11,hy-2)],fill=(110,74,46),outline=INK)   # neck
+    d.polygon([(hx+12,hy-17),(hx+22,hy-12),(hx+21,hy-9),(hx+13,hy-11)],fill=(110,74,46),outline=INK)  # head
+    d.line([hx+5,hy-12,hx+12,hy-18],fill=(50,34,24),width=2)         # the mane
+    d.point((hx+17,hy-14),fill=INK)
+    d.line([hx-12,hy-3,hx-17,hy+6],fill=(50,34,24),width=2)          # the tail
+    for i,lx in enumerate((hx-9,hx-5,hx+2,hx+6)):                   # four legs, stepping
+        sw=2.5*math.sin(f2*2*math.pi/12+i*math.pi/2); d.line([lx,hy+4,lx+sw,58],fill=(90,60,36),width=2)
+        d.point((lx+sw,58),fill=INK)
+
+@fx('sk_rope')
+def _fx_rope(d,im,e,f):
+    _,x,y=e; d.line([x-1,y,x+2,y],fill=(190,160,100)); d.point((x,y+1),fill=(150,120,70))
+
+@fx('sk_bubble')
+def _fx_bubble(d,im,e,f):
+    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
+    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
+    d.rectangle([x,y,x+w,y+h],fill=(244,240,228),outline=INK)
+    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(244,240,228),outline=INK)
+    d.line([tx-1,y+h,tx+1,y+h],fill=(244,240,228))
+    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+
+def closeup_ralof(t,f):
+    """Primer plano: Ralof across the cart — the blond hair, the beard, the blue Stormcloak cuirass with
+    its fur; the forest going by behind him. HEY, YOU. YOU'RE FINALLY AWAKE."""
+    im=Image.new('RGB',(W,H),(180,192,204)); d=ImageDraw.Draw(im)
+    o=f*1.5
+    for i in range(-1,14):                                           # the pines going past, out of focus
+        x=i*16-o%16; d.polygon([(x,8),(x-8,50),(x+8,50)],fill=(70,100,82))
+    im=im.filter(ImageFilter.GaussianBlur(1.5)); d=ImageDraw.Draw(im)
+    b=1 if (f//6)%2 else 0                                           # the cart's jolt
+    d.rectangle([4,46+b,76,H],fill=(56,76,120),outline=INK)          # the cuirass, the fur over the shoulders
+    for k in range(9): d.ellipse([2+k*8,40+b,14+k*8,52+b],fill=(196,176,140))
+    d.rectangle([24,30+b,56,44+b],fill=(230,190,160))                # the neck and face
+    d.rounded_rectangle([20,6+b,60,40+b],radius=10,fill=(230,190,160),outline=INK)
+    d.pieslice([16,0+b,64,26+b],180,360,fill=(220,190,110))          # the blond hair, long at the sides
+    d.rectangle([16,12+b,22,44+b],fill=(220,190,110)); d.rectangle([58,12+b,64,44+b],fill=(220,190,110))
+    d.polygon([(22,28+b),(58,28+b),(54,46+b),(40,50+b),(26,46+b)],fill=(200,166,90))   # the beard
+    for ex in (30,46): d.rectangle([ex,20+b,ex+4,23+b],fill=INK); d.line([ex-1,17+b,ex+5,17+b],fill=(170,140,70))
+    talk=(f//3)%2 and t<0.85
+    d.rectangle([35,33+b,45,34+b+(3 if talk else 0)],fill=(90,40,36))
+    d.rectangle([30,42+b,50,46+b],fill=(140,110,90))                 # the rope round his wrists, just showing
+    if t>=0.08: big_text(im,"HEY, YOU.",6,(250,246,236),scale=2,cx=128,shadow=INK)
+    if t>=0.3:
+        big_text(im,"YOU'RE FINALLY",26,(250,246,236),scale=2,cx=128,shadow=INK)
+        big_text(im,"AWAKE.",44,(250,246,236),scale=2,cx=128,shadow=INK)
+    if t<0.05: zoom_lines(d,(250,246,236))
+    return im
+
+def cart_scene(f):
+    s=scene(f,THEME)
+    bob=1 if (f//6)%2 else 0
+    gate=0.0 if f<262 else min(1,(f-262)/30)
+    s['under'].append(('sk_road',f*1.2,gate))
+    acts=[]
+    for x,left,kit in SEATS:
+        if kit is None: acts.append(actor(PRISONER,x,y=44+bob,pal={**DPAL,**RAGS}))
+        else: acts.append(actor(PLAYER['idle'],x,y=47+bob,flip=left,pal=kit))
+    acts.append(actor(PLAYER['idle'],138,y=44+bob,pal=K_DRIVER))    # the Imperial on the bench
+    s['actors']=acts
+    s['fx'].append(('sk_cart',bob,f))
+    s['fx'].append(('sk_rope',66,39+bob))
+    return s
+
+def clip_awake(f):
+    if f<14 or f>=340: return night(f)
+    if f<34: s=night(f); im=fade_to(render(s,f),(0,0,0),(f-14)/20); return {'image':im}
+    if 300<=f<318: im=fade_to(render(cart_scene(f),f),(0,0,0),(f-300)/18); return {'image':im}
+    if 318<=f<340: im=fade_to(render(night(f),f),(0,0,0),1-(f-318)/22); return {'image':im}
+    if 80<=f<140: return {'image':closeup_ralof((f-80)/60,f)}
+    s=cart_scene(f)
+    if 150<=f<218: s['fx'].append(('sk_bubble',["YOU WERE TRYING TO","CROSS THE BORDER, RIGHT?"],102,4,102))
+    if 222<=f<262: s['fx'].append(('sk_bubble',"DAMN YOU STORMCLOAKS.",116,10,116))
+    if 270<=f<300: s['fx'].append(('big',"HELGEN",4,(250,246,236)))
+    if 34<=f<64:                                                     # waking: the eyes open, blink, open
+        im=render(s,f); t=f-34
+        gap=lerp(0,34,t/10) if t<10 else (lerp(34,4,(t-10)/4) if t<14 else lerp(4,34,(t-14)/16))
+        im=im.filter(ImageFilter.GaussianBlur(max(0,2.5*(1-t/30)))); d=ImageDraw.Draw(im)
+        if gap<H/2: d.rectangle([0,0,W,int(H/2-gap)],fill=(0,0,0)); d.rectangle([0,int(H/2+gap),W,H],fill=(0,0,0))
+        return {'image':im}
+    return s
+
+CLIPS = [clip('fusrodah', N_, clip_fusrodah), clip('awake', N_AWAKE, clip_awake)]
