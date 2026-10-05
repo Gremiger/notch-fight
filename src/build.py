@@ -1,5 +1,8 @@
 """Renders every clip of every theme + all theme-to-theme transitions into the cwd:
 clips/<theme>__<clip>/NNN.png, transitions/<theme>__out|in/NNN.png, sheet_<theme>_<clip>.png.
+Each clip and transition folder also gets frames.png, all its frames packed in one image (a grid of
+SHEET_COLS columns, in order, row by row), and count, how many: the app ships just those, one file per
+clip instead of hundreds (the loose NNN.png stay for the GIFs and the Claude Code mod).
 
 A transition is per theme: the iris closing on the theme being left (<theme>__out), then opening on the
 next one (<theme>__in); both come from the theme's keyframe (its first clip's first frame).
@@ -22,11 +25,21 @@ def selected(themes, only):
         picked+=[h for h in hits if h not in picked]
     return picked
 
+SHEET_COLS = 10
+
+def pack(dd, frames):
+    """frames.png (the frames in a grid of SHEET_COLS columns, row by row) and count, in folder dd."""
+    cols=min(SHEET_COLS,len(frames)); rows=(len(frames)+cols-1)//cols
+    sh=Image.new('RGB',(W*cols,H*rows))
+    for i,fr in enumerate(frames): sh.paste(fr,((i%cols)*W,(i//cols)*H))
+    sh.save(f'{dd}/frames.png'); open(f'{dd}/count','w').write(f'{len(frames)}\n')
+
 def render_clip(theme, name, n, frame_fn, off):
     random.seed(zlib.crc32(name.encode()))
     frames=[frame_fn(f) for f in range(n)]
     dd=f'clips/{theme}__{name}'; shutil.rmtree(dd,ignore_errors=True); os.makedirs(dd)
     for i,fr in enumerate(frames): fr.save(f'{dd}/{i:03d}.png')
+    pack(dd,frames)
     if off: open(f'{dd}/.default-off','w').close()   # shipped off: ./clips.sh and the app read this
     big=[fr.resize((W*2,H*2),Image.NEAREST) for fr in frames]
     sh=Image.new('RGB',(W*4,H*12)); pick=[int(i*(n-1)/11) for i in range(12)]
@@ -68,5 +81,6 @@ if __name__=='__main__':
         for half,frames in (('out',iris_out(img)),('in',iris_in(img))):
             dd=f'transitions/{theme}__{half}'; shutil.rmtree(dd,ignore_errors=True); os.makedirs(dd)
             for i,fr in enumerate(frames): fr.save(f'{dd}/{i:03d}.png')
+            pack(dd,frames)
     open('.built','w').write('\n'.join(f'{t}__{c[0]}' for t,c in todo)+'\n')
     print('transitions ok')
