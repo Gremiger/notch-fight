@@ -27,9 +27,8 @@ PY
   echo "First clip set to $FIRST (~/.config/notch-fight/config.json)"
 fi
 
-# The app is updated in place, not rebuilt: it ships just each folder's packed frames.png + count (and the
-# .default-off marks), a few hundred files rather than tens of thousands; rsync copies the ones that
-# changed and drops the rest. The Swift is compiled only when its source is newer than the binary.
+# The app is updated in place, not rebuilt: rsync copies each folder's frames.png + count (and the
+# .default-off marks) that changed, and drops what's gone (the loose NNN.png of an older build too). The Swift is compiled only when its source is newer than the binary.
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/"
 for d in clips transitions; do
@@ -51,10 +50,13 @@ if [[ ! -x "$MENU/Contents/MacOS/NotchFightMenu" || "$ROOT/app/menu.swift" -nt "
 fi
 
 if [[ "${GIFS:-0}" == "1" ]]; then   # GIFS=1 ./build.sh refreshes media/clips previews
-  while read -r n; do [[ -z "$n" ]] && continue; d="$OUT/clips/$n/"   # only the clips this run rendered
-    ffmpeg -y -loglevel error -framerate 20 -i "$d%03d.png" \
+  tmp="$(mktemp -d)"
+  while read -r n; do [[ -z "$n" ]] && continue; d="$tmp/$n"          # only the clips this run rendered
+    python3 "$ROOT/scripts/frames.py" unpack "$OUT/clips/$n" "$d"
+    ffmpeg -y -loglevel error -framerate 20 -i "$d/%03d.png" \
       -vf "scale=iw*2:ih*2:flags=neighbor,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=none" \
       -loop 0 "$ROOT/media/clips/$n.gif"
   done < "$OUT/.built"
+  rm -rf "$tmp"
 fi
 echo "Built $APP"

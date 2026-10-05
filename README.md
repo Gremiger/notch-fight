@@ -337,11 +337,12 @@ ONLY=sonic GIFS=1 ./build.sh      # just one theme (or theme__clip, comma-separa
 JOBS=4 ./build.sh    # clips render in parallel, one per core by default (JOBS=1: one at a time)
 ```
 
-Each clip (and transition) folder holds its frames as `NNN.png` and, packed into one image, as
-`frames.png` (a 10-column grid) with `count`. The app ships only the packs, a few hundred files, and is
-updated in place: just the packs that changed are copied into it, and the Swift is recompiled only when
-`app/*.swift` changes. It reads a clip's pack when the clip is queued and keeps only the last few in
-memory. The loose frames are for the GIFs and the Claude Code mod.
+Each clip (and transition) folder holds its frames packed into one image, `frames.png` (a 10-column
+grid, row by row), and `count`; `scripts/frames.py` reads them back (the GIFs, the Claude Code mod, which
+unpacks a clip into `build/mod/` for its image mode). The app is updated in place: just the packs that
+changed are copied into it, and the Swift is recompiled only when `app/*.swift` changes. As a clip
+starts, the app picks the next one and decodes its pack in the background, keeping only the last few in
+memory.
 
 Canvas is 185×64 art pixels = 185×64 pt on a 14" MacBook Pro (1 art px = 2 device px).
 
