@@ -10,37 +10,78 @@ from engine import *
 
 THEME = 'fightclub'
 N_ = 384                                                            # a multiple of 12 and of 48 (the bulb)
-CX, TX = 70, 116                                                    # Claude; Tyler, when he's there
+CX, TX = 80, 98                                                     # Claude; Tyler, when he's there (in reach)
 INK = (16,12,12)
 BLOOD, BLOOD_D = (176,20,24), (110,10,14)
 SOAP = (236,150,170)
 
-# the Narrator: the white shirt, the dark tie loosened, grey trousers, a bruise round one eye (and blood)
-CPAL = {'1':(236,232,220),'2':(110,24,28),'3':(64,64,70),'4':(110,60,120),'5':BLOOD}
-def _narrator(spr):
-    g=[list(r) for r in spr]; top,l,r=body_box(spr); h=len(g)
-    for y in range(h):
-        for x in range(len(g[0])):
-            c=g[y][x]
-            if c=='O' and y>=top+5:
-                g[y][x]='2' if x==(l+r)//2+1 and y<top+8 else ('3' if y>=top+8 else '1')
-            elif c=='O' and top+2<=y<=top+3 and g[y][x+1:x+2]==['K']: g[y][x]='4'     # the black eye
-            elif c=='o' and y>=top+8: g[y][x]='3'
-    return S([''.join(x) for x in g])
-NARR=variant(_narrator)
-def bloody(spr,level):
-    """The same pose with blood on the face: a split brow, then the nose, then the mouth."""
-    g=[list(r) for r in spr]; top,l,r=body_box(spr)
-    spots=[(r-1,top+1),(r-1,top+4),(r-2,top+4),(l+3,top+1),(r-3,top+4),(l+2,top+4)][:level]
-    for x,y in spots:
-        if g[y][x]=='O': g[y][x]='5'
-    return S([''.join(x) for x in g])
+# ---- the two of them: built from a pose, so they move alike --------------------------------------------
+GW, GH, C = 28, 24, 12                                              # grid, centre column (they face right)
+ARMS = {    # pose -> (back elbow, back fist, front elbow, front fist), from (C, shoulder row); lean; legs
+ 'guard': ((1,4),(4,-2),(3,4),(6,-3),0,'stance'),
+ 'guard2':((1,4),(4,-1),(3,4),(6,-2),0,'stance'),
+ 'jab':   ((1,4),(4,-2),(6,0),(11,-2),1,'lunge'),
+ 'hook':  ((4,-1),(10,-3),(3,4),(5,-1),2,'lunge'),
+ 'hurt':  ((-3,3),(-6,1),(1,5),(4,6),-2,'reel'),
+ 'self':  ((1,4),(4,-2),(7,2),(3,-4),-1,'stance'),
+ 'down':  ((0,6),(1,8),(2,6),(4,8),0,'stand'),
+}
+def _put(g,x,y,c):
+    if 0<=x<GW and 0<=y<GH: g[y][x]=c
+def _seg(g,x0,y0,x1,y1,c):
+    n=max(abs(x1-x0),abs(y1-y0),1)
+    for i in range(n+1): _put(g,round(x0+(x1-x0)*i/n),round(y0+(y1-y0)*i/n),c)
+LEGS = {                                                            # (back foot dx, front foot dx, knee bend)
+ 'stance':(-3,3,0),'lunge':(-5,5,1),'reel':(-4,2,0),'stand':(-1,1,0)}
 
-TPAL = {'h':(196,166,110),'s':(232,196,166),'G':(16,16,20),'r':(168,40,30),'R':(120,24,18),'W':(214,190,120),'p':(70,80,110),'k':(30,26,24),'5':BLOOD}
-TYLER=poses(S([
-"...h.hh.h...","..hhhhhhhh..","...ssssss...","...GGsGGs...","...ssssss...","....ssss....",
-"..rrrrrrrr..",".srrrWWrrrs.",".sRrrWWrrRs.","..rrrWWrrr..","..rrrrrrrr..","...pppppp...",
-"...pppppp...","...pp..pp...","...pp..pp...","...kk..kk...",]),7,'s',3)
+_built={}
+def build(who,pose,blood=0):
+    """A fighter: legs, torso (leaning), head, two arms of two segments each with a fist; blood 0..3."""
+    key=(who['name'],pose,blood)
+    if key in _built: return _built[key]
+    g=[['.']*GW for _ in range(GH)]
+    be,bf,fe,ff,lean,legs=ARMS[pose]
+    hip=GH-9; ty=hip-7; hy=ty-5                                      # legs 9 rows, torso 7, head 5
+    bx,fx_,bend=LEGS[legs]
+    for k,(dx,c) in enumerate(((bx,'P'),(fx_,'p'))):                 # the legs, the shoes
+        for t in range(9):
+            fr=t/8; x=C+round(dx*fr)+(bend if 3<t<7 and k==1 else 0)+(k*2-1)
+            _put(g,x,hip+t,c); _put(g,x+1,hip+t,c)
+        _put(g,C+dx+(k*2-1)+2,GH-1,'k'); _put(g,C+dx+(k*2-1),GH-1,'k'); _put(g,C+dx+(k*2-1)+1,GH-1,'k')
+    sh=lambda y: round(lean*(hip-y)/(hip-hy))                       # the lean, more at the top
+    def arm(e,f_,front):
+        sx=C+(2 if front else -2)+sh(ty+1); sy=ty+1
+        ex,ey=C+e[0]+sh(ty),ty+e[1]; fx2,fy2=C+f_[0]+sh(ty),ty+f_[1]
+        _seg(g,sx,sy,ex,ey,'a' if front else 'A'); _seg(g,ex,ey,fx2,fy2,'s' if who['bare'] else ('a' if front else 'A'))
+        for dx,dy in ((0,0),(1,0),(0,1),(1,1)): _put(g,fx2+dx,fy2+dy,'f')
+    arm(be,bf,False)
+    for y in range(ty,hip+1):                                        # the torso, the belt
+        o=sh(y)
+        for x in range(C-3+o,C+3+o): _put(g,x,y,'b' if y==hip-1 else ('w' if y==ty else 'j'))
+        if who['name']=='narr' and y<hip-1: _put(g,C+1+o,y,'t')      # the tie, loosened
+        if who['name']=='tyler' and y<hip-1: _put(g,C+o,y,'u'); _put(g,C+1+o,y,'u')   # the shirt under the open jacket
+    o=sh(hy)
+    for y in range(hy,hy+5):                                         # the head
+        for x in range(C-2+o,C+3+o): _put(g,x,y,'s')
+    _put(g,C+1+o,hy+2,'K'); _put(g,C-1+o,hy+2,'K')
+    if who['name']=='tyler':
+        for x in range(C-2+o,C+3+o): _put(g,x,hy+2,'G')              # the shades
+    else:
+        _put(g,C+1+o,hy+1,'v'); _put(g,C+2+o,hy+2,'v'); _put(g,C+2+o,hy+3,'v')   # the black eye
+    for i,row in enumerate(who['hair']):
+        for j,ch in enumerate(row):
+            if ch!='.': _put(g,C-3+o+j,hy-len(who['hair'])+1+i,ch)
+    for x,y in ((C+2,hy+1),(C+2,hy+4),(C+1,hy+4),(C+2,hy+3),(C,hy+4),(C+1,ty+1))[:blood*2]:   # the brow, the nose, the mouth, the shirt
+        _put(g,x+o,y,'r')
+    arm(fe,ff,True)
+    _built[key]=S([''.join(r) for r in g]); return _built[key]
+
+NARRATOR = dict(name='narr', bare=False, hair=["..hhhh.","hhhhhhh","hh....."])
+TYLER    = dict(name='tyler',bare=False, hair=["h.h.h..","hhhhhh.","hhhhhhh","hh....."])
+CPAL = {'s':(232,192,160),'K':INK,'h':(70,46,32),'j':(232,228,216),'w':(250,248,240),'A':(200,196,186),'a':(232,228,216),
+        't':(110,24,28),'b':(40,30,26),'p':(64,64,70),'P':(50,50,56),'k':(24,20,20),'f':(232,192,160),'v':(110,60,120),'r':BLOOD}
+TPAL = {'s':(232,196,166),'K':INK,'G':(12,12,14),'h':(204,170,110),'j':(168,40,30),'w':(120,24,18),'A':(130,28,20),'a':(168,40,30),
+        'u':(214,180,90),'b':(40,30,26),'p':(70,84,120),'P':(56,68,100),'k':(30,26,24),'f':(232,196,166),'r':BLOOD}
 
 # ---- the basement -------------------------------------------------------------------------------------
 def _basement(d):
@@ -94,11 +135,6 @@ def _fx_spray(d,im,e,f):
         px=x+vx*k; py=y+vy*k+0.18*k*k
         if py<GROUND: d.point((int(px),int(py)),fill=BLOOD); d.point((int(px)+1,int(py)),fill=BLOOD_D)
 
-@fx('fc_selfhit')
-def _fx_selfhit(d,im,e,f):
-    """His own fist, back into his own face."""
-    _,x,y=e; d.line([x-6,y+6,x,y],fill=(168,80,54),width=2); d.rectangle([x-1,y-2,x+2,y+1],fill=(217,119,87),outline=INK)
-
 # ---- the card, the close-up, the window -----------------------------------------------------------------
 def card_rules(t,f):
     """THE FIRST RULE OF FIGHT CLUB IS... and the rest, crossed out before it's said."""
@@ -117,8 +153,8 @@ def closeup_soap(t,f):
     SOAP CO.; then I AM JACK'S SMIRKING REVENGE."""
     im=Image.new('RGB',(W,H),(30,24,20)); d=ImageDraw.Draw(im)
     g=Image.new('L',(W,H),0); ImageDraw.Draw(g).ellipse([-30,-30,110,90],fill=90); im.paste((255,210,150),(0,0),g.filter(ImageFilter.GaussianBlur(10))); d=ImageDraw.Draw(im)
-    d.rectangle([4,6,66,H+4],fill=(217,119,87),outline=INK)          # Claude's face, big
-    d.rectangle([60,6,66,H],fill=(168,80,54))
+    d.rectangle([4,6,66,H+4],fill=CPAL['s'],outline=INK)            # his face, big
+    d.rectangle([60,6,66,H],fill=(200,156,124)); d.rectangle([4,0,66,9],fill=CPAL['h'],outline=INK)
     d.rectangle([18,18,22,28],fill=INK); d.rectangle([42,18,46,28],fill=INK)   # the eyes
     d.ellipse([36,13,54,32],outline=(110,60,120),width=3)            # the black eye
     d.line([16,13,26,15],fill=BLOOD,width=2); d.line([24,15,22,24],fill=BLOOD)  # the split brow, running
@@ -131,7 +167,7 @@ def closeup_soap(t,f):
         d.rounded_rectangle([sx,18,sx+76,50],radius=8,fill=SOAP,outline=(170,90,110))
         d.rounded_rectangle([sx+4,22,sx+72,46],radius=6,outline=(214,124,148))
         text(d,"PAPER STREET",int(sx)+14,28,(176,86,108),shadow=None); text(d,"SOAP CO.",int(sx)+22,36,(176,86,108),shadow=None)
-        d.rectangle([sx-6,40,sx+4,56],fill=(217,119,87),outline=INK)  # the thumb
+        d.rectangle([sx-6,40,sx+4,56],fill=CPAL['s'],outline=INK)  # the thumb
     else:
         big_text(im,"I AM JACK'S",6,(236,232,220),scale=2,cx=126,shadow=INK)
         big_text(im,"SMIRKING",24,(236,232,220),scale=2,cx=126,shadow=INK)
@@ -172,7 +208,7 @@ def window(t,f):
     return im
 
 # ---- the clip -------------------------------------------------------------------------------------------
-HITS = ((100,'tyler'),(116,'claude'),(130,'tyler'),(144,'claude'),(156,'tyler'),(166,'claude'))
+HITS = ((100,'tyler','jab'),(114,'claude','jab'),(126,'tyler','hook'),(140,'claude','hook'),(152,'tyler','jab'),(162,'claude','hook'))
 
 def clip_rules(f):
     s=scene(f,THEME)
@@ -181,30 +217,36 @@ def clip_rules(f):
     if 296<=f<352: s['image']=window((f-296)/56,f); return s
     if 352<=f<366: s['image']=fade_to(window(1.0,f),(0,0,0),(f-352)/14); return s
     s['under']+=[('fc_crowd','back'),('fc_light',)]
-    pose=guard_pose(f); tpose='idle'; tx=None; blood=0; spatters=0
+    g=guard_pose(f); pose,tpose='guard' if g=='guard' else 'guard2','guard' if g=='guard2' else 'guard2'
+    cx,tx=CX,None; blood=0; spatters=0
     fight=80<=f<296
     if 80<=f<170:
-        tx=lerp(W+10,TX,ease((f-80)/16))
-        for hf,who in HITS:
-            if hf<=f<hf+8:
-                if who=='tyler': tpose='attack'; pose='hurt'; tx-=4
-                else: pose='punch'; tpose='hurt'
-            if f>=hf: blood+=1 if who=='tyler' else 0; spatters+=2
-            if hf<=f<hf+14:
-                k=f-hf
-                if who=='tyler': s['fx'].append(('fc_spray',CX+4,GROUND-9,k,-1))
-                else: s['fx'].append(('fc_spray',tx-4,GROUND-13,k,1))
-                if k<3: s['shake']=rshake(1)
+        tx=lerp(W+14,TX,ease((f-80)/18))
+        for hf,who,kind in HITS:
+            if f>=hf+2 and who=='tyler': blood=min(3,blood+1)
+            if f>=hf+2: spatters+=2
+            if hf<=f<hf+7:                                           # the punch: a step in, it lands
+                if who=='tyler': tpose=kind; tx-=3
+                else: pose=kind; cx+=3
+            if hf+2<=f<hf+10:                                        # the head snaps back
+                if who=='tyler': pose='hurt'; cx-=2
+                else: tpose='hurt'; tx+=2
+            if hf+2<=f<hf+16:
+                k=f-hf-2
+                if who=='tyler': s['fx'].append(('fc_spray',cx+1,GROUND-19,k,-1))
+                else: s['fx'].append(('fc_spray',tx-1,GROUND-19,k,1))
+                if k<2: s['shake']=rshake(1)
     if 250<=f<296:
         blood,spatters=3,12
         if f<262 and (f//2)%3==0: tx=TX                              # Tyler flickers... and is gone
-        k=(f-262)%10
-        if f>=262: pose='hurt' if k<4 else 'guard';
-        if f>=262 and k<3: s['fx'].append(('fc_selfhit',CX+4,GROUND-9)); s['shake']=rshake(1) if k==0 else (0,0)
+        if f>=262:
+            k=(f-262)%12; pose='self' if k<5 else ('hurt' if k<9 else 'guard')
+            if k==3: s['shake']=rshake(1)
+            if 3<=k<10: s['fx'].append(('fc_spray',cx+2,GROUND-19,k-3,-1))
     if fight: s['under'].append(('fc_floorblood',spatters))
     acts=[]
-    if tx is not None: acts.append(actor(TYLER[tpose],tx,flip=True,pal=TPAL))
-    acts.append(actor(bloody(NARR[pose],min(6,blood*2)) if blood else NARR[pose],CX,pal=CPAL))
+    if tx is not None: acts.append(actor(build(TYLER,tpose),tx,flip=True,pal=TPAL))
+    acts.append(actor(build(NARRATOR,pose,blood),cx,pal=CPAL))
     s['actors']=acts
     s['fx'].append(('fc_crowd','front'))
     return s
