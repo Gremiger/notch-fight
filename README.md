@@ -333,7 +333,11 @@ media/                           # rendered previews
 ./build.sh           # frames + app into build/
 GIFS=1 ./build.sh    # also refresh media/clips/*.gif
 ONLY=sonic GIFS=1 ./build.sh      # just one theme (or theme__clip, comma-separated) on top of the last build
+JOBS=4 ./build.sh    # clips render in parallel, one per core by default (JOBS=1: one at a time)
 ```
+
+The app in `build/` is updated in place: only the frames that changed are copied into it, and the
+Swift is recompiled only when `app/*.swift` changes.
 
 Canvas is 185×64 art pixels = 185×64 pt on a 14" MacBook Pro (1 art px = 2 device px).
 
