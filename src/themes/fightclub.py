@@ -5,7 +5,9 @@ is crossed out); Tyler (the red leather jacket, the shades) steps into the ring 
 punches, the blood landing on the concrete, his face getting worse. Close-up: the bloody grin, the pink bar
 of Paper Street soap, I AM JACK'S SMIRKING REVENGE. Then Tyler flickers, and is gone: Claude alone in the
 ring, hitting himself. The end: the window, the towers coming down one by one, holding Marla's hand —
-WHERE IS MY MIND?"""
+WHERE IS MY MIND?
+Clip `firstrule`, the same for laughs: the rules drop as signs and cross themselves out as he reads them, HIT ME
+AS HARD AS YOU CAN (the ear), a cartoon brawl, and he was punching himself: WHY AM I HITTING MYSELF?"""
 from engine import *
 
 THEME = 'fightclub'
@@ -251,4 +253,113 @@ def clip_rules(f):
     s['fx'].append(('fc_crowd','front'))
     return s
 
-CLIPS = [clip('rules', N_, clip_rules)]
+# ---- clip 2: firstrule — the same, for laughs: no blood, and he's still fighting himself ----------------
+N_FIRST = 480                                                       # a multiple of 12 and of 48 (the bulb)
+SIGN_X = 140
+RULES = ((14,84,["RULE 1:","DON'T TALK ABOUT","FIGHT CLUB."]),
+         (84,144,["RULE 2:","DON'T TALK ABOUT","FIGHT CLUB."]),
+         (144,204,["RULE 8: FIRST NIGHT?","YOU HAVE TO","FIGHT."]))
+
+@fx('fc_sign')
+def _fx_sign(d,im,e,f):
+    """A cardboard sign on two strings from the ceiling: y its top, x crossed (0..1), an arrow down."""
+    _,lines,y,cross,arrow=e; y=int(y); x0,w,h=SIGN_X-42,84,len(lines)*7+5
+    for sx in (x0+8,x0+w-8): d.line([sx,0,sx,y],fill=(70,64,56))
+    d.rectangle([x0,y,x0+w,y+h],fill=(214,196,160),outline=(90,74,50))
+    for i,l in enumerate(lines): text(d,l,SIGN_X-len(l)*2,y+3+i*7,INK,shadow=None)
+    if cross>0:                                                      # it crosses itself out
+        k=min(1,cross*2); d.line([x0+2,y+2,x0+2+(w-4)*k,y+2+(h-4)*k],fill=BLOOD,width=2)
+        if cross>0.5: k=min(1,(cross-0.5)*2); d.line([x0+w-2,y+2,x0+w-2-(w-4)*k,y+2+(h-4)*k],fill=BLOOD,width=2)
+    if arrow:                                                        # pointing at him
+        ax,ay=x0-2,y+h-2; bx,by=CX+8,y+h+10
+        d.line([ax,ay,bx,by],fill=BLOOD,width=2); d.polygon([(bx-4,by-1),(bx+1,by-4),(bx-1,by+2)],fill=BLOOD)
+
+@fx('fc_bubble')
+def _fx_bubble(d,im,e,f):
+    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
+    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
+    d.rectangle([x,y,x+w,y+h],fill=(240,236,226),outline=INK)
+    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(240,236,226),outline=INK)
+    d.line([tx-1,y+h,tx+1,y+h],fill=(240,236,226))
+    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+
+@fx('fc_brawl')
+def _fx_brawl(d,im,e,f):
+    """The cartoon fight: a rolling dust cloud, fists and shoes poking out, stars, POW and BONK."""
+    _,x,y=e; rr=random.Random(f//2)
+    for i in range(9):
+        a=i*0.7+f*0.3; r=rr.randint(6,9)
+        cx,cy=x+math.cos(a)*12,y+math.sin(a)*6
+        d.ellipse([cx-r,cy-r,cx+r,cy+r],fill=(170,164,156),outline=(110,104,98))
+    for i in range(3):                                               # a fist, a shoe, a fist
+        a=rr.uniform(0,2*math.pi); ex,ey=x+math.cos(a)*20,y+math.sin(a)*10
+        d.line([x+math.cos(a)*12,y+math.sin(a)*6,ex,ey],fill=(232,228,216) if i!=1 else (64,64,70),width=2)
+        d.rectangle([ex-2,ey-2,ex+2,ey+1],fill=(232,192,160) if i!=1 else (24,20,20),outline=INK)
+    for k in range(3): spark(d,int(x+rr.randint(-20,20)),int(y+rr.randint(-14,4)),2,(255,230,90))
+    word=("POW!","BONK!","WHAM!")[(f//8)%3]; text(d,word,int(x-8+rr.randint(-14,14)),int(y-18),(255,230,90))
+
+def closeup_myself(t,f):
+    """Primer plano: his own fist coming at his own face, eyes wide — WHY AM I HITTING MYSELF?"""
+    im=Image.new('RGB',(W,H),(30,24,20)); d=ImageDraw.Draw(im)
+    g=Image.new('L',(W,H),0); ImageDraw.Draw(g).ellipse([-30,-30,110,90],fill=90); im.paste((255,210,150),(0,0),g.filter(ImageFilter.GaussianBlur(10))); d=ImageDraw.Draw(im)
+    d.rectangle([4,6,66,H+4],fill=CPAL['s'],outline=INK); d.rectangle([60,6,66,H],fill=(200,156,124))
+    d.rectangle([4,0,66,9],fill=CPAL['h'],outline=INK)
+    for ex in (16,40): d.ellipse([ex,16,ex+12,30],fill=(250,248,240),outline=INK); d.rectangle([ex+5,21,ex+7,25],fill=INK)   # eyes wide
+    d.ellipse([28,34,40,42],fill=(90,30,30),outline=INK)             # the mouth, open
+    k=(f//4)%2                                                       # the uppercut, again and again
+    fy=lerp(H+20,46,ease(min(1,t/0.2)))+(0 if k else 8)
+    if fy+10<H+10: d.rectangle([26,fy+10,44,H+10],fill=CPAL['j'],outline=INK)   # his own sleeve, from below
+    d.rounded_rectangle([24,fy-2,46,fy+12],radius=4,fill=CPAL['s'],outline=INK)
+    for j in range(3): d.line([28+j*5,fy-2,28+j*5,fy+4],fill=(180,130,100))
+    if not k and t>0.2: spark(d,35,int(fy-4),4,(255,230,90))
+    if t>=0.1:
+        big_text(im,"WHY AM I",8,(236,232,220),scale=2,cx=126,shadow=INK)
+        big_text(im,"HITTING",26,(236,232,220),scale=2,cx=126,shadow=INK)
+        big_text(im,"MYSELF?",44,(255,230,90),scale=2,cx=126,shadow=INK)
+    if t<0.04: zoom_lines(d,(255,214,150))
+    return im
+
+def clip_firstrule(f):
+    s=scene(f,THEME)
+    if 366<=f<426: s['image']=closeup_myself((f-366)/60,f); return s
+    s['under']+=[('fc_crowd','back'),('fc_light',)]
+    g=guard_pose(f); pose='guard' if g=='guard' else 'guard2'
+    cx,tx,tpose,talpha=CX,None,'guard',1.0
+    # the signs: each one drops, he reads it out loud... and it crosses itself out
+    for i,(a,b,lines) in enumerate(RULES):
+        if a<=f<b:
+            t=f-a
+            y=lerp(-30,4,ease(min(1,t/10)))+(2*math.sin(t*0.9)*max(0,1-(t-10)/10) if t>=10 else 0)
+            if t>=b-a-8: y=lerp(4,-34,(t-(b-a-8))/8)
+            cross=0 if i==2 else max(0,min(1,(t-30)/12))
+            s['under'].append(('fc_sign',lines,y,cross,i==2 and t>=24))
+            if i<2 and 12<=t<30: s['fx'].append(('fc_bubble',lines[0]+" "+lines[1].split(' ')[0]+"..." if i==0 else "ISN'T THAT RULE 1?",56,18,cx+2))
+            if i<2 and 30<=t<b-a-4: pose='self'; s['fx'].append(('dmg',"BZZT!",SIGN_X-10,34,BLOOD))     # a hand over his mouth
+            if i==2 and 24<=t<b-a: s['fx'].append(('fc_bubble',"...ME?",cx-14,18,cx+2))
+    # Tyler: HIT ME AS HARD AS YOU CAN. — and the ear
+    if 204<=f<350:
+        tx=lerp(W+14,TX,ease((f-204)/14))
+        if 210<=f<266: s['fx'].append(('fc_bubble',["HIT ME AS HARD","AS YOU CAN."],TX,8,TX-2))
+        if 262<=f<270: pose='hook'; cx+=3
+        if 266<=f<314:
+            tpose='hurt' if f<290 else 'self'                         # a hand to his ear
+            if f<268: s['shake']=rshake(1)
+            s['fx'].append(('fc_bubble',["OW! IN THE","EAR, MAN?"],TX,8,TX-2))
+    # the brawl: a cloud with everything in it
+    if 314<=f<350:
+        tx=None; cx=None; s['fx'].append(('fc_brawl',(CX+TX)//2,GROUND-12))
+    # the dust clears: only him, punching himself
+    if 350<=f<366: tx=None; cx=CX; pose='self' if (f//4)%2 else 'hurt'
+    if 426<=f<468:
+        pose='hurt' if f<440 else pose; s['fx'].append(('dizzy',CX+1,GROUND-24))
+        if 432<=f<466:                                               # Tyler, there all along (or not)
+            tx,tpose,talpha=TX,'guard',min(1,(f-432)/6)*max(0,min(1,(466-f)/6))
+            s['fx'].append(('fc_bubble',"FIRST RULE.",TX,8,TX-2))
+    acts=[]
+    if tx is not None: acts.append(actor(build(TYLER,tpose),tx,flip=True,pal=TPAL,alpha=talpha))
+    if cx is not None: acts.append(actor(build(NARRATOR,pose),cx,pal=CPAL))
+    s['actors']=acts
+    s['fx'].append(('fc_crowd','front'))
+    return s
+
+CLIPS = [clip('rules', N_, clip_rules), clip('firstrule', N_FIRST, clip_firstrule)]
