@@ -8,7 +8,7 @@ from engine import *
 from themes.arg import PLAYER, CELESTE, WHITE                       # same country: the generic people
 
 THEME = 'arg-mate'
-N_ = 366
+N_ = 360                                                            # a multiple of 12 (the guard pose), 60 (the flag) and 15 (the steam)
 CX = 30                                                             # Claude on his stool
 FRIENDS = [(78,{'j':(200,70,60),'J':(200,70,60),'s':(226,184,150),'h':(60,40,30),'p':(60,80,140),'k':(40,30,26)}),
            (118,{'j':(70,140,90),'J':(70,140,90),'s':(196,140,104),'h':(30,24,22),'p':(50,50,60),'k':(40,30,26)}),
@@ -50,11 +50,11 @@ def _fx_flag(d,im,e,f):
     x0,y0,w,h=10,14,30,18
     d.line([x0-1,y0-2,x0-1,y0+h+4],fill=(120,100,80))
     for x in range(w):
-        dy=int(round(1.5*math.sin(2*math.pi*(f/61)-x*0.35)*(x/w)))
+        dy=int(round(1.5*math.sin(2*math.pi*(f/60)-x*0.35)*(x/w)))
         for y in range(h):
             c=CELESTE if y<h//3 or y>=2*h//3 else WHITE
             d.point((x0+x,y0+y+dy),fill=c)
-    sx,sy=x0+w//2,y0+h//2+int(round(1.5*math.sin(2*math.pi*(f/61)-(w//2)*0.35)*0.5))
+    sx,sy=x0+w//2,y0+h//2+int(round(1.5*math.sin(2*math.pi*(f/60)-(w//2)*0.35)*0.5))
     for k in range(8): a=k*math.pi/4; d.line([sx,sy,sx+math.cos(a)*3,sy+math.sin(a)*3],fill=GOLD)
     d.ellipse([sx-1,sy-1,sx+1,sy+1],fill=GOLD); d.point((sx,sy),fill=(200,140,30))
 
