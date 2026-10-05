@@ -82,12 +82,7 @@ def _fx_legs(d,im,e,f):
 
 @fx('av_bubble')
 def _fx_bubble(d,im,e,f):
-    _,lines,cx,y,tail=e; lines=[lines] if isinstance(lines,str) else lines
-    w=max(len(l) for l in lines)*4+7; h=len(lines)*7+4; x=max(1,min(W-w-2,int(cx-w/2)))
-    d.rectangle([x,y,x+w,y+h],fill=(255,255,255),outline=INK,width=1)
-    tx=max(x+4,min(x+w-4,int(tail))); d.polygon([(tx-2,y+h),(tx+2,y+h),(int(tail),y+h+5)],fill=(255,255,255),outline=INK)
-    d.line([tx-1,y+h,tx+1,y+h],fill=(255,255,255))
-    for i,l in enumerate(lines): text(d,l,x+4,y+3+i*7,INK,shadow=None)
+    speech_bubble(d,*e[1:],fill=(255,255,255),ink=INK)                     # the engine's bubble (engine/people.py)
 
 # ---- close-up -------------------------------------------------------------------------------------------
 def carlitox_face(d,ox):

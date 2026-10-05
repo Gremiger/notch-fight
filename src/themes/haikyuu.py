@@ -36,11 +36,7 @@ def _legs(kind,t,L):
     if kind=='jump': return -2-round(3*fr), 1-round(3*fr)
     return -2, 1
 
-def _line(g,x0,y0,x1,y1,c,first=None):
-    n=max(abs(x1-x0),abs(y1-y0),1)
-    for i in range(n+1):
-        x=round(x0+(x1-x0)*i/n); y=round(y0+(y1-y0)*i/n)
-        if 0<=x<GW and 0<=y<GH: g[y][x]=first if (first and i==0) else c
+_line = seg                                                          # the engine's (engine/people.py)
 
 _built={}
 def build(who,arms='down',legs='stand',shut=False):
@@ -87,13 +83,6 @@ K_USHIJIMA = _kit((96,84,52),WHITE,PURPLE,PURPLE,PURPLE,skin=(226,184,150))
 K_TENDOU   = _kit((214,40,40),WHITE,PURPLE,PURPLE,PURPLE)
 K_SERVER   = _kit((70,50,36),WHITE,PURPLE,PURPLE,PURPLE,skin=(226,184,150))
 
-_small={}
-def shrink(spr,k=0.8):
-    key=tuple(spr)
-    if key not in _small:
-        h,w=len(spr),len(spr[0]); nh,nw=round(h*k),round(w*k)
-        _small[key]=S([''.join(spr[min(h-1,int(y/k))][min(w-1,int(x/k))] for x in range(nw)) for y in range(nh)])
-    return _small[key]
 
 # ---- the gym ------------------------------------------------------------------------------------------
 def _quad(d,wx0,wx1,z0,z1,c):
@@ -181,9 +170,7 @@ def _fx_score(d,im,e,f):
 
 @fx('hq_bubble')
 def _fx_bubble(d,im,e,f):
-    _,txt,cx,y=e; w=len(txt)*4+5; x=max(1,min(W-w-2,int(cx-w/2))); tx=max(x+3,min(x+w-3,int(cx)))
-    d.rectangle([x,y,x+w,y+9],fill=(250,250,250),outline=(30,30,30)); d.polygon([(tx-2,y+9),(tx+2,y+9),(tx+1,y+13)],fill=(250,250,250))
-    text(d,txt,x+3,y+2,(30,30,30),shadow=None)
+    speech_bubble(d,*e[1:],fill=(250,250,250),ink=(30,30,30))                     # the engine's bubble (engine/people.py)
 
 # ---- close-up: from behind him, up there -------------------------------------------------------------
 def closeup_top(t,f):
