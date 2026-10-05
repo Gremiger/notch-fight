@@ -11,13 +11,13 @@ final class App: NSObject, NSApplicationDelegate {
     var win: NotchPanel!
     let art = CALayer()
     // Clips are grouped by theme (dir name "<theme>__<clip>"). Clips of one theme share a
-    // loop keyframe and chain seamlessly; switching theme plays transitions/<from>__<to>.
+    // loop keyframe and chain seamlessly; switching theme plays transitions/<from>__out, then <to>__in.
     // Frames load lazily: only the directory names are read at launch (tens of thousands of PNGs
     // would delay the drop by seconds); a clip's frames are read when it is queued, and a background
     // pass warms the cache for the clips.
     var clipDirs: [String: URL] = [:]               // "<theme>__<clip>" -> frames directory
     var allowed: [String] = []                      // the clips in the rotation (config selection)
-    var transDirs: [String: URL] = [:]              // "<from>__<to>" -> frames directory
+    var transDirs: [String: URL] = [:]              // "<theme>__out" / "<theme>__in" -> frames directory
     var cache: [String: [CGImage]] = [:]            // "c:<clip>" / "t:<transition>" -> frames
     var queue: [[CGImage]] = []
     var theme = ""
@@ -131,7 +131,7 @@ final class App: NSObject, NSApplicationDelegate {
         preload()
     }
 
-    // Warm the cache with every clip in the background (transitions stay on demand: they are many and short).
+    // Warm the cache with every clip in the background (transitions stay on demand: they are short).
     func preload() {
         let todo = clipDirs.filter { cache["c:" + $0.key] == nil }
         DispatchQueue.global(qos: .utility).async {
@@ -301,8 +301,10 @@ final class App: NSObject, NSApplicationDelegate {
 
     func enqueue(_ name: String) {
         guard let clipFrames = frames("c:" + name, clipDirs[name]) else { return }
-        let t = themeOf(name), tk = "\(theme)__\(t)"
-        if !theme.isEmpty && t != theme, let tr = frames("t:" + tk, transDirs[tk]) { queue.append(tr) }
+        let t = themeOf(name)
+        if !theme.isEmpty && t != theme {                             // the iris closes on this theme, opens on the next
+            for tk in ["\(theme)__out", "\(t)__in"] { if let tr = frames("t:" + tk, transDirs[tk]) { queue.append(tr) } }
+        }
         visitCount = (t == theme) ? visitCount + 1 : 1
         theme = t; lastPlayed = name
         remaining.removeAll { $0 == name }

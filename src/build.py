@@ -1,13 +1,15 @@
 """Renders every clip of every theme + all theme-to-theme transitions into the cwd:
-clips/<theme>__<clip>/NNN.png, transitions/<a>__<b>/NNN.png, sheet_<theme>_<clip>.png.
+clips/<theme>__<clip>/NNN.png, transitions/<theme>__out|in/NNN.png, sheet_<theme>_<clip>.png.
 
-ONLY=<theme|theme__clip>[,...] renders just those clips and the transitions to and from their themes,
-leaving the rest of the cwd as it is (it needs a full build first). Either way `.built` lists the clips
+A transition is per theme: the iris closing on the theme being left (<theme>__out), then opening on the
+next one (<theme>__in); both come from the theme's keyframe (its first clip's first frame).
+ONLY=<theme|theme__clip>[,...] renders just those clips and, when a theme's first clip is among them, that
+theme's two halves, leaving the rest of the cwd as it is (it needs a full build first). Either way `.built` lists the clips
 rendered by this run (build.sh makes GIFs for those)."""
 import os, random, shutil, sys, zlib
 from engine import *
 from themes import load_themes
-from transitions import transition
+from transitions import iris_out, iris_in
 
 def selected(themes, only):
     """(theme, clip) pairs named by ONLY; exits listing the known names on a typo."""
@@ -41,16 +43,12 @@ if __name__=='__main__':
     for theme,(name,n,frame_fn,off) in todo:
         fr=render_clip(theme,name,n,frame_fn,off)
         if name==THEMES[theme][0][0]: first[theme]=fr          # a theme's keyframe: its first clip's first frame
-    rebuilt={t for t,_ in todo}
-    for theme,items in THEMES.items():                           # the other themes' keyframes, from the last build
-        if theme not in first:
-            path=f'clips/{theme}__{items[0][0]}/000.png'
-            if not os.path.exists(path): sys.exit(f'{path} is missing: run a full build first (./build.sh)')
-            first[theme]=Image.open(path).convert('RGB')
-    for a in first:
-        for b in first:
-            if a==b or not ({a,b}&rebuilt): continue
-            dd=f'transitions/{a}__{b}'; shutil.rmtree(dd,ignore_errors=True); os.makedirs(dd)
-            for i,fr in enumerate(transition(first[a],first[b])): fr.save(f'{dd}/{i:03d}.png')
+    os.makedirs('transitions',exist_ok=True)
+    for dd in os.listdir('transitions'):                         # the old per-pair transitions, gone
+        if not dd.endswith(('__out','__in')): shutil.rmtree(f'transitions/{dd}',ignore_errors=True)
+    for theme,img in first.items():
+        for half,frames in (('out',iris_out(img)),('in',iris_in(img))):
+            dd=f'transitions/{theme}__{half}'; shutil.rmtree(dd,ignore_errors=True); os.makedirs(dd)
+            for i,fr in enumerate(frames): fr.save(f'{dd}/{i:03d}.png')
     open('.built','w').write('\n'.join(f'{t}__{c[0]}' for t,c in todo)+'\n')
     print('transitions ok')
