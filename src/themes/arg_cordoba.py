@@ -1,5 +1,5 @@
 """Argentina sub-theme "arg-cordoba": a cuarteto dance in Córdoba, at night, no fight. The hall under
-spinning coloured lights, the band up on the stage (the singer at the mic, the keyboard, the congas), the
+spinning coloured lights, the band up on the stage (La Mona Jiménez himself at the front — the curly mane, bare-chested — the keyboard, the congas), the
 dancers going round the floor in the ronda (in 2.5D: the circle has depth, the far side smaller, everyone
 sorted front to back), the shoulders going. Claude at the bar in Belgrano's sky blue, the 2.25 l Coca
 bottle cut in half on the counter (the bottom half: the waist, the five-lobed base), the fernet beside it.
@@ -11,8 +11,8 @@ from engine import *
 
 THEME = 'arg-cordoba'
 N_ = 480                                                            # a multiple of 12, 96 (the lights), 240 (the ronda)
-CX, BAR, TOPY = 52, 40, 45                                          # Claude by the bar; the counter's end and top
-VX, VY = 30, 45                                                     # the cut bottle on the counter (its base)
+CX, BAR, TOPY = 50, 40, 50                                          # Claude by the bar; the counter's end and top
+VX, VY = 30, 50                                                     # the cut bottle on the counter (its base)
 RC, RX, RY = (124,51), 50, 8                                        # the ronda: centre, radii
 INK = (14,10,16)
 COCA, FOAM, FERNET = (52,22,14), (214,170,120), (26,14,10)
@@ -25,6 +25,7 @@ POSES = {   # pose -> (back elbow, back hand, front elbow, front hand, lean, leg
  'dance1':((-4,2),(-3,-1),(4,2),(3,-1),1,'stance'),
  'dance2':((-4,2),(-3,-1),(4,2),(3,-1),-1,'stand'),
  'reach': ((-1,3),(-1,6),(4,1),(7,-1),1,'stand'),
+ 'pour':  ((-1,3),(-1,6),(4,-3),(6,-9),1,'stand'),
  'up':    ((-4,2),(-3,-1),(3,-1),(3,-6),0,'stand'),
  'updance':((-4,2),(-3,-1),(3,-1),(3,-6),1,'stance'),
  'drink': ((-1,3),(-1,6),(4,0),(2,-3),-2,'stand'),
@@ -66,6 +67,7 @@ def build(who,pose):
             c='j'
             if who.get('stripes') and (x-o)%2: c='J'                   # Talleres: blue and white stripes
             if y==HIP and not who.get('skirt'): c='b'
+            if who.get('bare') and y<HIP-1: c='s' if not (y==TY+2 and (x-o) in (C-2,C+1)) else 'n'   # bare chest
             _put(g,x,y,c)
     o=sh(HY)
     for y in range(HY,HY+5):
@@ -73,7 +75,7 @@ def build(who,pose):
     _put(g,C+o,HY+2,'K'); _put(g,C+2+o,HY+2,'K'); _put(g,C+1+o,HY+4,'m')
     for i,row in enumerate(who['hair']):
         for j,ch in enumerate(row):
-            if ch!='.': _put(g,C-3+o+j,HY-2+i,ch)
+            if ch!='.': _put(g,C+who.get('hx',-3)+o+j,HY-who.get('hy',2)+i,ch)
     arm(fe,fh,True)
     _built[key]=S([''.join(r) for r in g]); return _built[key]
 
@@ -96,7 +98,8 @@ DANCERS = [   # (who, palette): the ronda, couple by couple
  (dict(name='d8',hair=SHORT,stripes=True,sleeves=True),{'s':(230,186,150),'K':INK,'m':(150,70,60),'h':(90,60,30),'j':(30,50,120),'J':(240,240,240),'b':(30,30,40),'p':(40,44,60),'k':(30,26,22)}),
 ]
 BAND = [(dict(name='keys',hair=SHORT,sleeves=True),{'s':(214,170,130),'K':INK,'m':(150,70,60),'h':(20,16,14),'j':(30,30,36),'b':(20,20,24),'p':(30,30,36),'k':(20,20,24)}),
-        (dict(name='singer',hair=["..hhh..",".hhhhh.","hhhhhhh","hh...hh"],sleeves=True),{'s':(220,176,140),'K':INK,'m':(150,70,60),'h':(30,22,18),'j':(200,40,60),'b':(20,20,24),'p':(30,30,36),'k':(20,20,24)}),
+        (dict(name='mona',bare=True,hx=-5,hy=4,hair=["..h.h.h.h..",".hhhhhhhhh.","hhhhhhhhhhh","hhhhhhhhhhh","hhh.....hhh","hh.......hh","hh.......hh","hhh.....hhh",".hh.....hh."]),   # La Mona Jiménez
+         {'s':(214,160,120),'n':(150,90,60),'K':INK,'m':(120,50,40),'h':(26,20,18),'j':(214,160,120),'b':(240,240,240),'p':(20,20,24),'k':(20,20,24)}),
         (dict(name='perc',hair=SHORT),{'s':(200,150,110),'K':INK,'m':(150,70,60),'h':(40,30,24),'j':(240,240,240),'b':(20,20,24),'p':(30,30,36),'k':(20,20,24)})]
 
 _small={}
@@ -112,7 +115,6 @@ def _hall(d):
     d.rectangle([0,0,W,H],fill=(24,16,34))
     d.rectangle([86,0,184,30],fill=(34,22,46))                       # the stage, with the band's backdrop
     for x in range(88,184,6): d.point((x,1),fill=(255,230,150))      # the bulbs along the top
-    text(d,"CUARTETO",60,2,(255,210,90),shadow=None)
     d.rectangle([84,30,184,34],fill=(80,50,40)); d.line([84,30,184,30],fill=(140,100,70))
     d.rectangle([0,34,W,H],fill=(54,40,40))                          # the floor
     for y in (40,47,55): d.line([0,y,W,y],fill=(64,48,46))
@@ -123,6 +125,15 @@ def _hall(d):
     d.rectangle([0,TOPY+2,BAR,TOPY+3],fill=(70,42,26)); d.line([0,TOPY,BAR,TOPY],fill=(150,100,60))
     for x in range(4,BAR,9): d.rectangle([x,TOPY+6,x+5,H],outline=(80,50,30))
 register_bg(THEME, lambda v: (v+40,v+30,v+50), decor=_hall)
+
+@fx('co_sign')
+def _fx_sign(d,im,e,f):
+    """The sign over the band: CUAR - TE - TO, one syllable to each beat, then all three together."""
+    beat=(f//8)%4
+    for i,(syl,cx) in enumerate((("CUAR",40),("-",62),("TE",76),("-",90),("TO",104))):
+        k=i//2 if i%2==0 else None
+        on=(k is not None and (beat==k or beat==3)) or (k is None and beat==3)
+        big_text(im,syl,3 if syl!='-' else 6,(255,220,90) if on else (90,70,40),scale=2 if syl!='-' else 1,cx=cx,shadow=None)
 
 @fx('co_lights')
 def _fx_lights(d,im,e,f):
@@ -186,18 +197,20 @@ def _fx_vessel(d,im,e,f):
 
 @fx('co_bottle')
 def _fx_bottle(d,im,e,f):
-    """A bottle in a hand, tilted (a: 0 upright .. 1 pouring), and its stream down to (sx,sy)."""
-    _,kind,x,y,a,stream=e
+    """A bottle standing on the bar (hand None), or held up and tipped: its mouth at (x,y) over the cut
+    bottle, the body back up towards the hand, and the stream falling straight in to (x,sy)."""
+    _,kind,x,y,hand,sy=e
     body=(26,20,16) if kind=='fernet' else COCA
     label=(240,230,200) if kind=='fernet' else (220,30,40)
-    ang=-a*2.0; ca,sa=math.cos(ang),math.sin(ang)
-    P=lambda u,v: (x+u*ca-v*sa, y+u*sa+v*ca)
-    d.polygon([P(-3,0),P(3,0),P(3,-10),P(1,-13),P(1,-15),P(-1,-15),P(-1,-13),P(-3,-10)],fill=body,outline=INK)
-    d.polygon([P(-3,-3),P(3,-3),P(3,-7),P(-3,-7)],fill=label)
-    if kind!='fernet': d.line([P(-2,-5),P(2,-5)],fill=(255,255,255))
-    if stream:
-        mx,my=P(0,-15); sx,sy=stream
-        d.line([mx,my,sx,sy],fill=(60,30,18) if kind!='fernet' else (30,16,10),width=1)
+    if hand is None: ca,sa,ox,oy=0.0,-1.0,x,y-15                    # upright: mouth at the top
+    else:
+        hx,hy=hand; L=math.hypot(hx-x,hy-y) or 1; ca,sa=(hx-x)/L,(hy-y)/L; ox,oy=x,y
+    P=lambda u,v: (ox+u*ca-v*sa, oy+u*sa+v*ca)                       # u: from the mouth back to the base
+    d.polygon([P(0,-1),P(3,-1),P(5,-3),P(15,-3),P(15,3),P(5,3),P(3,1),P(0,1)],fill=body,outline=INK)
+    d.polygon([P(8,-3),P(12,-3),P(12,3),P(8,3)],fill=label)
+    if kind!='fernet': d.line([P(10,-2),P(10,2)],fill=(255,255,255))
+    if hand is not None and sy is not None:
+        d.line([x,y+1,x,sy],fill=(60,30,18) if kind!='fernet' else (30,16,10),width=1)
 
 @fx('co_ice')
 def _fx_ice(d,im,e,f):
@@ -231,7 +244,7 @@ def closeup_fernet(t,f):
     if t>=0.1:
         big_text(im,"FERNET",8,(250,240,220),scale=2,cx=146,shadow=INK)
         big_text(im,"CON COCA",26,(220,30,40),scale=2,cx=146,shadow=INK)
-    if t>=0.6: text(d,"NI UNA GOTA AFUERA",110,48,(250,240,220))
+    if t>=0.6: big_text(im,"RICASO CULIAO",46,(250,240,220),scale=1,cx=146,shadow=INK)
     if t<0.04: zoom_lines(d,FOAM)
     return im
 
@@ -242,7 +255,7 @@ def ronda_pos(a):
 def clip_fernet(f):
     s=scene(f,THEME)
     if 140<=f<220: s['image']=closeup_fernet((f-140)/80,f); return s
-    s['under'].append(('co_lights',))
+    s['under']+=[('co_lights',),('co_sign',)]
     figs=[]                                                          # (y, actor)
     # the ronda, couple by couple, going round (one turn per 240 frames)
     for i,(who,pal) in enumerate(DANCERS):
@@ -252,7 +265,8 @@ def clip_fernet(f):
         spr=build(who,pose); figs.append((y,actor(shrink(spr) if far else spr,x,y,flip=math.sin(a)>0,pal=pal)))
     for k,(x,(who,pal)) in enumerate(zip((110,144,170),BAND)):        # the band, up on the stage
         pose='dance1' if (f//8+k)%2 else 'dance2'
-        if who['name']=='singer': pose='up' if (f//12)%2 else 'stand'
+        if who['name']=='mona':                                      # La Mona, front and centre, full size
+            pose='up' if (f//12)%2 else 'dance1'; figs.append((31,actor(build(who,pose),x,31,pal=pal))); continue
         figs.append((30,actor(shrink(build(who,pose)),x,30,flip=k==2,pal=pal)))
     # Claude: ice, fernet, Coca; then up, the ronda, down it in one, back to the bar
     cx,cy,pose,flip=CX,GROUND,'stand',True
@@ -263,14 +277,14 @@ def clip_fernet(f):
         if t0<=f<t0+5: s['fx'].append(('co_ice',VX+(k%3-1)*2,lerp(VY-16,VY-6,(f-t0)/5)))
         if f>=t0+5 and f<440: ice=k+1
     if 34<=f<78:
-        pose='reach'; level=0.34*max(0,min(1,(f-40)/30))
-        hx,hy=hand_xy(cx,cy,'reach',True)
-        s['fx'].append(('co_bottle','fernet',hx,hy,min(1,(f-34)/6)*(1 if f<72 else (78-f)/6),(VX,VY-10*level-2) if 40<=f<72 else None))
+        pose='pour'; level=0.34*max(0,min(1,(f-40)/30))
+        hx,hy=hand_xy(cx,cy,'pour',True)
+        s['fx'].append(('co_bottle','fernet',VX+1,VY-12,(hx,hy),VY-10*level-1 if 40<=f<72 else None))
     if f>=78 and f<236: level=0.34
     if 78<=f<140:
-        pose='reach'; t=max(0,min(1,(f-84)/52)); level=lerp(0.34,0.62,t); foam=0.1*t
-        hx,hy=hand_xy(cx,cy,'reach',True)
-        s['fx'].append(('co_bottle','coca',hx,hy,min(1,(f-78)/6),(VX,VY-10*(level+foam)-2) if f>=84 else None))
+        pose='pour'; t=max(0,min(1,(f-84)/52)); level=lerp(0.34,0.62,t); foam=0.1*t
+        hx,hy=hand_xy(cx,cy,'pour',True)
+        s['fx'].append(('co_bottle','coca',VX+1,VY-12,(hx,hy),VY-10*(level+foam)-1 if f>=84 else None))
     if 220<=f<380: level,foam=0.7,0.25
     if 220<=f<236: pose='up'; held=True
     if 236<=f<260:
@@ -291,8 +305,8 @@ def clip_fernet(f):
         hx,hy=hand_xy(cx,cy,pose,flip)
         s['fx'].append(('co_vessel',hx,hy+5 if pose!='drink' else hy+3,level,foam,ice))
     else: s['fx'].append(('co_vessel',VX,VY,level,foam,ice))
-    s['fx'].append(('co_bottle','fernet',12,TOPY,0,None)) if not 34<=f<78 else None
-    s['fx'].append(('co_bottle','coca',20,TOPY,0,None)) if not 78<=f<140 else None
+    s['fx'].append(('co_bottle','fernet',12,TOPY,None,None)) if not 34<=f<78 else None
+    s['fx'].append(('co_bottle','coca',20,TOPY,None,None)) if not 78<=f<140 else None
     return s
 
 CLIPS = [clip('fernet', N_, clip_fernet)]
