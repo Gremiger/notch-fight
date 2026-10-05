@@ -44,7 +44,8 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
 
 Each theme has its own neutral pose (the "loop keyframe"). Every clip of a theme starts and
 ends on it. Switching theme plays a
-pre-rendered asterisk-iris transition (`transitions/<from>__<to>`).
+pre-rendered asterisk-iris transition: the iris closes on the theme being left (`transitions/<from>__out`)
+and opens on the next one (`transitions/<to>__in`), two halves per theme rather than one per pair.
 
 | Theme | Claude as | Opponent | Clips |
 |---|---|---|---|

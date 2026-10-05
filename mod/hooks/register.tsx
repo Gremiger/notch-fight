@@ -97,9 +97,11 @@ async function itemOf($: EngineInterface, dir: string, name: string): Promise<It
 
 async function enqueue($: EngineInterface, name: string) {
   const t = themeOf(name)
-  if (theme && t !== theme) {
-    const tr = await itemOf($, `${root}/build/transitions/${theme}__${t}`, `t_${theme}__${t}`)
-    if (tr) queue.push(tr)
+  if (theme && t !== theme) {                             // the iris closes on this theme, opens on the next
+    for (const half of [`${theme}__out`, `${t}__in`]) {
+      const tr = await itemOf($, `${root}/build/transitions/${half}`, `t_${half}`)
+      if (tr) queue.push(tr)
+    }
   }
   const clip = await itemOf($, `${root}/build/clips/${name}`, name)
   if (clip) queue.push(clip)
