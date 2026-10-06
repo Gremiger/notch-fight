@@ -48,4 +48,9 @@
   (`@fx('name')`) live in that file; only move something to `src/engine/` when a second theme needs it.
   Effect names are global — registering one twice fails loudly.
 - A refactor that should not change visuals must keep the rendered frames pixel-identical:
-  diff `build/clips` and `build/transitions` against a copy taken before the change.
+  `tests/test_snapshots.py` checks every clip against `tests/snapshots.txt` and names the ones that
+  changed. When a change is meant (a new clip, a better sprite), record it with
+  `python3 tests/test_snapshots.py --update` and commit `tests/snapshots.txt` with it.
+- Every clip's frame N must be its frame 0 (`tests/test_loops.py`): whatever moves in the neutral pose
+  needs a period that divides the clip's length.
+- To look at frames while making a clip: `python3 scripts/sheet.py <theme> [clip] [frames]` (no build).
