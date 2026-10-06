@@ -52,5 +52,6 @@
   changed. When a change is meant (a new clip, a better sprite), record it with
   `python3 tests/test_snapshots.py --update` and commit `tests/snapshots.txt` with it.
 - Every clip's frame N must be its frame 0 (`tests/test_loops.py`): whatever moves in the neutral pose
-  needs a period that divides the clip's length.
+  needs a period that divides the clip's length. Use `engine/loop.py` (`loop.frame`, `loop.wave`,
+  `loop.period`, `loop.rng`) and the ambient effects in `engine/ambient.py` rather than raw `f`.
 - To look at frames while making a clip: `python3 scripts/sheet.py <theme> [clip] [frames]` (no build).
