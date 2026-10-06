@@ -12,9 +12,9 @@ from engine import W, H, hold, wrap, fit, cue   # noqa: E402
 
 class Director(unittest.TestCase):
     def test_hold_follows_the_rule(self):
-        self.assertEqual(hold('DON!'), 30)                              # never under 1.5 s
-        self.assertEqual(hold('A B C D E F'), 56)                       # 1 s + 6 x 0.3 s = 2.8 s
-        self.assertTrue(cue(10, 10, 'HEY') and cue(39, 10, 'HEY') and not cue(40, 10, 'HEY'))
+        self.assertEqual(hold('DON!'), 20)                              # never under 1 s
+        self.assertEqual(hold('A B C D E F'), 34)                       # 0.5 s + 6 x 0.2 s = 1.7 s
+        self.assertTrue(cue(10, 10, 'HEY') and cue(29, 10, 'HEY') and not cue(30, 10, 'HEY'))
 
     def test_wrap_fits_and_keeps_lines_even(self):
         lines = wrap('YOU WERE TRYING TO CROSS THE BORDER, RIGHT?', 100)
@@ -32,7 +32,7 @@ class Rules(unittest.TestCase):
     def test_a_short_line_is_flagged_and_a_long_enough_one_is_not(self):
         texts = [[('SAY MY NAME', 10, 10, 50, 14)] if f < 10 else [] for f in range(60)]
         self.assertEqual([p[0] for p in self.problems(texts)], ['short'])
-        texts = [[('SAY MY NAME', 10, 10, 50, 14)] if f < 40 else [] for f in range(60)]
+        texts = [[('SAY MY NAME', 10, 10, 50, 14)] if f < 25 else [] for f in range(60)]
         self.assertEqual(self.problems(texts), [])
 
     def test_a_blink_a_scoreboard_and_a_typed_line_count_as_one_showing(self):

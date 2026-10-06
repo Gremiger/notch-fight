@@ -1,7 +1,7 @@
 """The text director: how long a line stays up, how it breaks into lines, how big it can be in a box,
 and a close-up template, so a theme says what's written and where, and the rest follows the rules:
 
-- hold(txt): the frames a text needs on screen: at least 1 s + 0.3 s a word, never under 1.5 s.
+- hold(txt): the frames a text needs on screen: 0.5 s + 0.2 s a word, never under 1 s.
 - cue(f, start, txt): is it up at frame f (from start, for hold(txt) frames)?
 - wrap(txt, width, scale): the text broken into lines that fit width pixels at that scale.
 - text_block(im, txt, box): the text drawn as big as fits in box (x0, y0, x1, y1), centred, wrapped.
@@ -14,10 +14,11 @@ from .closeup import zoom_lines
 from .fx import fx
 
 FPS = 20
+READ_BASE, READ_WORD, READ_MIN = 0.5, 0.2, 1.0                     # seconds: to read a line, a word more, at least
 
 def hold(txt, fps=FPS):
-    """The frames txt needs on screen to be read: 1 s + 0.3 s a word, and at least 1.5 s."""
-    return int(math.ceil(max(1.5, 1 + 0.3 * len(txt.split())) * fps))
+    """The frames txt needs on screen to be read: 0.5 s + 0.2 s a word, and at least 1 s."""
+    return int(math.ceil(max(READ_MIN, READ_BASE + READ_WORD * len(txt.split())) * fps))
 
 def cue(f, start, txt, extra=0):
     """True while txt, shown from frame start, is up (hold(txt) frames, plus extra)."""

@@ -3,8 +3,8 @@
 - loop: frame N must be frame 0 (whatever moves needs a period that divides the clip; engine/loop.py)
 - neutral: a theme's clips all start on the same frame
 - font: every character written is in the font
-- text: every line of two or more words stays up long enough to read (engine/director.py hold(): 1 s +
-  0.3 s a word, at least 1.5 s; a blink of a few frames, or a line typed out letter by letter, counts as
+- text: every line of two or more words stays up long enough to read (engine/director.py hold(): 0.5 s +
+  0.2 s a word, at least 1 s; a blink of a few frames, or a line typed out letter by letter, counts as
   one showing), and nothing that stays put is cut off by the panel's edge
 
     python3 scripts/check.py [theme ...]          (every theme when none is named; nf check does the same)

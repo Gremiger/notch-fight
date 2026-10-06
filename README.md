@@ -374,8 +374,8 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
   / `loop.phase(f, p)` / `loop.period(p)` for smooth motion (periods that divide the clip), `loop.rng(f)`.
   Ready-made ambient effects that already do: `rain`, `snow`, `ash`, `embers`, `fireflies`, `fog`,
   `torch`, `stars`, `flashes` (options in a dict: `s['under'].append(('rain', {'dens': 0.7}))`).
-- **Text, the easy way** (`engine/director.py`): `hold(txt)` is how many frames a line needs (1 s + 0.3 s
-  a word, at least 1.5 s), `cue(f, start, txt)` whether it's up; `text_block(im, txt, box)` draws it as
+- **Text, the easy way** (`engine/director.py`): `hold(txt)` is how many frames a line needs (0.5 s + 0.2 s
+  a word, at least 1 s), `cue(f, start, txt)` whether it's up; `text_block(im, txt, box)` draws it as
   big as fits in a box, wrapped into even lines; the `caption` effect does the same; and
   `closeup(t, f, bg, draw, txt)` makes a close-up frame (background, your drawing, the text, zoom lines).
 - **Check it:** `nf check <theme>` (or `python3 scripts/check.py <theme>`) renders the theme and lists
