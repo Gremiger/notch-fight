@@ -13,6 +13,8 @@
     nf click [close|next]          what a click on the panel does: close it (default) or skip to the next clip
                                    (with "next", a double click closes it)
     nf menu [on|off]               a menu bar icon with all of this (starts at login)
+    nf resident [on|off]           keep the app up, hidden, between prompts so it shows at once (on, the
+                                   default; "on" also starts it at login), or quit it each time (off)
     nf check [<theme>...]          check themes against the rules: loops, the font, text long enough
                                    to read and inside the panel (all of them when none is named)
 
@@ -37,6 +39,7 @@ SESSIONS = os.path.expanduser('~/.config/notch-fight/sessions')
 APP = os.path.join(ROOT, 'build', 'NotchFight.app')
 MENU_APP = os.path.join(ROOT, 'build', 'NotchFightMenu.app')
 AGENT = os.path.expanduser('~/Library/LaunchAgents/local.notchfight.menu.plist')
+APP_AGENT = os.path.expanduser('~/Library/LaunchAgents/local.notchfight.app.plist')
 PRESETS = [('15 minutes', 15), ('30 minutes', 30), ('1 hour', 60), ('4 hours', 240), ('8 hours', 480), ('until I resume', None)]
 # Processes that only run while the screen is being shared or recorded. Zoom starts CptHost to share;
 # screencaptureui is macOS's own capture (Cmd-Shift-5). Browser-based calls (Meet, Teams on the web)
@@ -141,6 +144,8 @@ def live_sessions():
 
 def app_running(): return subprocess.run(['pgrep', '-x', 'NotchFight'], capture_output=True).returncode == 0
 def hide_app(): subprocess.run(['pkill', '-x', 'NotchFight'], capture_output=True)
+def poke_app(): subprocess.run(['pkill', '-USR1', '-x', 'NotchFight'], capture_output=True)   # look again now
+def resident(cfg=None): return (load_cfg() if cfg is None else cfg).get('resident', True) is not False
 def show_app(*args): subprocess.run(['open', '-g', APP, *(['--args', *args] if args else [])], capture_output=True)
 
 # ---- commands ----------------------------------------------------------------------------------------
@@ -154,7 +159,9 @@ def cmd_pause(args):
         minutes = PRESETS[int(pick) - 1][1] if int(pick) <= len(PRESETS) else parse_duration(input('Minutes: '))
     else: raise NfError('how long? e.g. nf pause 30m (15m, 30m, 1h, 4h, 8h, forever, or minutes)')
     if minutes is not None and minutes <= 0: raise NfError('the pause has to last at least a minute')
-    set_pause(minutes); hide_app()
+    set_pause(minutes)
+    if resident(): poke_app()                                         # it hides itself, and stays up
+    else: hide_app()
     print('Paused until you run: nf resume' if minutes is None else f'Paused for {fmt_left(minutes * 60)}, until {fmt_time(time.time() + minutes * 60)}')
 
 def cmd_resume(args):
@@ -163,7 +170,9 @@ def cmd_resume(args):
     except OSError: pass
     ok, why = gate()
     if not ok: print(f'Resumed, but not showing yet: {why}'); return
-    if live_sessions() and not app_running(): show_app(); print('Resumed: a Claude session is working, here it comes')
+    if resident() and app_running():
+        poke_app(); print('Resumed: a Claude session is working, here it comes' if live_sessions() else 'Resumed')
+    elif live_sessions() and not app_running(): show_app(); print('Resumed: a Claude session is working, here it comes')
     else: print('Resumed' if was is not None else 'Not paused')
 
 def cmd_status(args):
@@ -187,7 +196,8 @@ def cmd_status(args):
     rows = [('now', 'may show' if ok else f'hidden: {why}'), ('paused', pause), ('quiet hours', quiet),
             ('when sharing', share), ('delay', f"{cfg.get('delay')} s" if cfg.get('delay') else 'off'),
             ('click', 'next clip (double click closes)' if cfg.get('click') == 'next' else 'closes it'),
-            ('menu icon', ('on' if os.path.exists(AGENT) else 'off') + (' (running)' if menu_running() else '')), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
+            ('menu icon', ('on' if os.path.exists(AGENT) else 'off') + (' (running)' if menu_running() else '')),
+            ('resident', ('on' if resident(cfg) else 'off') + (', starts at login' if os.path.exists(APP_AGENT) else '')), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
             ('hooks', ', '.join(d.replace(os.path.expanduser('~'), '~') for d in hooked) or 'not installed (./install.sh)'),
             ('sessions', f'{live_sessions()} working'), ('app', ('running' if app_running() else 'built') if os.path.isdir(APP) else 'not built (./build.sh)')]
     for k, v in rows: print(f'  {k:<15}{v}')
@@ -196,6 +206,10 @@ def cmd_preview(args):
     if not args: raise NfError('which clip or theme? e.g. nf preview odyssey')
     names = clipsmod.clip_names(clipsmod.CLIPS_DIR)
     todo = clipsmod.expand(args, names)
+    if resident():
+        # a second copy plays them; the resident one steps aside while it runs and comes back after
+        subprocess.run(['open', '-n', '-g', APP, '--args', '--first', ','.join(todo), '--only'], capture_output=True)
+        print(f"Playing {len(todo)} clip{'s' if len(todo) != 1 else ''}: {', '.join(todo)}"); return
     was_up = app_running()
     if was_up: hide_app(); time.sleep(0.6)
     show_app('--first', ','.join(todo), '--only')
@@ -258,6 +272,9 @@ def cmd_click(args):
 def show(app, sid, delay):
     """What the hook runs on a prompt: show the panel now, or after `delay` seconds if that session is
     still working by then (a detached sleeper, so the hook returns at once)."""
+    if resident():                                                    # the app decides (gate, delay) by itself
+        if not app_running(): subprocess.run(['open', '-g', app], capture_output=True)
+        return
     if not gate()[0]: return
     if delay <= 0: subprocess.run(['open', '-g', app], capture_output=True); return
     subprocess.Popen([sys.executable, os.path.abspath(__file__), '_show_later', app, sid, str(delay)],
@@ -303,6 +320,39 @@ def cmd_menu(args):
         print('Menu bar icon: off')
     else: raise NfError('nf menu on|off')
 
+def cmd_resident(args):
+    cfg = load_cfg()
+    if not args:
+        print(f"Resident: {'on' if resident(cfg) else 'off'}{' (starts at login)' if os.path.exists(APP_AGENT) else ''}"
+              f"{', running' if app_running() else ''}"); return
+    uid = str(os.getuid())
+    if args[0] == 'on':
+        if not os.path.isdir(APP): raise NfError('the app is not built yet: run ./build.sh')
+        cfg.pop('resident', None); save_cfg(cfg)                          # on is the default
+        os.makedirs(os.path.dirname(APP_AGENT), exist_ok=True)
+        with open(APP_AGENT, 'w') as fh:
+            fh.write(f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>local.notchfight.app</string>
+<key>ProgramArguments</key><array><string>/usr/bin/open</string><string>-g</string><string>{APP}</string></array>
+<key>RunAtLoad</key><true/>
+</dict></plist>
+""")
+        subprocess.run(['launchctl', 'bootout', f'gui/{uid}', APP_AGENT], capture_output=True)
+        subprocess.run(['launchctl', 'bootstrap', f'gui/{uid}', APP_AGENT], capture_output=True)
+        if app_running(): hide_app(); time.sleep(0.6)                    # a non-resident one: start over resident
+        subprocess.run(['open', '-g', APP], capture_output=True)
+        print('Resident: on (up, hidden, between prompts; it starts at login too)')
+    elif args[0] == 'off':
+        cfg['resident'] = False; save_cfg(cfg)
+        subprocess.run(['launchctl', 'bootout', f'gui/{uid}', APP_AGENT], capture_output=True)
+        try: os.remove(APP_AGENT)
+        except OSError: pass
+        hide_app()
+        print('Resident: off (the app starts on each prompt and quits when it retracts)')
+    else: raise NfError('nf resident on|off')
+
 def cmd_themes(args):
     """For the menu: one theme per line (from the build)."""
     for t in sorted({clipsmod.theme_of(c) for c in clipsmod.clip_names(clipsmod.CLIPS_DIR)}): print(t)
@@ -313,7 +363,7 @@ def cmd_gate(args):
 COMMANDS = {'pause': cmd_pause, 'resume': cmd_resume, 'status': cmd_status, 'preview': cmd_preview,
             'quiet': cmd_quiet, 'share': cmd_share, 'gate': cmd_gate, '_after_preview': cmd_after_preview,
             'delay': cmd_delay, 'click': cmd_click, 'menu': cmd_menu, '_show': cmd_show, '_show_later': cmd_show_later,
-            '_themes': cmd_themes}
+            '_themes': cmd_themes, 'resident': cmd_resident}
 
 def main(argv):
     if not argv or argv[0] in ('-h', '--help', 'help'): print(__doc__.split('\n\nWhether')[0]); return 0

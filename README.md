@@ -30,13 +30,20 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
 
 - `NotchFight.app` hangs a black panel from the notch's bottom edge (width = notch width,
   detected at runtime via `NSScreen.auxiliaryTopLeftArea/RightArea`) and plays the clips.
-- Clicking the panel, or `SIGTERM` (`pkill -x NotchFight`), retracts it into the notch and quits.
+- The app is **resident** (the default): it stays up, hidden, between prompts, and drops the panel as
+  soon as a session starts working (about 75 ms from the prompt, against ~300 ms when it had to start
+  each time). Hidden it holds no frames and runs no timers: ~13 MB and 0 % CPU. `nf resident on` also
+  starts it at login; `nf resident off` goes back to starting it on each prompt and quitting after.
+- Clicking the panel retracts it until your next prompt. `SIGTERM` (`pkill -x NotchFight`) retracts it
+  and quits.
 - Claude Code hooks in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude`; for several profiles: `NOTCH_FIGHT_CLAUDE_DIRS=~/.claude-work:~/.claude-personal ./install.sh`) drive it:
-  - `UserPromptSubmit` → `scripts/notch-hook.sh start` (marks the session as working, opens the app)
-  - `Stop` / `StopFailure` / `SessionEnd` → `scripts/notch-hook.sh stop`
+  - `UserPromptSubmit` → `scripts/notch-hook.sh start` (marks the session as working; starts the app
+    if it is not up)
+  - `Stop` / `StopFailure` / `SessionEnd` → `scripts/notch-hook.sh stop` (removes the mark; `SIGUSR1`
+    tells the app to look again: resident, it hides; otherwise it retracts and quits)
 - Several sessions can work at once (even across profiles): each one leaves a marker in
-  `~/.config/notch-fight/sessions/` with its `claude` PID, and the panel retracts only when the
-  last one stops. The app also drops markers of dead PIDs (e.g. a closed terminal never fires
+  `~/.config/notch-fight/sessions/` with its `claude` PID (rewritten on each prompt), and the panel
+  retracts only when the last one stops. The resident app watches that folder, so it reacts at once. The app also drops markers of dead PIDs (e.g. a closed terminal never fires
   `Stop`). An interrupted turn (Esc) doesn't fire `Stop` either: the panel stays until that
   session's next turn ends, or click it.
 
@@ -149,7 +156,7 @@ and opens on the next one (`transitions/<to>__in`), two halves per theme rather 
 | `basterds-cinema` | The premiere at Le Gamaar (its own set, no fight): Shosanna in the red dress at the end of the aisle while Stolz der Nation plays to a full house (the sniper in his bell tower, the grain, the projector's beam over the rows of caps); she slips out — CHAPTER FIVE: REVENGE OF THE GIANT FACE — the reel cuts and her face comes up on the screen: THIS IS THE FACE OF JEWISH VENGEANCE.; the nitrate catches behind it, the fire climbs the curtains; close-up: her face thrown onto the smoke, laughing; the screen is gone, the house in flames | the premiere's audience | cinema |
 | `hp` | Harry (round glasses, the scar, the Gryffindor scarf) in the graveyard at Little Hangleton: leaning headstones, the yew, the statue of Death with its scythe, mist on the ground. Voldemort rises out of the mist; EXPELLIARMUS! against AVADA KEDAVRA!, the red beam and the green lock, the bead of light sliding between them, the golden cage rising over both; the close-up inside the cage, PRIORI INCANTATEM, the shades of the dead coming out of the wand; Harry pushes the bead home, the link breaks and he runs for the cup — the Portkey — and he's gone | Voldemort | priori |
 
-Playback (per launch): forced clips first, then every other clip in random order — no clip
+Playback (each time the panel shows): forced clips first, then every other clip in random order — no clip
 repeats until all of them have played, then a new round starts. Clips are grouped up to 2 per
 theme visit to keep transitions few.
 
@@ -191,11 +198,13 @@ nf share hide|show          # while sharing the screen: hide the panel (default)
 nf delay 10s                # only show it once Claude has worked that long (quick answers stay quiet; `off`)
 nf click next               # a click skips to the next clip, a double click closes it (`close`: the default)
 nf menu on                  # a menu bar icon with all of the above (and "Choose clips…"); starts at login; `off`
+nf resident on|off          # keep the app up, hidden, between prompts (the default; `on` adds login) or not
 ```
 
-Whether the panel may show follows one set of rules, `nf gate` (`scripts/nf.py`): the Claude Code hook
-asks before opening it, and the app asks every few seconds while it is up, so a pause, quiet hours or a
-screen share hides a panel that is already out. Sessions keep being tracked meanwhile. The pause lives
+Whether the panel may show follows one set of rules, `nf gate` (`scripts/nf.py`). The resident app asks
+when a session starts, every 5 s while anyone is working, and when `nf pause` / `resume` poke it
+(`SIGUSR1`), so a pause, quiet hours or a screen share hides a panel that is already out, and it comes
+back when they end if Claude is still working. Not resident, the hook asks before opening it. Sessions keep being tracked meanwhile. The pause lives
 in `~/.config/notch-fight/paused`; quiet hours and `pauseOnShare` in `config.json`. The app and the menu
 ask their own copy of those rules (`app/Gate.swift`, no Python every few seconds); `tests/test_app_gate.py`
 keeps it answering exactly like `nf gate`.
@@ -204,8 +213,10 @@ The rotation outlives the app: `~/.config/notch-fight/state.json` keeps the clip
 round, so the next launch carries on with it instead of starting over, and no clip repeats until all have
 played. It also counts plays per clip and the time the panel was up each day.
 
-With a delay, the hook hands the prompt to a detached sleeper and returns at once: after the delay, the
-panel shows only if that session is still working (its marker is still there). The menu bar icon is a
+With a delay, the panel shows only once a session has been working that long: the resident app times it
+from the date of the session's marker (written on each prompt); not resident, the hook hands the prompt
+to a detached sleeper. `nf preview` plays in a second copy of the app; the resident one steps aside
+while it runs (the preview leaves its PID in `~/.config/notch-fight/.preview` and pokes it). The menu bar icon is a
 separate tiny app (`build/NotchFightMenu.app`, a LaunchAgent once on): a sparkle when the panel may
 show, a pause sign when it is hidden, and every item just runs `nf`.
 
@@ -237,7 +248,7 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
 - Some clips ship **off by default** (niche ones, see "Adding a clip"): they are listed as
   `(off by default)` and only play once you turn them on. In `"enabled"` mode those go in an
   `"enabled"` list next to `"disabled"`.
-- With nothing selected the panel does not show at all. Changes apply from the next launch.
+- With nothing selected the panel does not show at all. Changes apply the next time the panel shows.
 - `NOTCH_FIGHT_CONFIG=/path/config.json` points the app and `clips.sh` at another config (tests and
   dev only: the app sees it when its binary is run directly, not through `open`).
 - To check what would play without opening the panel:
@@ -245,7 +256,8 @@ Two modes, stored in `~/.config/notch-fight/config.json` (`install.sh` offers th
   whether the panel would show).
 - Tests: `python3 -m unittest discover tests` (the app tests need `./build.sh`). They use `--print-selection`,
   so no panel shows and the focused window keeps focus. `NOTCH_FIGHT_TEST_PANEL=1` adds real launches
-  (in the background with `open -g`: the panel shows, focus stays).
+  (in the background with `open -g`: the panel shows, focus stays) and `tests/test_resident.py`, which
+  runs a resident copy against a temporary config folder and follows it through `NOTCH_FIGHT_TRACE`.
 
 ## Inside Claude Code (mod)
 

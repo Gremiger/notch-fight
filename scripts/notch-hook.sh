@@ -3,8 +3,10 @@
 #   notch-hook.sh start <path/to/NotchFight.app>   (UserPromptSubmit)
 #   notch-hook.sh stop                              (Stop, StopFailure, SessionEnd)
 # Each working session leaves a marker in ~/.config/notch-fight/sessions/<session_id> holding the
-# PID of its `claude` process. Stop removes it; the panel retracts only when no live marker is left.
-# The app also prunes markers of dead PIDs (a closed terminal never fires Stop) and retracts itself.
+# PID of its `claude` process, rewritten on each prompt (its date: when that prompt started). Stop removes
+# it; the panel retracts only when no live marker is left. The resident app watches the folder and shows
+# or hides itself; SIGUSR1 tells it (or a non-resident one, which then quits) to look again now. The app
+# also prunes markers of dead PIDs (a closed terminal never fires Stop).
 set -u
 DIR="$HOME/.config/notch-fight/sessions"; LOCK="$HOME/.config/notch-fight/.lock"
 mkdir -p "$DIR"
@@ -29,9 +31,11 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 case "${1:-}" in
   start)
-    [[ -n "$sid" ]] && echo "$(claude_pid)" > "$DIR/$sid"
-    # nf decides: paused, quiet hours or screen sharing keep it hidden (the marker stays); with a
-    # "delay" it shows only if this session is still working by then
+    # written next to it and renamed: the app's folder watcher sees a rename (a rewrite in place it would not)
+    [[ -n "$sid" ]] && { echo "$(claude_pid)" > "$DIR/.$sid.tmp" && mv -f "$DIR/.$sid.tmp" "$DIR/$sid"; }
+    # nf starts the app if it is not up (resident: the app then decides by itself); not resident, nf
+    # decides: paused, quiet hours or screen sharing keep it hidden (the marker stays); with a "delay" it
+    # shows only if this session is still working by then
     python3 "$(dirname "$0")/nf.py" _show "$2" "$sid" >/dev/null 2>&1 || true
     ;;
   stop)
@@ -44,7 +48,7 @@ case "${1:-}" in
       if [[ -z "$pid" && -n "$(find "$f" -mmin -120 2>/dev/null)" ]]; then exit 0; fi
       rm -f "$f"
     done
-    pkill -x NotchFight >/dev/null 2>&1 || true
+    pkill -USR1 -x NotchFight >/dev/null 2>&1 || true   # resident: hides; otherwise: retracts and quits
     ;;
 esac
 exit 0

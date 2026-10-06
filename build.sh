@@ -42,6 +42,12 @@ swift() { swiftc -O -target "$(uname -m)-apple-macos13.0" "$@"; }
 SRC=("$ROOT/app/main.swift" "$ROOT/app/Gate.swift" "$ROOT/app/State.swift")
 stale "$APP/Contents/MacOS/NotchFight" "${SRC[@]}" && swift "${SRC[@]}" -o "$APP/Contents/MacOS/NotchFight"
 codesign -s - --force "$APP" >/dev/null 2>&1
+# a resident app that is up picks up the new build: it retracts and quits, and starts again (hidden, or
+# straight back out with the new clips first if a Claude session is working)
+if pgrep -x NotchFight >/dev/null && python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import nf; sys.exit(not nf.resident())' "$ROOT/scripts"; then
+  pkill -x NotchFight; for _ in $(seq 40); do pgrep -x NotchFight >/dev/null || break; sleep 0.1; done
+  open -g "$APP"
+fi
 
 # the menu bar icon (nf menu on): a tiny separate app, so it can stay up while the panel comes and goes
 MENU="$OUT/NotchFightMenu.app"
