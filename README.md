@@ -314,6 +314,8 @@ src/
 │   ├── fx.py          # effect registry (@fx('name')) + effects used by several themes
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   ├── people.py      # people built from a pose (grid, limbs, lean, far-away copies) + the speech bubble
+│   ├── loop.py        # time that loops: the clip's length, wrapped frames, periods that divide it
+│   ├── ambient.py     # rain, snow, ash, embers, fireflies, fog, torch, stars, flashes (they loop on their own)
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py  skyrim.py  haikyuu.py  fightclub.py  arcane.py  basterds.py  basterds_cinema.py  hp.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py
@@ -366,5 +368,10 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
   last frames and frame 0, to check the loop closes). It goes to `build/sheets/`.
 - **Text:** the 3x5 font has A-Z, 0-9, accents and Ñ (Á É Í Ó Ú Ü Ñ), ¡ ¿ and `! ? . , : ; ' " - + = / ( ) < > _ * # % &`;
   lower case draws as upper case. A test fails if a clip writes a character it lacks.
+- **Things that keep moving** (rain, a torch, a swaying cloak) must be back where they started at frame
+  N. The engine knows each clip's length: `loop.frame(f)` for anything random per frame, `loop.wave(f, p)`
+  / `loop.phase(f, p)` / `loop.period(p)` for smooth motion (periods that divide the clip), `loop.rng(f)`.
+  Ready-made ambient effects that already do: `rain`, `snow`, `ash`, `embers`, `fireflies`, `fog`,
+  `torch`, `stars`, `flashes` (options in a dict: `s['under'].append(('rain', {'dens': 0.7}))`).
 - **Snapshots:** `tests/snapshots.txt` keeps a hash of every clip; the tests say which clips changed. When
   a change is meant (a new clip, a better sprite), record it: `python3 tests/test_snapshots.py --update`.
