@@ -310,7 +310,7 @@ src/
 │   ├── core.py        # canvas constants, sprite drawing (auto outline + aura), sparks, orbs, easing
 │   ├── palette.py     # one char per colour for sprite grids (themes add their own)
 │   ├── claude.py      # Claude's base sprites + tools to dress him up / derive poses
-│   ├── text.py        # 3x5 pixel font
+│   ├── text.py        # 3x5 pixel font (accents, Ñ, ¡ ¿)
 │   ├── fx.py          # effect registry (@fx('name')) + effects used by several themes
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
 │   ├── people.py      # people built from a pose (grid, limbs, lean, far-away copies) + the speech bubble
@@ -361,3 +361,10 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
   `clip('<name>', <frames>, clip_<name>, off=True)` (or `off=False` to override the theme) does it per clip.
   `build.py` marks them in the build (`build/clips/<clip>/.default-off`); the app and `./clips.sh` read it.
   `./build.sh` still puts a new clip first, so you see it while you make it.
+- **Look at it while you make it:** `python3 scripts/sheet.py <theme> [clip] [frames]` renders a contact
+  sheet straight from the code (no build), each frame numbered: `0,40,80`, `0-200/20`, or `end` (the
+  last frames and frame 0, to check the loop closes). It goes to `build/sheets/`.
+- **Text:** the 3x5 font has A-Z, 0-9, accents and Ñ (Á É Í Ó Ú Ü Ñ), ¡ ¿ and `! ? . , : ; ' " - + = / ( ) < > _ * # % &`;
+  lower case draws as upper case. A test fails if a clip writes a character it lacks.
+- **Snapshots:** `tests/snapshots.txt` keeps a hash of every clip; the tests say which clips changed. When
+  a change is meant (a new clip, a better sprite), record it: `python3 tests/test_snapshots.py --update`.
