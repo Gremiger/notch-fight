@@ -33,7 +33,16 @@ def glyph(ch):
     if ch not in FONT: MISSING.add(ch); return FONT[' '],None
     return FONT[ch],None
 
+# A recorder for checks (scripts/check.py): while RECORD is a list, every text drawn on a full panel-sized
+# canvas is noted there as (text, x0, y0, x1, y1), its box. Drawing is the same either way.
+RECORD=None
+_INNER=[False]                                                       # big_text's own text() call: not noted twice
+
+def _note(txt,x0,y0,x1,y1,canvas):
+    if RECORD is not None and not _INNER[0] and canvas==(W,H) and txt.strip(): RECORD.append((txt,x0,y0,x1,y1))
+
 def text(d,txt,x,y,c,shadow=(0,0,0)):
+    _note(txt,x,y-2 if any(glyph(ch)[1] for ch in txt) else y,x+len(txt)*4-2,y+4,getattr(d,'_image',None) and d._image.size)
     for i,ch in enumerate(txt):
         bits,mark=glyph(ch)
         if mark: bits=mark+'000'+bits; y0=y-2                       # the mark, a clear row, the letter
@@ -49,8 +58,11 @@ def big_text(im,txt,y,c,scale=2,cx=W//2,shadow=(0,0,0),outline=None):
     outline: a colour pasted at the 4 neighbours and +1,+1, the shadow then goes to +2,+2.
     Returns the text box (x, y, w, h). Unknown chars render as spaces."""
     up=2 if any(glyph(ch)[1] for ch in txt) else 0                  # room for the accents above
-    m=Image.new('L',(len(txt)*4,6+up),0); text(ImageDraw.Draw(m),txt,0,up,255,shadow=None)
+    m=Image.new('L',(len(txt)*4,6+up),0); _INNER[0]=True
+    try: text(ImageDraw.Draw(m),txt,0,up,255,shadow=None)
+    finally: _INNER[0]=False
     m=m.resize((m.width*scale,m.height*scale),Image.NEAREST); x=int(cx-m.width//2); y-=up*scale
+    _note(txt,x,y,x+m.width-scale,y+m.height-scale,im.size)
     if outline is not None:
         for dx,dy in ((-1,0),(1,0),(0,-1),(0,1),(1,1)): im.paste(outline,(x+dx,y+dy),m)
         if shadow is not None: im.paste(shadow,(x+2,y+2),m)

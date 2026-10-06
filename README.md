@@ -316,6 +316,7 @@ src/
 │   ├── people.py      # people built from a pose (grid, limbs, lean, far-away copies) + the speech bubble
 │   ├── loop.py        # time that loops: the clip's length, wrapped frames, periods that divide it
 │   ├── ambient.py     # rain, snow, ash, embers, fireflies, fog, torch, stars, flashes (they loop on their own)
+│   ├── director.py    # text: how long it stays up, wrapping, the biggest that fits; a close-up template
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py  skyrim.py  haikyuu.py  fightclub.py  arcane.py  basterds.py  basterds_cinema.py  hp.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py
@@ -373,5 +374,13 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
   / `loop.phase(f, p)` / `loop.period(p)` for smooth motion (periods that divide the clip), `loop.rng(f)`.
   Ready-made ambient effects that already do: `rain`, `snow`, `ash`, `embers`, `fireflies`, `fog`,
   `torch`, `stars`, `flashes` (options in a dict: `s['under'].append(('rain', {'dens': 0.7}))`).
+- **Text, the easy way** (`engine/director.py`): `hold(txt)` is how many frames a line needs (1 s + 0.3 s
+  a word, at least 1.5 s), `cue(f, start, txt)` whether it's up; `text_block(im, txt, box)` draws it as
+  big as fits in a box, wrapped into even lines; the `caption` effect does the same; and
+  `closeup(t, f, bg, draw, txt)` makes a close-up frame (background, your drawing, the text, zoom lines).
+- **Check it:** `nf check <theme>` (or `python3 scripts/check.py <theme>`) renders the theme and lists
+  what breaks the rules: loops, characters the font lacks, lines too short to read, text cut off by the
+  edge. `tests/test_check.py` runs it on every theme and fails on any problem that isn't already in
+  `tests/check_baseline.txt` (fix one, drop its line).
 - **Snapshots:** `tests/snapshots.txt` keeps a hash of every clip; the tests say which clips changed. When
   a change is meant (a new clip, a better sprite), record it: `python3 tests/test_snapshots.py --update`.

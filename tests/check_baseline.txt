@@ -1,0 +1,224 @@
+# problems scripts/check.py already knew about; tests/test_check.py fails only on new ones.
+# Fix one, and drop its line (or rerun: python3 scripts/check.py --baseline).
+amongus__impostor short # IMPOSTORS REMAIN
+amongus__impostor short DEAD BODY
+amongus__impostor short I WAS IN ELECTRICAL
+amongus__impostor short TASK COMPLETE!
+amongus__impostor short THE IMPOSTOR.
+amongus__impostor short VOTING RESULTS
+amongus__impostor short WHO IS THE IMPOSTOR?
+apex__champion short DIMENSIONAL RIFT
+apex__champion short DROPPING IN
+apex__champion short INTO THE VOID
+apex__champion short KILL LEADER
+apex__champion short SHIELD BROKEN
+apex__champion short YOU ARE THE
+arg-colapinto__debut cut off 43
+arg-mate__ronda short ESTA LAVADO
+bb__saymyname short SAY MY
+bb__saymyname short THIS IS NOT METH.
+cai__clasico short CAI #-# RAC
+cai__clasico short REY DE COPAS
+clippy__deathmatch short ARE WRITING CODE.
+clippy__deathmatch short ARE YOU SURE?
+clippy__deathmatch short CODE.DOC - WORD
+clippy__deathmatch short END TASK
+clippy__deathmatch short IS NOT
+clippy__deathmatch short IT LOOKS LIKE YOU
+clippy__deathmatch short NEED HELP?
+clippy__deathmatch short NEED HELP?
+cs__defuse short BOMB HAS BEEN DEFUSED
+cs__defuse short COUNTER-TERRORISTS WIN
+cs__defuse short GO GO GO!
+cs__defuse short THE BOMB HAS BEEN PLANTED
+cyberpunk-edgerunners__moon short BREACH PROTOCOL
+cyberpunk-edgerunners__moon short GET TO
+cyberpunk-edgerunners__moon short I GOT YOU, DAVID.
+cyberpunk-edgerunners__moon short I WANT TO GO
+cyberpunk-edgerunners__moon short I'M GONNA
+cyberpunk-edgerunners__moon short THE TOP
+cyberpunk-edgerunners__moon short TO THE MOON.
+cyberpunk__nightcity short #X CRIT!
+cyberpunk__nightcity short MALORIAN ARMS ####
+cyberpunk__nightcity short SHORT CIRCUIT
+cyberpunk__nightcity short WAKE UP,
+cyberpunk__nightcity short WE HAVE A CITY TO BURN.
+cyberpunk__nightcity short YOU'RE DEAD, CHOOM!
+dannyphantom__ghost short I'LL BE BACK, WHELP!
+dannyphantom__ghost short I'LL HAVE YOUR PELT, WHELP!
+dannyphantom__ghost short MISSED ME!
+dannyphantom__ghost short WHY YOU LITTLE...
+deadpool__bub short OH COME ON.
+deadpool__review short +CONST THINGY#: ANY
+deadpool__review short +TODO: FIX LATER. MAYBE.
+deadpool__review short -IF A IF B IF C IF D
+dexter__lab short BYE BYE!
+dexter__lab short CLAUDE'S LABORATORY
+dexter__lab short DEE DEE! GET OUT OF MY LABORATORY!
+dexter__lab short DEE DEEEE!
+dexter__lab short LA LA LA!
+dexter__lab short MECH, ACTIVATE!
+dexter__lab short OOOH! WHAT DOES THIS BUTTON DO?
+dexter__lab short OOOH! WHAT DOES THIS DO?
+dexter__lab short SELF DESTRUCT
+ds__felled short ENEMY FELLED
+ds__felled short PRAISE THE SUN!
+ds__felled short WATERFOWL DANCE
+etendo__rebrand short SHIP IT!
+fightclub__firstrule short ISN'T THAT RULE #?
+fightclub__rules short YOU DO NOT TALK ABOUT FIGHT CLUB
+fma__flame short NOT DONE YET.
+fma__flame short WHICH ONE IS REAL?
+foster__bloo short BET YOU CANT BEAT THIS!
+foster__bloo short COCO! COCO!
+foster__bloo short HE DID IT!
+foster__bloo short IN THE HALL.
+foster__bloo short MASTER CLAUDE!
+foster__bloo short NO BALLS
+foster__bloo short NO FAIR!
+foster__bloo short NO ME GUSTA!
+foster__bloo short SORRY! SORRY!
+foster__bloo short YOU'RE ON.
+gta__grove short AH SHIT HERE WE GO AGAIN...
+gta__grove short BUSTED? NOT TODAY
+hl__lambda short GRAVITY GUN
+hl__lambda short HALF LIFE # CONFIRMED
+hl__lambda short MR. FREEMAN.
+hl__lambda short RISE AND SHINE
+hl__lambda short SMELL THE ASHES.
+hl__lambda short WAKE UP AND
+hxh__jajanken short JAN KEN...
+inv__train short PIENSA CLAUDE!
+inv__train short PIENSA CLAUDE!
+jakelong__dragon short DRAGON UP!
+jakelong__dragon short GOT YOU!
+jakelong__dragon short HAHA, DRAGON!
+jakelong__dragon short HOLD STILL, DRAGON!
+jakelong__dragon short THE DRAGON WILL BE MINE!
+jakelong__dragon short YO, JAKE! LOOK OUT!
+jjk-maki__zenin short I WILL
+jjk-maki__zenin short IT ALL
+jjk-maki__zenin short OGI ZENIN
+jjk-maki__zenin short ZENIN CLAN
+jjk-toji__sakahoko short INVERTED SPEAR OF HEAVEN
+jjk-toji__sakahoko short SORCERER KILLER
+jjk__infinity short HA HA HA
+jojo-diamond__kira short CRAZY DIAMOND!
+jojo-diamond__kira short LOOK HERE!
+jojo-diamond__kira short MY NAME IS YOSHIKAGE KIRA...
+jojo-diamond__kira short WHAT A RIDICULOUS HAIRDO.
+jojo-diamond__kira short WHAT DID YOU SAY ABOUT MY HAIR?!
+jojo-golden__requiem short GOLD EXPERIENCE!
+jojo-golden__requiem short KING CRIMSON!
+jojo-golden__requiem short KING CRIMSON!
+jojo-golden__requiem short KING CRIMSON!
+jojo-golden__requiem short MUDA MUDA MUDA!
+jojo-golden__requiem short RETURN TO ZERO.
+jojo-golden__requiem short TIME HAS BEEN ERASED!
+jojo-stone__heaven short MADE IN HEAVEN!
+jojo-stone__heaven short ORA ORA ORA!
+jojo-stone__heaven short STONE FREE!
+jojo-stone__heaven short TIME IS ACCELERATING!
+jojo-stone__heaven short YARE YARE DAWA.
+jojo__theworld short KONO DIO DA!
+jojo__theworld short MUDA MUDA MUDA!
+jojo__theworld short ORA ORA ORA!
+jojo__theworld short ORA ORA ORA!
+jojo__theworld short TOKI WO TOMARE!
+jojo__theworld short ZA WARUDO!
+mario__castle short BUT OUR PRINCESS IS
+mario__castle short IN ANOTHER CASTLE!
+matrix__bullettime short HE IS THE ONE
+matrix__bullettime short ME TOO
+matrix__bullettime short MR. ANDERSON...
+mc__enderdragon short THE END
+memento__polaroids short FIND HIM AND KILL HIM
+memento__polaroids short HIS LIES
+memes__bossrush short DEAL WITH IT
+memes__bossrush short FINAL BOSS
+memes__bossrush short MEME DEFEATED
+memes__bossrush short NEW FRIEND!
+memes__bossrush short TUNG TUNG TUNG
+meshi__dragonstew short # RED DRAGON
+meshi__dragonstew short DRAGON STEW
+meshi__dragonstew short SIMMER # HRS
+mist-kelsier__survivor short STEEL INQUISITOR
+mist__inquisitor short I SEE WHAT COMES
+mk__fatality short FINISH HIM!
+mk__fatality short GET OVER HERE!
+naruto-edo__edotensei short EDO TENSEI!
+naruto-edo__edotensei short KAGE BUNSHIN NO JUTSU!
+naruto-lee__lotus short GATE # OPEN
+naruto-lee__lotus short KAGE BUYO!
+naruto-lee__lotus short KONOHA SENPU!
+naruto-lee__lotus short LEE! TAKE THEM OFF!
+naruto-lee__lotus short THE POWER OF YOUTH!
+naruto-lee__lotus short TOO SLOW!
+naruto-zabuza__waterdragon short SUITON: DAIBAKUFU NO JUTSU!
+naruto-zabuza__waterdragon short SUITON: SUIRYUDAN NO JUTSU!
+nrt__shadowclone short IS THAT ALL?
+nrt__shadowclone short KAGE BUNSHIN NO JUTSU!
+nrt__shadowclone short NO JUTSU!
+phm__rocky short FIST MY BUMP
+ppg__townsville short AND SO, ONCE AGAIN,
+ppg__townsville short BLOSSOM! BUBBLES! BUTTERCUP!
+ppg__townsville short CURSE YOU, POWERPUFF CLAUDE!
+ppg__townsville short I, MOJO JOJO, SHALL DESTROY YOU!
+ppg__townsville short MWA HA HA HA!
+ppg__townsville short THE CITY OF TOWNSVILLE!
+ppg__townsville short THE DAY IS SAVED!
+pvz__lastwave short A HUGE WAVE OF ZOMBIES
+pvz__lastwave short ATE YOUR BRAINS!
+pvz__lastwave short BECAUSE IM
+pvz__lastwave short DR. CODEX
+pvz__lastwave short IS APPROACHING!
+pvz__lastwave short NEW PLANT!
+pvz__lastwave short RM -RF LAWN
+pvz__lastwave short THE ZOMBIES
+pvz__lastwave short YOU GOT A
+rm__schwifty short SHOW ME WHAT YOU GOT!
+rm__schwifty short WUBBA LUBBA DUB DUB!
+samuraijack__aku short CURSE YOU, SAMURAI!
+samuraijack__aku short HA HA HA!
+samuraijack__aku short LONG AGO, IN A DISTANT LAND...
+sf__hadouken short PSYCHO CRUSHER!
+sf__hadouken short YOU WIN
+simuladores__operativo short CUESTIONARIO DE SATISFACCION
+simuladores__operativo short EL CODIGO
+simuladores__operativo short ERA TODO
+simuladores__operativo short FIRME ACA
+simuladores__operativo short GRACIAS, MUCHACHOS
+simuladores__operativo short INSPECCION FEDERAL!
+simuladores__operativo short LOS VOLVERIA A LLAMAR
+simuladores__operativo short ME ESTAFARON...
+simuladores__operativo short ME QUEDE SIN NADA!
+simuladores__operativo short QUE TAL, AMIGO?
+simuladores__operativo short SERVICE TECNICO
+simuladores__operativo short UN NUEVO CASO
+sl__arise short DEFEAT IGRIS
+sl__arise short IGRIS ARISEN
+sl__arise short LEVEL UP!
+sonic__greenhill short CLAUDE GOT
+sonic__greenhill short HO HO HO!
+sonic__greenhill short SUPER CLAUDE
+sonic__greenhill short THROUGH ACT #
+spidey__leap short A LEAP OF FAITH.
+spongebob__krabby short HEH HEH HEH!
+spongebob__krabby short I'LL GET YOU NEXT TIME!
+spongebob__krabby short I'M READY! I'M READY!
+spongebob__krabby short KRUSTY KRAB
+spongebob__krabby short MONEY! MONEY! MONEY!
+spongebob__krabby short ORDER UP!
+spongebob__krabby short THE FORMULA WILL BE MINE!
+sw__father short I AM YOUR
+sw__father short I FIND YOUR LACK OF FAITH DISTURBING
+sw__father short THE FORCE IS STRONG
+sw__father short WITH THIS ONE
+term__judgment short COME BACK LATER
+term__judgment short GO AWAY
+term__judgment short HASTA LA VISTA BABY
+term__judgment short I LL BE BACK.
+terraria__melee short EYE OF CTHULHU HAS AWOKEN!
+terraria__melee short EYE OF CTHULHU HAS BEEN DEFEATED!
+terraria__summoner short EYE OF CTHULHU HAS AWOKEN!
+terraria__summoner short EYE OF CTHULHU HAS BEEN DEFEATED!
