@@ -55,3 +55,5 @@
   needs a period that divides the clip's length. Use `engine/loop.py` (`loop.frame`, `loop.wave`,
   `loop.period`, `loop.rng`) and the ambient effects in `engine/ambient.py` rather than raw `f`.
 - To look at frames while making a clip: `python3 scripts/sheet.py <theme> [clip] [frames]` (no build).
+- Before calling a theme done, run `nf check <theme>`: it must report nothing new. Time text with
+  `engine/director.py` (`hold`, `cue`) and lay it out with `text_block` / `closeup` rather than by hand.

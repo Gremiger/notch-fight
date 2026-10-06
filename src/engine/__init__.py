@@ -12,3 +12,4 @@ from .logos import *
 from .people import *
 from . import loop
 from .ambient import *
+from .director import *
