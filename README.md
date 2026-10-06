@@ -313,7 +313,7 @@ src/
 │   ├── text.py        # 3x5 pixel font (accents, Ñ, ¡ ¿)
 │   ├── fx.py          # effect registry (@fx('name')) + effects used by several themes
 │   ├── logos.py       # pixel logos of other coding agents (Codex, OpenCode, Grok) + stick body
-│   ├── people.py      # people built from a pose (grid, limbs, lean, far-away copies) + the speech bubble
+│   ├── people.py      # people from a body spec and a pose (figure, POSES), far-away copies, the speech bubble
 │   ├── loop.py        # time that loops: the clip's length, wrapped frames, periods that divide it
 │   ├── ambient.py     # rain, snow, ash, embers, fireflies, fog, torch, stars, flashes (they loop on their own)
 │   ├── director.py    # text: how long it stays up, wrapping, the biggest that fits; a close-up template
@@ -374,6 +374,12 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
   / `loop.phase(f, p)` / `loop.period(p)` for smooth motion (periods that divide the clip), `loop.rng(f)`.
   Ready-made ambient effects that already do: `rain`, `snow`, `ash`, `embers`, `fireflies`, `fog`,
   `torch`, `stars`, `flashes` (options in a dict: `s['under'].append(('rain', {'dens': 0.7}))`).
+- **People:** `figure(spec, pose)` (`engine/people.py`) paints a person from a body spec (proportions,
+  hair, clothes colours, boots, fists, and small painters for the rest: a tie, a number, glasses, a scar)
+  and a pose (elbows, hands, lean, legs: stand, stance, lunge, reel, run, jump, kneel, crouch...). `POSES`
+  has the common ones (guard, jab, hook, hurt, cheer, point, walk, run, jump, kneel, crouch);
+  `figure_point()` finds a hand or the head on screen (to hang a sword, a bat, a wand on it). The six
+  themes with posed people (haikyuu, fightclub, arcane, basterds, arg-cordoba, hp) are built this way.
 - **Text, the easy way** (`engine/director.py`): `hold(txt)` is how many frames a line needs (0.5 s + 0.2 s
   a word, at least 1 s), `cue(f, start, txt)` whether it's up; `text_block(im, txt, box)` draws it as
   big as fits in a box, wrapped into even lines; the `caption` effect does the same; and
