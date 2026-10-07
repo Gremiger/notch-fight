@@ -49,6 +49,8 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
     `elicitation_response` notifications) → `scripts/notch-hook.sh work`: the alert comes off once the
     tool ran or the question was answered. It does nothing unless the session was waiting (plain bash,
     no Python: it runs after every tool call).
+  - To see which hooks fire: `touch ~/.config/notch-fight/hook.log` and each call is noted there (mode,
+    event, notification type, tool); delete the file to stop.
 - Several sessions can work at once (even across profiles): each one leaves a marker in
   `~/.config/notch-fight/sessions/` with its `claude` PID (rewritten on each prompt), and the panel
   retracts only when the last one stops. The resident app watches that folder, so it reacts at once.

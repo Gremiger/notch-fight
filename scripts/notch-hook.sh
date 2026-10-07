@@ -20,6 +20,16 @@ sid=""
 [[ "$input" =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([A-Za-z0-9_-]+)\" ]] && sid="${BASH_REMATCH[1]}"
 M="$DIR/$sid"
 
+# Debugging: when ~/.config/notch-fight/hook.log exists, every call is noted there (mode, event, type).
+LOG="$HOME/.config/notch-fight/hook.log"
+if [[ -e "$LOG" ]]; then
+  ev=""; nt=""; tool=""
+  [[ "$input" =~ \"hook_event_name\"[[:space:]]*:[[:space:]]*\"([A-Za-z]+)\" ]] && ev="${BASH_REMATCH[1]}"
+  [[ "$input" =~ \"notification_type\"[[:space:]]*:[[:space:]]*\"([a-z_]+)\" ]] && nt="${BASH_REMATCH[1]}"
+  [[ "$input" =~ \"tool_name\"[[:space:]]*:[[:space:]]*\"([A-Za-z_]+)\" ]] && tool="${BASH_REMATCH[1]}"
+  echo "$(date +%T) ${1:-?} $ev $nt $tool ${sid:0:8}" >> "$LOG"
+fi
+
 # Nothing to take off: the common case after a tool call, done before taking the lock.
 if [[ "${1:-}" == work ]]; then
   [[ -n "$sid" && -f "$M" ]] && grep -q waiting "$M" 2>/dev/null || exit 0
