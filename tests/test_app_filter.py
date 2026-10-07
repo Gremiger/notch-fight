@@ -97,6 +97,14 @@ class AppRotation(unittest.TestCase):
         rest = self.play(3)                                          # the 2 not played yet + the new one
         self.assertEqual(sorted(rest), sorted([c for c in self.five if c not in played] + [ON[5]]))
 
+    def test_a_stats_reset_holds(self):
+        self.play(2)
+        st = json.load(open(self.state)); st.pop('stats'); json.dump(st, open(self.state, 'w'))   # nf stats reset
+        self.play(1)
+        st = json.load(open(self.state))
+        self.assertEqual(sum(st['stats']['plays'].values()), 1)
+        self.assertEqual(len(st['rotation']['played']), 3)                # the round was kept
+
     def test_unknown_state_keys_are_kept(self):
         json.dump({'later': {'x': 1}}, open(self.state, 'w'))
         self.play(1)
