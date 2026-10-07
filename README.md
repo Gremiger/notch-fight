@@ -328,7 +328,7 @@ The panel takes its size and position from the real notch of each Mac. Its looks
 | `widthTweak` | per model | Width correction (pt) when the panel overhangs by a hair. Built-in: `Mac14,2` → `-1`. |
 | `entrance` | `"spring"` | How it comes out and goes back: `"spring"` drops and settles with a wobble; `"bounce"` falls and bounces off the bottom; `"crt"` drops dark and switches on like an old TV (a bright line that opens up), and off the same way. |
 | `transitions` | `"mix"` | Between themes: a random style each time (`"mix"`), or always one of `"iris"`, `"dissolve"`, `"wipe"`, `"crt"`. A theme can have its own (the cinema's curtain). |
-| `glow` | off | `"soft"` or `"strong"`: the clip's light spills below the panel, in the colour of the frame on screen. |
+| `glow` | off | `"soft"` or `"strong"`: a halo of the clip's light hugs the panel (its sides and below it, ~16 pt), in the colour of the frame on screen. |
 
 ```json
 { "fillet": 8, "stretch": false, "entrance": "crt", "glow": "soft" }

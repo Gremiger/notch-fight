@@ -294,7 +294,7 @@ final class App: NSObject, NSApplicationDelegate {
         crtLine.opacity = Float(1 - open)
     }
 
-    // The glow under the panel (Glow.swift), when the config asks for it.
+    // The glow around the panel (Glow.swift), when the config asks for it.
     var glow: Glow?
     var glowStrength: Double?
     var glowColors: [String: [SIMD3<Double>]] = [:]     // clip -> one colour per frame
@@ -302,8 +302,9 @@ final class App: NSObject, NSApplicationDelegate {
     func glowIn() {
         guard phase == .shown, let strength = glowStrength else { return }
         let g = glow ?? Glow(); glow = g; g.strength = strength
-        let top = screen.frame.maxY - notchH - bodyH + corner
-        g.place(below: win, centerX: notchMidX, top: top, width: bodyW * 1.9, height: 70 * scale)
+        let f = screen.frame                                        // the panel, from the screen's top edge down
+        g.place(below: win, around: NSRect(x: notchMidX - bodyW / 2, y: f.maxY - notchH - bodyH, width: bodyW, height: notchH + bodyH),
+                corner: min(corner, bodyH / 2))
         if let n = currentName, let c = glowColors[n], idx > 0, idx - 1 < c.count { g.color = c[idx - 1] }
         g.step(toward: nil)
         g.win.orderFrontRegardless(); g.win.order(.below, relativeTo: win.windowNumber)
