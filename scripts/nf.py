@@ -195,6 +195,21 @@ def sessions_line():
     n, w = live_sessions(waiting=True)
     return f'{n} working' + (f', {w} waiting for you' if w else '')
 
+def hook_state(claude_dir):
+    """Our hooks in a Claude profile: None (none), 'current', 'old: run ./install.sh' (no waiting alert
+    yet), or 'another copy: <dir>' (they run a different checkout's notch-hook.sh)."""
+    try:
+        with open(os.path.join(claude_dir, 'settings.json')) as fh: hooks = json.load(fh).get('hooks', {})
+    except (OSError, ValueError): return None
+    cmds = [h.get('command', '') for groups in hooks.values() for g in groups for h in g.get('hooks', [])]
+    ours = [c for c in cmds if 'notch-hook.sh' in c]
+    if not ours: return None
+    here = os.path.join(HERE, 'notch-hook.sh')
+    if not any(here in c for c in ours):
+        other = next((w.strip("'\"") for c in ours for w in c.split() if w.strip("'\"").endswith('notch-hook.sh')), '?')
+        return f"another copy: {os.path.dirname(os.path.dirname(other)).replace(os.path.expanduser('~'), '~')}"
+    return 'current' if any(c.endswith(' work') for c in ours) else 'old: run ./install.sh'
+
 def cmd_status(args):
     cfg = load_cfg(); ok, why = gate(cfg)
     until = paused_until()
@@ -207,18 +222,16 @@ def cmd_status(args):
         act = clipsmod.active(cfg, names, off); clip_line = f'{len(act)}/{len(names)} active ({clipsmod.mode_of(cfg)} mode for new clips)'
     except clipsmod.ClipsError as e: clip_line = str(e)
     from hooks import claude_dirs
-    def has_hook(d):
-        try: return 'notch-hook.sh' in open(os.path.join(d, 'settings.json')).read()
-        except OSError: return False
     import glob
     dirs = sorted(set(claude_dirs()) | set(glob.glob(os.path.expanduser('~/.claude*'))))   # every profile on this Mac
-    hooked = [d for d in dirs if os.path.isdir(d) and has_hook(d)]
+    hooked = [(d, st) for d in dirs if os.path.isdir(d) and (st := hook_state(d))]
     rows = [('now', 'may show' if ok else f'hidden: {why}'), ('paused', pause), ('quiet hours', quiet),
             ('when sharing', share), ('delay', f"{cfg.get('delay')} s" if cfg.get('delay') else 'off'),
             ('click', 'next clip (double click closes)' if cfg.get('click') == 'next' else 'closes it'),
             ('menu icon', ('on' if os.path.exists(AGENT) else 'off') + (' (running)' if menu_running() else '')),
             ('resident', ('on' if resident(cfg) else 'off') + (', starts at login' if os.path.exists(APP_AGENT) else '')), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
-            ('hooks', ', '.join(d.replace(os.path.expanduser('~'), '~') for d in hooked) or 'not installed (./install.sh)'),
+            ('hooks', ', '.join(d.replace(os.path.expanduser('~'), '~') + ('' if st == 'current' else f' ({st})') for d, st in hooked)
+                      or 'not installed (./install.sh)'),
             ('sessions', sessions_line()), ('app', ('running' if app_running() else 'built') if os.path.isdir(APP) else 'not built (./build.sh)')]
     for k, v in rows: print(f'  {k:<15}{v}')
 
