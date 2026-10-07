@@ -37,14 +37,20 @@ def pack(dd, frames):
     for i,fr in enumerate(frames): sh.paste(fr,((i%cols)*W,(i//cols)*H))
     sh.save(f'{dd}/frames.png'); open(f'{dd}/count','w').write(f'{len(frames)}\n')
 
+CLAUDE=((217,119,87),(168,80,54))                            # Claude's own orange: in every clip, not the scene's light
+
 def glow_color(fr):
-    """The colour a frame spills below the panel (config "glow"): its pixels averaged with the bright ones
-    weighing most (a black sky must not win over the fire), then brightened to full value: 'rrggbb'."""
+    """The light a frame spills below the panel (config "glow"), 'rrggbb'. Its hue: the scene's pixels with
+    the vivid ones weighing most (the green rain, the fire, the cursed red; not white text, grey sky or
+    Claude itself). Its brightness: how lit the scene is, so a night scene glows faintly."""
     px=list(fr.convert('RGB').resize((37,13),Image.BILINEAR).getdata())
-    wsum=sum((r+g+b)**2 for r,g,b in px) or 1
-    avg=[sum(p[i]*(p[0]+p[1]+p[2])**2 for p in px)/wsum for i in range(3)]
-    top=max(avg) or 1
-    return ''.join(f'{min(255,round(c*255/top)):02x}' for c in avg)
+    px=[p for p in px if all(sum((a-b)**2 for a,b in zip(p,c))>45**2 for c in CLAUDE)] or px
+    weight=[(max(p)-min(p))*max(p) for p in px]
+    wsum=sum(weight)
+    hue=[sum(p[i]*w for p,w in zip(px,weight))/wsum for i in range(3)] if wsum else [180,180,180]
+    lit=sum(sum(p) for p in px)/len(px)/3/255                  # 0 black .. 1 white
+    v=min(1,0.35+lit*1.6)*255/(max(hue) or 1)
+    return ''.join(f'{min(255,round(c*v)):02x}' for c in hue)
 
 def render_clip(theme, name, n, frame_fn, off):
     random.seed(zlib.crc32(name.encode()))

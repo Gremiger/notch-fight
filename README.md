@@ -338,7 +338,8 @@ Transitions are built per theme (`src/transitions.py`): the half that closes a t
 opens the next meet at black, so any two go together. Each theme has `transitions/<theme>__out` / `__in`
 (the iris, also what the Claude Code mod plays) and `<theme>__out__<style>` for the other styles; a
 theme module can set `TRANSITION = '<style>'` to have only its own. The glow's colours come from the
-build too: `clips/<clip>/glow`, one `rrggbb` per frame (the bright pixels weigh most).
+build too: `clips/<clip>/glow`, one `rrggbb` per frame: the hue from the scene's vivid pixels (not
+Claude's own orange, which is in every clip), the brightness from how lit the scene is.
 
 ## Layout
 
