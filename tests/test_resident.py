@@ -31,18 +31,24 @@ class Resident(unittest.TestCase):
 
     def config(self, **cfg): json.dump(cfg, open(self.cfg, 'w'))
     def poke(self): self.app.send_signal(signal.SIGUSR1)
-    def marker(self, pid=None, name='s1'):
+    def marker(self, pid=None, name='s1', content='', age=0):
         tmp = os.path.join(self.sessions, f'.{name}.tmp')
-        open(tmp, 'w').write(str(pid or self.worker.pid)); os.replace(tmp, os.path.join(self.sessions, name))
+        open(tmp, 'w').write(f'{pid or self.worker.pid} {content}'.strip())
+        if age: t = time.time() - age; os.utime(tmp, (t, t))
+        os.replace(tmp, os.path.join(self.sessions, name))
     def unmark(self, name='s1'): os.remove(os.path.join(self.sessions, name))
-    def lines(self): return open(self.trace).read().split() if os.path.exists(self.trace) else []
-    def state(self, wait=2.0, want=None):
-        """The last change reported ('hidden' before any), waiting up to `wait` s for `want`."""
+    def lines(self, kinds=('shown', 'hidden')):
+        if not os.path.exists(self.trace): return []
+        return [l for l in open(self.trace).read().splitlines() if l.split()[0] in kinds or l in kinds]
+    def state(self, wait=2.0, want=None, kinds=('shown', 'hidden'), before='hidden'):
+        """The last change of those kinds reported (`before` if none yet), waiting up to `wait` s for `want`."""
         end = time.time() + wait
         while True:
-            last = (self.lines() or ['hidden'])[-1]
+            last = (self.lines(kinds) or [before])[-1]
             if last == want or time.time() > end: return last
             time.sleep(0.05)
+    def alert(self, want=None): return self.state(want=want, kinds=('alert on', 'alert off'), before='alert off')
+    def count(self, want=None): return self.state(want=want, kinds=('sessions',), before='sessions 0')
 
     def test_hidden_until_a_session_works_then_hidden_again(self):
         self.assertEqual(self.lines(), [])
@@ -77,6 +83,27 @@ class Resident(unittest.TestCase):
         self.assertEqual(self.state(want='hidden'), 'hidden')
         os.remove(preview); self.poke()
         self.assertEqual(self.state(want='shown'), 'shown')
+
+    def test_a_waiting_session_raises_the_alert_and_skips_the_delay(self):
+        self.config(**dict(json.load(open(self.cfg)), delay=30))
+        self.marker(); time.sleep(1.0)
+        self.assertEqual(self.lines(), [])                                   # working: the delay holds it
+        self.marker(content='waiting')
+        self.assertEqual(self.state(want='shown'), 'shown')                  # waiting: right away
+        self.assertEqual(self.alert(want='alert on'), 'alert on')
+        self.marker()                                                        # a tool ran: back to working
+        self.assertEqual(self.alert(want='alert off'), 'alert off')
+
+    def test_a_click_does_not_hide_a_waiting_session(self):
+        # the dismissal is in the app (a click); the marker's date is older than any dismissal, and a
+        # waiting session shows anyway, so here: shown with an old date while waiting
+        self.marker(content='waiting', age=600)
+        self.assertEqual(self.state(want='shown'), 'shown')
+
+    def test_the_badge_counts_sessions(self):
+        self.marker(name='s1'); self.state(want='shown')
+        self.marker(name='s2'); self.assertEqual(self.count(want='sessions 2'), 'sessions 2')
+        self.unmark('s2'); self.assertEqual(self.count(want='sessions 1'), 'sessions 1')
 
     def test_sigterm_quits(self):
         self.marker(); self.state(want='shown')

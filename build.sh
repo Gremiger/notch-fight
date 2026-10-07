@@ -31,7 +31,7 @@ fi
 # .default-off marks) that changed, and drops what's gone (the loose NNN.png of an older build too). The Swift is compiled only when its source is newer than the binary.
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/"
-for d in clips transitions; do
+for d in clips transitions overlays; do
   rsync -a --delete --delete-excluded --include='*/' --include='frames.png' --include='count' --include='.default-off' \
     --exclude='*' "$OUT/$d/" "$APP/Contents/Resources/$d/"
 done
@@ -46,7 +46,8 @@ codesign -s - --force "$APP" >/dev/null 2>&1
 # straight back out with the new clips first if a Claude session is working)
 if pgrep -x NotchFight >/dev/null && python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import nf; sys.exit(not nf.resident())' "$ROOT/scripts"; then
   pkill -x NotchFight; for _ in $(seq 40); do pgrep -x NotchFight >/dev/null || break; sleep 0.1; done
-  open -g "$APP"
+  # LaunchServices can still be letting go of the old one (error -600): try again for a moment
+  for _ in 1 2 3 4 5; do open -g "$APP" 2>/dev/null && break; sleep 0.5; done || echo "Could not restart the app: open -g $APP"
 fi
 
 # the menu bar icon (nf menu on): a tiny separate app, so it can stay up while the panel comes and goes

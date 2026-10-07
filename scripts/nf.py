@@ -129,18 +129,27 @@ def fmt_time(ts): return time.strftime('%H:%M', time.localtime(ts))
 def fmt_left(secs):
     m = int(round(secs / 60)); return f'{m} min' if m < 60 else f'{m // 60} h {m % 60:02d} min'
 
-def live_sessions():
-    n = 0
+def read_marker(path):
+    """(pid or 0, waiting?) from a session marker: "<pid>" or "<pid> waiting" (notch-hook.sh)."""
+    try: words = open(path).read().split()
+    except OSError: return 0, False
+    try: pid = int(words[0]) if words else 0
+    except ValueError: pid = 0
+    return pid, 'waiting' in words[1:]
+
+def live_sessions(waiting=False):
+    """How many sessions are working (with waiting=True: (working, of them waiting for you))."""
+    n = w = 0
     for f in (os.listdir(SESSIONS) if os.path.isdir(SESSIONS) else []):
         if f.startswith('.'): continue
-        try: pid = int(open(os.path.join(SESSIONS, f)).read().strip() or 0)
-        except (OSError, ValueError): pid = 0
+        pid, waits = read_marker(os.path.join(SESSIONS, f))
         if pid:
-            try: os.kill(pid, 0); n += 1
-            except PermissionError: n += 1
-            except OSError: pass
-        elif time.time() - os.path.getmtime(os.path.join(SESSIONS, f)) < 7200: n += 1
-    return n
+            try: os.kill(pid, 0); alive = True
+            except PermissionError: alive = True
+            except OSError: alive = False
+        else: alive = time.time() - os.path.getmtime(os.path.join(SESSIONS, f)) < 7200
+        n += alive; w += alive and waits
+    return (n, w) if waiting else n
 
 def app_running(): return subprocess.run(['pgrep', '-x', 'NotchFight'], capture_output=True).returncode == 0
 def hide_app(): subprocess.run(['pkill', '-x', 'NotchFight'], capture_output=True)
@@ -175,6 +184,10 @@ def cmd_resume(args):
     elif live_sessions() and not app_running(): show_app(); print('Resumed: a Claude session is working, here it comes')
     else: print('Resumed' if was is not None else 'Not paused')
 
+def sessions_line():
+    n, w = live_sessions(waiting=True)
+    return f'{n} working' + (f', {w} waiting for you' if w else '')
+
 def cmd_status(args):
     cfg = load_cfg(); ok, why = gate(cfg)
     until = paused_until()
@@ -199,7 +212,7 @@ def cmd_status(args):
             ('menu icon', ('on' if os.path.exists(AGENT) else 'off') + (' (running)' if menu_running() else '')),
             ('resident', ('on' if resident(cfg) else 'off') + (', starts at login' if os.path.exists(APP_AGENT) else '')), ('clips', clip_line), ('scale', str(cfg.get('scale', 1))),
             ('hooks', ', '.join(d.replace(os.path.expanduser('~'), '~') for d in hooked) or 'not installed (./install.sh)'),
-            ('sessions', f'{live_sessions()} working'), ('app', ('running' if app_running() else 'built') if os.path.isdir(APP) else 'not built (./build.sh)')]
+            ('sessions', sessions_line()), ('app', ('running' if app_running() else 'built') if os.path.isdir(APP) else 'not built (./build.sh)')]
     for k, v in rows: print(f'  {k:<15}{v}')
 
 def cmd_preview(args):
@@ -284,6 +297,15 @@ def cmd_show(args):
     app, sid = args[0], (args[1] if len(args) > 1 else '')
     show(app, sid, load_cfg().get('delay', 0))
 
+def cmd_wait(args):
+    """What the hook runs when Claude waits for you: show the panel now, delay or not (the gate still applies)."""
+    app = args[0] if args and args[0] else APP
+    if resident():
+        if not app_running(): subprocess.run(['open', '-g', app], capture_output=True)
+        else: poke_app()
+        return
+    if gate()[0] and not app_running(): subprocess.run(['open', '-g', app], capture_output=True)
+
 def cmd_show_later(args):
     app, sid, delay = args[0], args[1], float(args[2])
     time.sleep(delay)
@@ -362,7 +384,7 @@ def cmd_gate(args):
 
 COMMANDS = {'pause': cmd_pause, 'resume': cmd_resume, 'status': cmd_status, 'preview': cmd_preview,
             'quiet': cmd_quiet, 'share': cmd_share, 'gate': cmd_gate, '_after_preview': cmd_after_preview,
-            'delay': cmd_delay, 'click': cmd_click, 'menu': cmd_menu, '_show': cmd_show, '_show_later': cmd_show_later,
+            'delay': cmd_delay, 'click': cmd_click, 'menu': cmd_menu, '_show': cmd_show, '_wait': cmd_wait, '_show_later': cmd_show_later,
             '_themes': cmd_themes, 'resident': cmd_resident}
 
 def main(argv):
