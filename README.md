@@ -41,9 +41,18 @@ always-on-top borderless window) reading the same `build/clips` PNGs.
     if it is not up)
   - `Stop` / `StopFailure` / `SessionEnd` → `scripts/notch-hook.sh stop` (removes the mark; `SIGUSR1`
     tells the app to look again: resident, it hides; otherwise it retracts and quits)
+  - `Notification` (`permission_prompt`, `elicitation_dialog`, `elicitation_url_dialog`, `agent_needs_input`)
+    → `scripts/notch-hook.sh wait`: Claude is waiting for you. The mark gets ` waiting` and the panel
+    shows a **NEEDS YOU** alert over the clip (the edge pulses in Claude's orange), right away even with a
+    delay and even after a click.
+  - `PostToolUse` / `PostToolUseFailure` / `ElicitationResult` (and the `elicitation_complete` /
+    `elicitation_response` notifications) → `scripts/notch-hook.sh work`: the alert comes off once the
+    tool ran or the question was answered. It does nothing unless the session was waiting (plain bash,
+    no Python: it runs after every tool call).
 - Several sessions can work at once (even across profiles): each one leaves a marker in
   `~/.config/notch-fight/sessions/` with its `claude` PID (rewritten on each prompt), and the panel
-  retracts only when the last one stops. The resident app watches that folder, so it reacts at once. The app also drops markers of dead PIDs (e.g. a closed terminal never fires
+  retracts only when the last one stops. The resident app watches that folder, so it reacts at once.
+  With more than one working, a small badge in the bottom right corner says how many (`✱3`). The app also drops markers of dead PIDs (e.g. a closed terminal never fires
   `Stop`). An interrupted turn (Esc) doesn't fire `Stop` either: the panel stays until that
   session's next turn ends, or click it.
 
@@ -342,11 +351,12 @@ src/
 │   ├── naruto_edo.py  naruto_zabuza.py  dbz_buu.py  dbz_jiren.py  jjk_sukuna.py  ghibli_totoro.py  snk_colosal.py  arg_86.py  naruto_shikamaru.py  mist_kelsier.py  xmen_nightcrawler.py  xmen_gambit.py  arg_mate.py  arg_colapinto.py  naruto_lee.py  lol_yasuo.py  jjk_toji.py  jjk_maki.py  arg_alejo.py  arg_alejo_flotar.py  arg_cordoba.py   # sub-themes
 │   └── __init__.py    # auto-discovers every theme module
 ├── transitions.py     # asterisk-iris transition between themes
+├── overlays.py        # drawn over any clip: the NEEDS YOU alert, the sessions badge (transparent frames)
 ├── build.py           # entry point used by build.sh
 └── legacy/single_clip.py   # the original standalone 10 s clip (--black for the notch version)
 app/main.swift, app/Info.plist   # the notch app
 app/Gate.swift                   # may the panel show (pause, quiet hours, sharing): app + menu, like `nf gate`
-app/State.swift                  # state.json: the rotation's round across launches, play counts
+app/State.swift                  # state.json: the rotation's round across launches, play counts, waits
 app/menu.swift                   # the menu bar icon (nf menu on)
 mod/                             # the Claude Code mod (band above the prompt)
 media/                           # rendered previews

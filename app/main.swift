@@ -94,9 +94,11 @@ final class App: NSObject, NSApplicationDelegate {
         root = v.layer!
         root.backgroundColor = NSColor.black.cgColor
         root.mask = shape
-        art.magnificationFilter = .nearest
-        art.actions = ["contents": NSNull()]
-        root.addSublayer(art)
+        for layer in [art, alertLayer, badgeLayer] {
+            layer.magnificationFilter = .nearest
+            layer.actions = ["contents": NSNull()]
+            root.addSublayer(layer)
+        }
         v.autoresizingMask = [.width, .height]
         win.contentView = v
 
@@ -124,6 +126,26 @@ final class App: NSObject, NSApplicationDelegate {
         evaluate()
     }
 
+    // Over the clip: the "needs you" alert while a session waits for you (a permission prompt, a question;
+    // the marker says "waiting"), and the badge with how many sessions work when more than one does.
+    // Both from overlays/ (src/overlays.py), loaded while the panel is out.
+    let alertLayer = CALayer(), badgeLayer = CALayer()
+    var alertFrames: [CGImage] = [], countFrames: [CGImage] = []
+    var alertIdx = 0
+    var waitingNow = false, sessionCount = 0
+    var waitingSeen: Set<String> = []                   // sessions already counted as waiting (stats)
+
+    func noteSessions(_ live: [Session]) {
+        let waiting = Set(live.filter(\.waiting).map(\.name))
+        let new = waiting.subtracting(waitingSeen)
+        if !new.isEmpty && !preview { for _ in new { state.countWait() }; state.save() }
+        waitingSeen = waiting
+        if !waiting.isEmpty != waitingNow { alertIdx = 0; trace(waiting.isEmpty ? "alert off" : "alert on") }   // from its first frame
+        if live.count != sessionCount { trace("sessions \(live.count)") }
+        waitingNow = !waiting.isEmpty; sessionCount = live.count
+        badgeLayer.contents = sessionCount >= 2 && !countFrames.isEmpty ? countFrames[min(sessionCount, countFrames.count + 1) - 2] : nil
+    }
+
     enum Phase { case hidden, shown, hiding }
     var phase = Phase.hidden
     var dirWatch: DispatchSourceFileSystemObject?
@@ -139,15 +161,17 @@ final class App: NSObject, NSApplicationDelegate {
         guard resident else { return }
         config = Gate.loadConfig()
         let live = liveSessions()
+        noteSessions(live)
         pollTimer?.invalidate(); pollTimer = nil; delayTimer?.invalidate(); delayTimer = nil
         if live.isEmpty { dismissedAt = nil; hide("no session working"); return }
         pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in self?.evaluate() }
-        let fresh = live.filter { dismissedAt == nil || $0 > dismissedAt! }
+        // a session waiting for you counts even after a click, and skips the delay
+        let fresh = live.filter { $0.waiting || dismissedAt == nil || $0.date > dismissedAt! }
         if fresh.isEmpty { hide("dismissed"); return }
         if case (false, let why) = Gate.check() { hide(why); return }
         if previewRunning() { hide("a preview is playing"); return }
         if phase == .shown { return }
-        let wait = (cfgNumber("delay") ?? 0) - Date().timeIntervalSince(fresh.min()!)
+        let wait = waitingNow ? 0 : (cfgNumber("delay") ?? 0) - Date().timeIntervalSince(fresh.map(\.date).min()!)
         if wait > 0 {
             delayTimer = Timer.scheduledTimer(withTimeInterval: wait, repeats: false) { [weak self] _ in self?.evaluate() }
             return
@@ -197,6 +221,13 @@ final class App: NSObject, NSApplicationDelegate {
         // Config "stretch": false keeps the art at its native width, centred (the black margins blend in).
         art.contentsGravity = stretch ? .resize : .resizeAspect
         art.contentsScale = screen.backingScaleFactor
+        for layer in [alertLayer, badgeLayer] {                      // drawn over the clip, the same way
+            layer.frame = art.frame; layer.contentsGravity = art.contentsGravity; layer.contentsScale = art.contentsScale
+        }
+        let res = Bundle.main.resourceURL!.appendingPathComponent("overlays")
+        alertFrames = Self.loadFrames(res.appendingPathComponent("wait"), alpha: true)
+        countFrames = Self.loadFrames(res.appendingPathComponent("count"), alpha: true)
+        if !preview { noteSessions(liveSessions()) }
         win.setFrame(rect(height: 0), display: false)
         phase = .shown; trace("shown")
         shownSince = Date()
@@ -220,14 +251,16 @@ final class App: NSObject, NSApplicationDelegate {
             if !self.resident { NSApp.terminate(nil); return }
             self.playTimer?.invalidate(); self.playTimer = nil
             self.win.orderOut(nil)
-            self.art.contents = nil
+            self.art.contents = nil; self.alertLayer.contents = nil; self.badgeLayer.contents = nil
             self.current = []; self.queue = []; self.cache = [:]; self.cacheOrder = []
+            self.alertFrames = []; self.countFrames = []
             self.phase = .hidden; self.trace("hidden")
             self.evaluate()                                          // a prompt may have come in meanwhile
         }
     }
 
-    // NOTCH_FIGHT_TRACE=<file>: one line per change, "shown" / "hidden" (tests/test_resident.py).
+    // NOTCH_FIGHT_TRACE=<file>: one line per change: "shown" / "hidden", "alert on" / "alert off",
+    // "sessions <n>" (tests/test_resident.py).
     let tracePath = ProcessInfo.processInfo.environment["NOTCH_FIGHT_TRACE"]
     func trace(_ what: String) {
         guard let tracePath, let h = FileHandle(forWritingAtPath: tracePath) ?? {
@@ -343,12 +376,12 @@ final class App: NSObject, NSApplicationDelegate {
 
     // A folder's frames: its frames.png cut into `count` frames (a grid, row by row, as build.py packs
     // it), decoded once into memory so every frame is a cheap crop; an older build's NNN.png otherwise.
-    static func loadFrames(_ dir: URL) -> [CGImage] {
+    static func loadFrames(_ dir: URL, alpha: Bool = false) -> [CGImage] {
         let raw = (try? String(contentsOf: dir.appendingPathComponent("count"), encoding: .utf8)) ?? ""
         if let n = Int(raw.trimmingCharacters(in: .whitespacesAndNewlines)), n > 0,
            let src = CGImageSourceCreateWithURL(dir.appendingPathComponent("frames.png") as CFURL, nil),
            let packed = CGImageSourceCreateImageAtIndex(src, 0, nil) {
-            let sheet = decoded(packed) ?? packed
+            let sheet = decoded(packed, alpha: alpha) ?? packed
             let cols = min(sheetCols, n), rows = (n + cols - 1) / cols
             let w = sheet.width / cols, h = sheet.height / rows
             return (0..<n).compactMap { i in sheet.cropping(to: CGRect(x: (i % cols) * w, y: (i / cols) * h, width: w, height: h)) }
@@ -363,10 +396,10 @@ final class App: NSObject, NSApplicationDelegate {
     static let sheetCols = 10                       // build.py's SHEET_COLS
 
     /// The image drawn once into a bitmap: its crops then share that memory instead of decoding the PNG again.
-    static func decoded(_ img: CGImage) -> CGImage? {
+    static func decoded(_ img: CGImage, alpha: Bool = false) -> CGImage? {
         let space = img.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
         guard let ctx = CGContext(data: nil, width: img.width, height: img.height, bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+                                  space: space, bitmapInfo: (alpha ? CGImageAlphaInfo.premultipliedLast : .noneSkipLast).rawValue) else { return nil }
         ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
         return ctx.makeImage()
     }
@@ -480,6 +513,8 @@ final class App: NSObject, NSApplicationDelegate {
         }
         art.contents = current[idx]
         idx += 1
+        alertLayer.contents = waitingNow && !alertFrames.isEmpty ? alertFrames[alertIdx % alertFrames.count] : nil
+        alertIdx += 1
     }
 
     // Manual 60 fps frame animation: window frames don't take spring timing reliably.
@@ -500,17 +535,20 @@ final class App: NSObject, NSApplicationDelegate {
     // scripts/notch-hook.sh on each prompt, so its date is when that prompt started). Markers of dead PIDs
     // are pruned (a closed terminal never fires Stop). Returns the live markers' dates.
     static var sessionsDir: URL { Gate.stateDir.appendingPathComponent("sessions") }   // (moves with NOTCH_FIGHT_CONFIG: tests)
-    func liveSessions() -> [Date] {
+    // A marker reads "<pid>" or "<pid> waiting" (the hook's `wait`: a permission prompt is up).
+    struct Session { let name: String; let date: Date; let waiting: Bool }
+    func liveSessions() -> [Session] {
         let fm = FileManager.default
         let files = (try? fm.contentsOfDirectory(at: Self.sessionsDir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
-        var live: [Date] = []
+        var live: [Session] = []
         for f in files where !f.lastPathComponent.hasPrefix(".") {
-            let raw = (try? String(contentsOf: f, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let words = ((try? String(contentsOf: f, encoding: .utf8)) ?? "").split(whereSeparator: \.isWhitespace)
             let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
-            if let pid = pid_t(raw) {
-                if kill(pid, 0) == 0 || errno == EPERM { live.append(m) } else { try? fm.removeItem(at: f) }
+            let s = Session(name: f.lastPathComponent, date: m, waiting: words.dropFirst().contains("waiting"))
+            if let pid = words.first.flatMap({ pid_t($0) }) {
+                if kill(pid, 0) == 0 || errno == EPERM { live.append(s) } else { try? fm.removeItem(at: f) }
             } else {   // no PID recorded: trust the marker for 2 h, like notch-hook.sh
-                if Date().timeIntervalSince(m) < 7200 { live.append(m) } else { try? fm.removeItem(at: f) }
+                if Date().timeIntervalSince(m) < 7200 { live.append(s) } else { try? fm.removeItem(at: f) }
             }
         }
         return live
@@ -526,7 +564,8 @@ final class App: NSObject, NSApplicationDelegate {
         if preview { return }
         if resident { evaluate(); return }
         if case (false, let why) = Gate.check() { NSLog("NotchFight: hiding (\(why))"); close(); return }
-        if !liveSessions().isEmpty { sawSession = true } else if sawSession { close() }
+        let live = liveSessions(); noteSessions(live)
+        if !live.isEmpty { sawSession = true } else if sawSession { close() }
     }
     // SIGUSR1 (the Stop hook, `nf pause`): look again now. Not resident, with nobody working: retract and quit.
     func poke() {
