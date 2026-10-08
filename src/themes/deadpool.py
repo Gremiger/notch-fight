@@ -77,6 +77,44 @@ def _no_arm(spr):
     return S([''.join(r) for r in g])
 ARMLESS={mood:_no_arm(DP[mood]['guard']) for mood in EYES}
 
+# The "Bye Bye Bye" moves (the dance clip only): Claude's body (the guard's head, torso, legs) with the
+# arms redrawn per move, painted like the others. Each move's pixels are listed in its own function.
+_BODY=[ '...OOOOOOOO', '...OOOOOOOO', '...OOOOKOOK', '...OOOOKOOK', '...OOOOOOOO', '...OOOOOOOO',
+        '...OOOOOOOO', '...OOOOOOOO', '...oOOOOOOo', '..oo.....oo', '.oo.......oo']
+def _dance_pose(arms, lean=None, knees=None):
+    """The body with `arms` ('o' cells, (x,y)); `lean` = (last row, columns) moves rows 0..last that many
+    columns left (he leans back one pixel)."""
+    g=[list(r.ljust(16,'.')) for r in _BODY]
+    if lean:
+        last,dx=lean
+        for y in range(0,last+1):
+            row=g[y]; g[y]=['.']*16
+            for x,c in enumerate(row):
+                if c!='.': g[y][x+dx]=c
+    if knees:                                                          # the legs (rows 9, 10) redrawn
+        for y,row in zip((9,10),knees): g[y]=list(row.ljust(16,'.'))
+    for x,y in arms: g[y][x]='o'
+    return S([''.join(r) for r in g])
+
+def _seg(x0,y0,x1,y1):
+    """The cells of a straight forearm from (x0,y0) to (x1,y1), one per column."""
+    return [(x, round(y0+(x-x0)*(y1-y0)/(x1-x0))) for x in range(x0,x1+1,1 if x1>x0 else -1)]
+_HAND_HIP=[(2,5),(1,6),(2,7)]                                       # the left arm: elbow out, fist on the hip
+DANCE_POSE={
+    # 'bye': the right arm straight out to the side, palm out (its hand a pixel up); left fist on the hip
+    'bye': _dance_pose(_HAND_HIP+[(x,4) for x in range(11,16)]+[(14,3),(15,3)]),
+    # 'push': both arms pushing out to the right at chest height; the body leans a pixel left
+    'push': _dance_pose([(x,4) for x in range(10,16)]+[(x,6) for x in range(10,16)]+[(14,3),(15,3),(14,7),(15,7)],
+                        lean=(7,-1)),
+    # 'cross': the forearms crossed in an X in front of the chest, the elbows out
+    'cross': _dance_pose(_seg(1,3,14,9)+_seg(14,3,1,9)),
+    # 'hip': one hand on the hip, the other arm up and bent; the knees dip a pixel out
+    'hip': _dance_pose(_HAND_HIP+[(11,4),(12,4),(12,3),(13,3),(12,2),(13,2),(12,1),(13,1),(12,0),(13,0)],
+                       knees=('.oo.....oo','oo.......oo')),
+}
+for _mood in EYES:
+    DP[_mood].update({k:_deadpool(v,_mood) for k,v in DANCE_POSE.items()})
+
 WOLV=poses(S([
 "..bb.......bb...","..bbb.....bbb...","...bbyyyyybb....","....ykWkWky.....","....yPPPPPy.....",
 ".....PPPPP......","......PkP.......","...bbyyyyybb....","..bbbyyyyybbb...","..PbyyyyyyybP...",
@@ -630,18 +668,24 @@ def _agent(f,side,enter,k):
     a=max(0.0,min(1.0,1-(f-k-6)/4))
     return stop+d*(4*1.5+(f-k-4)*0.6), _TVA_FALL, GROUND, a
 
+DANCE_MOVES=('bye','push','cross','hip')
+def dance_move(beat):
+    """(pose, flip) for dance beat `beat`: the four moves in turn, and the mirror alternates each beat and
+    each cycle, so bye goes out to one side, then the other."""
+    return DANCE_MOVES[beat%4], (beat%2+beat//4)%2==1
+
 def clip_byebyebye(f):
     s=scene(f,THEME)
     if 126<=f<166: s['image']=closeup_dance((f-126)/40,f); return s          # the mask, mid-dance
     x,y,pose,mood,flip=30,GROUND,guard_pose(f),'normal',False
     weapon=None
     # 1) the dance: Deadpool steps out of the neutral pose and hops on the beat, three moves in turn:
-    #    both arms up, arms crossing in front, one arm out
+    #    bye, push, cross, hip (dance_move), one move on each beat
     if BEAT0<=f<262:
         beat=(f-BEAT0)//BEAT
         x=ez(30,DANCE_X,(f-BEAT0)/20) if f<34 else DANCE_X
         y=GROUND-int(3*math.sin(math.pi*((f-BEAT0)%BEAT)/BEAT))
-        pose=('armsup','guard','punch')[beat%3]; mood='happy'
+        pose,flip=dance_move(beat); mood='happy'
     if cue(f,BEAT0,'BYE BYE BYE'): s['fx'].append(('dp_box','BYE BYE BYE',DANCE_X,4))   # 22 frames
     for bs in range(BEAT0,262,2*BEAT):                                                  # a note every other beat
         if (bs<77 or bs>=203) and 0<=f-bs<16:
@@ -657,8 +701,7 @@ def clip_byebyebye(f):
         if k<=f<k+9: s['fx'].append(('dp_blood',TVA_L if side=='L' else TVA_R,GROUND-9,f-k))
     # 3) the last agent down: he keeps dancing and waves bye, the arms crossing on each beat
     if 203<=f<262:
-        pose,mood,flip='armsup','happy',((f-BEAT0)//BEAT)%2==1
-        if (f-BEAT0)%BEAT==0 and ((f-BEAT0)//BEAT)%2==0: pose='punch'          # the bye: one arm out
+        pose,flip=dance_move((f-BEAT0)//BEAT+3); mood='happy'                  # bye lands on beat 29 (216)
     if cue(f,216,'BYE, TVA.'): s['fx'].append(('dp_box','BYE, TVA.',DANCE_X,4))
     # 4) back to the neutral pose
     if 262<=f<284: x,flip,pose,y,mood=ez(DANCE_X,30,(f-262)/22),True,guard_pose(f),GROUND,'normal'
