@@ -11,14 +11,14 @@ from engine import *
 from engine import loop
 
 THEME = 'scarface'
-N_ = 336                                                            # a multiple of 12 (the guard bob) and of 48 (the lamp)
+N_ = 288                                                            # a multiple of 12 (the guard bob) and of 48 (the lamp)
 CX = 92                                                             # Tony
 LINE = "SAY HELLO TO MY LITTLE FRIEND!"
 LINE2 = "THE WORLD IS YOURS"
 CLOSE = LINE
 CLOSE_AT, CLOSE_LEN = 68, 40                                        # the close-up on the line (ends at 108)
 GLINT_AT, CAP2_AT = 196, 196                                        # the globe glints, THE WORLD IS YOURS
-HITMEN = [(168, 116, 30), (152, 126, 33), (136, 134, 36), (120, 144, 39)]   # (x, death frame, frame it starts in)
+HITMEN = [(178, 116, 30), (162, 126, 33), (146, 134, 36), (130, 144, 39)]   # (x, death frame, frame it starts in)
 INK = (16,14,22)
 GOLD = (206,166,84)
 WALL, WALL2, FLOOR = (84,56,70), (58,38,54), (118,92,96)
@@ -79,9 +79,9 @@ def door_open(f):
 
 def veil_alpha(f):
     """The smoke that rolls over the whole foyer and back off it: the clip's end is its start, clean."""
-    if 236 <= f < 256: return (f - 236) / 20
-    if 256 <= f < 286: return 1.0
-    if 286 <= f < 316: return 1 - (f - 286) / 30
+    if 246 <= f < 256: return (f - 246) / 10
+    if 256 <= f < 264: return 1.0
+    if 264 <= f < 276: return 1 - (f - 264) / 12
     return 0.0
 
 # ---- the foyer --------------------------------------------------------------------------------------------
@@ -190,13 +190,15 @@ def _fx_spurt(d, im, e, f):
 
 @fx('sc_corpse')
 def _fx_corpse(d, im, e, f):
-    """A dead hitman on the marble: x, feet, k frames since he dropped (the pool grows)."""
+    """A dead hitman lying flat on the marble: x, feet, k frames since he dropped (the pool grows)."""
     x, y, k = e[1], e[2], e[3]
-    r = min(7, 2 + k * 0.5)
-    d.ellipse([x - r, y - 2, x + r, y], fill=(110,12,12))
-    d.rectangle([x - 7, y - 3, x + 5, y - 1], fill=(44,44,58))
-    d.rectangle([x + 5, y - 4, x + 9, y - 1], fill=(214,170,134))
-    d.rectangle([x - 8, y - 2, x - 7, y - 1], fill=INK)
+    r = min(10, 4 + k * 0.6)
+    d.ellipse([x - r, y - 2, x + r, y], fill=(150,14,14))              # the pool
+    d.rectangle([x - 8, y - 4, x + 5, y - 1], fill=(70,70,92))          # the suit, flat
+    d.rectangle([x + 3, y - 4, x + 4, y - 1], fill=(220,220,230))       # the shirt at the collar
+    d.rectangle([x + 5, y - 5, x + 9, y - 1], fill=(214,170,134))       # the head
+    d.rectangle([x + 5, y - 5, x + 9, y - 4], fill=(18,14,12))          # the hair
+    d.rectangle([x - 10, y - 3, x - 8, y - 1], fill=INK)                 # the shoes
 
 @fx('sc_pistol')
 def _fx_pistol(d, im, e, f):
@@ -236,26 +238,38 @@ def _fx_veil(d, im, e, f):
     im.paste((86,80,86), (0, 0), m)
 
 # ---- the close-up --------------------------------------------------------------------------------------------
-def _face(im, d, t, f):                                             # Tony's face, the eyes going wider
+def _face(im, d, t, f):                                             # Tony's face: the scar, the brows, the eyes going wider
     x0 = int(lerp(14, 6, ease(t)))
-    d.ellipse([x0, 8, x0 + 56, 62], fill=(226,184,150), outline=INK)
-    d.pieslice([x0 - 2, 0, x0 + 58, 30], 180, 360, fill=(34,26,24))       # the slicked hair
-    ew = int(lerp(7, 11, ease(t)))
-    for ex in (x0 + 16, x0 + 42):
-        d.ellipse([ex - ew // 2, 26 - ew // 2, ex + ew // 2, 26 + ew // 2], fill=(255,255,255), outline=INK)
-        d.rectangle([ex - 1, 25, ex + 1, 27], fill=INK)                  # the pupils
-    d.line([x0 + 10, 16, x0 + 22, 14], fill=INK); d.line([x0 + 36, 14, x0 + 48, 16], fill=INK)
-    d.rectangle([x0 + 20, 42, x0 + 38, 52], fill=(60,10,14), outline=INK)   # the shout
-    d.rectangle([x0 + 21, 42, x0 + 37, 44], fill=(246,242,230))
-    d.polygon([(x0 + 28, 58), (x0 + 24, 62), (x0 + 32, 62)], fill=ACCENT)  # the orange tie
-    if t > 0.3: d.ellipse([x0 + 52, 16, x0 + 54, 19], fill=(150,200,240))  # sweat
+    SK, SH, HAIR, WHITE = (226,184,150), (184,136,104), (14,12,16), (240,236,226)
+    d.polygon([(x0 - 6, 64), (x0 + 8, 52), (x0 + 26, 50), (x0 + 26, 64)], fill=WHITE, outline=INK)       # lapels
+    d.polygon([(x0 + 62, 64), (x0 + 48, 52), (x0 + 30, 50), (x0 + 30, 64)], fill=WHITE, outline=INK)
+    d.polygon([(x0 + 26, 50), (x0 + 30, 50), (x0 + 30, 64), (x0 + 26, 64)], fill=(30,28,34))              # dark shirt
+    d.polygon([(x0 + 27, 53), (x0 + 33, 53), (x0 + 34, 64), (x0 + 26, 64)], fill=ACCENT)                  # the orange tie
+    d.rectangle([x0 + 18, 46, x0 + 38, 54], fill=SK)                                                     # neck
+    d.ellipse([x0, 6, x0 + 56, 52], fill=SK, outline=INK)
+    d.polygon([(x0 + 38, 10), (x0 + 50, 18), (x0 + 54, 34), (x0 + 48, 46), (x0 + 40, 44), (x0 + 44, 30)], fill=SH)  # the shaded side
+    d.polygon([(x0 - 2, 22), (x0 + 4, 6), (x0 + 22, 2), (x0 + 28, 9), (x0 + 34, 2), (x0 + 52, 6), (x0 + 58, 22),
+               (x0 + 54, 14), (x0 + 40, 10), (x0 + 28, 14), (x0 + 16, 10), (x0 + 2, 14)], fill=HAIR)         # slicked back, widow's peak
+    d.line([x0 + 8, 8, x0 + 20, 5], fill=(70,66,74))                                                      # the sheen
+    d.line([x0 + 10, 15, x0 + 24, 20], fill=INK, width=2); d.line([x0 + 46, 15, x0 + 32, 20], fill=INK, width=2)  # brows, down in the middle
+    ew = int(lerp(7, 10, ease(t)))
+    for cx, px in ((x0 + 18, 1), (x0 + 38, -1)):                                                          # wide eyes, whites showing
+        d.ellipse([cx - ew // 2, 27 - ew // 3, cx + ew // 2, 27 + ew // 3], fill=(255,255,255), outline=INK)
+        d.rectangle([cx + px - 1, 26, cx + px + 1, 28], fill=INK)
+    d.line([x0 + 27, 30, x0 + 26, 38], fill=SH)                                                           # nose
+    d.line([x0 + 9, 32, x0 + 20, 43], fill=(240,196,196))                                                 # the scar, across the cheek and lip
+    for x, y in ((x0 + 12, 46), (x0 + 16, 50), (x0 + 30, 50), (x0 + 42, 46), (x0 + 36, 52)): d.point((x, y), fill=(60,46,44))  # stubble
+    d.rectangle([x0 + 19, 40, x0 + 37, 50], fill=(60,10,14), outline=INK)                                  # the shout
+    d.rectangle([x0 + 20, 40, x0 + 36, 43], fill=(246,242,230))                                            # teeth
+    d.line([x0 + 28, 40, x0 + 28, 43], fill=INK)
+    if t > 0.3: d.ellipse([x0 + 52, 18, x0 + 54, 21], fill=(150,200,240))                                 # sweat
 
 # ---- the clip: starts and ends on the neutral pose, so frame N_ is frame 0 ---------------------------------
 def clip_main(f):
     s = scene(f, THEME)
     if CLOSE_AT <= f < CLOSE_AT + CLOSE_LEN:
         s['image'] = closeup((f - CLOSE_AT) / CLOSE_LEN, f, bg=SKY, draw=_face, txt=CLOSE); return s
-    s['under'].append(('sc_lamp',))
+    if not cue(f, GLINT_AT, LINE2): s['under'].append(('sc_lamp',))   # the chandelier keeps out of the caption's way
     s['under'].append(('sc_door', door_open(f)))
     me = tony_pose(f)
     actors = [actor(figure(TONY, POSES[me]), CX, pal=TPAL)]
@@ -290,7 +304,7 @@ def clip_main(f):
         if s0 <= f < s0 + 60: s['fx'].append(('sc_puff', 170 - 2 * j, 36 + 4 * (j % 3), f - s0))
 
     for tx, death, start in HITMEN:                                 # the spray: who it's aimed at, in turn
-        win = {168: None, 152: (118, 126), 136: (126, 134), 120: (134, 144)}[tx]
+        win = {178: None, 162: (118, 126), 146: (126, 134), 130: (134, 144)}[tx]
         if win and win[0] <= f < win[1] and f % 2 == 0:
             s['fx'].append(('sc_muzzle', mx, my, f))
             s['fx'].append(('sc_tracer', mx, my, tx, GROUND - 14))
