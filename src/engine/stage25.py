@@ -14,6 +14,7 @@ Three ways to see the floor, all one Stage:
     st = Stage(far_y=33, near_y=62, vp_x=40, far_scale=0.62)
     x, y = st.proj(wx, z, h)                     # screen point
     a = st.place(spr, wx, z, h, flip=..., pal=...)   # an actor, shrunk / faded if far
+    a = st.place_at(spr, x, y)                       # the same, at a screen point (depth from its y)
     s['actors'] = st.back_to_front([(z, a), ...])
 """
 import math
@@ -69,6 +70,15 @@ class Stage:
         x, y = self.proj(wx, z, h, cam)
         far = self.is_far(z)
         if far and self.far_alpha != 1.0: kw['alpha'] = alpha * self.far_alpha
+        elif alpha != 1.0: kw['alpha'] = alpha
+        return actor(self.sized(spr, z), x, y, flip=flip, pal=pal, **kw)
+
+    def place_at(self, spr, x, y, flip=False, pal=None, alpha=1.0, **kw):
+        """An actor whose feet are at screen (x, y), sized and faded for the depth of that y: for scenes laid
+        out on the screen (an ellipse in screen coordinates, a stage at a fixed height). Its depth is
+        depth(y), for back_to_front()."""
+        z = self.depth(y)
+        if self.is_far(z) and self.far_alpha != 1.0: kw['alpha'] = alpha * self.far_alpha
         elif alpha != 1.0: kw['alpha'] = alpha
         return actor(self.sized(spr, z), x, y, flip=flip, pal=pal, **kw)
 

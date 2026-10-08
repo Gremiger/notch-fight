@@ -35,6 +35,12 @@ class Figures(unittest.TestCase):
         self.assertEqual(near['spr'], SPR); self.assertNotIn('alpha', near)
         self.assertEqual(far['spr'], shrink(SPR, 0.75)); self.assertAlmostEqual(far['alpha'], 0.4)
 
+    def test_place_at_a_screen_point(self):
+        st = Stage(far_y=30, near_y=60, far_k=0.75)
+        a, b = st.place_at(SPR, 40, 35), st.place_at(SPR, 40, 55)
+        self.assertEqual((a['x'], a['y'], a['spr']), (40, 35, shrink(SPR, 0.75)))
+        self.assertEqual(b['spr'], SPR)
+
     def test_back_to_front_is_stable(self):
         self.assertEqual(Stage.back_to_front([(0.9, 'a'), (0.2, 'b'), (0.9, 'c'), (0.5, 'd')]), ['b', 'd', 'a', 'c'])
 
