@@ -254,6 +254,7 @@ def _fx_pistol(d, im, e, f):
     x, y, dr = int(e[1]), int(e[2]), e[3]
     xs = sorted([x, x + 3 * dr])
     d.rectangle([xs[0], y, xs[1], y], fill=(8,8,10))                    # the barrel and slide
+    d.line([x + dr, y - 1, x + 3 * dr, y - 1], fill=(150,150,162))      # the slide's shine, so it reads on a dark suit
     d.point((x, y + 1), fill=(8,8,10))                                  # the grip
 
 @fx('sc_puff')
