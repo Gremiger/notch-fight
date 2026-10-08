@@ -101,6 +101,8 @@ class NewTheme(unittest.TestCase):
             with self.assertRaises(new_theme.NewThemeError, msg=bad): new_theme.create(bad, root=self.root)
         with self.assertRaises(new_theme.NewThemeError): new_theme.create('nt-orphan', parent='no-such-theme', root=self.root)
         self.assertFalse(os.path.exists(os.path.join(self.root, 'src', 'themes', 'nt_orphan.py')))
+        with self.assertRaises(new_theme.NewThemeError): new_theme.create('ntcell', parent='dbz', root=self.root)   # not dbz-...
+        self.assertFalse(os.path.exists(os.path.join(self.root, 'src', 'themes', 'ntcell.py')))
 
     def test_arg_themes_never_set_default_off_and_others_only_comment_it(self):
         self.assertNotIn('DEFAULT_OFF', read(self.paths['arg-ntsalta']))
