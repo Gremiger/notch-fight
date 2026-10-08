@@ -557,7 +557,7 @@ DANCE_X=92
 TVA_L,TVA_R=58,126                                                 # where the agents stand, left and right
 # a TVA agent: khaki suit (j), brown belt (b), short hair, no ears
 TVA_SPEC={'name':'tva','w':18,'h':26,'c':9,'legs':9,'torso':7,'head':5,'hair':('hhhh',),'hair_x':-2,'hair_y':1,
-          'body':{'color':'j','belt':'b'},'arm':{'hand':'s'},'eyes':(0,2)}
+          'body':{'color':'j','belt':'b'},'leg':{'color':'j'},'arm':{'hand':'s'},'eyes':(0,2)}
 AGENT_PAL={'j':(196,170,110),'b':(96,64,36),'s':(226,182,140),'h':(60,40,30),'K':(20,16,16),'o':(255,140,40),
            'k':(30,24,20)}
 _TVA_STAND=figure(TVA_SPEC,POSES['stand']); _TVA_JAB=figure(TVA_SPEC,POSES['jab']); _TVA_HURT=figure(TVA_SPEC,POSES['hurt'])
