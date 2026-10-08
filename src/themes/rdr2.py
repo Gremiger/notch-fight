@@ -131,10 +131,12 @@ def _coat(g, at):                                                   # the coat: 
     c, ty, hip, sh = at['c'], at['ty'], at['hip'], at['sh']         # shirt, a gun belt and holster, the satchel strap,
     for y in range(ty + 1, hip - 1): put(g, c - 3 + sh(y), y, 'J')  # the bandana at the neck
     for y in range(ty + 1, hip - 2): put(g, c + 1 + sh(y), y, 'A')
-    for x in range(c - 3, c + 3): put(g, x + sh(hip - 1), hip - 1, 'z')           # the gun belt
-    for y in (hip, hip + 1, hip + 2):                                             # the holster, 2 x 3, on the hip
-        put(g, c + 2 + sh(y), y, 'z'); put(g, c + 3 + sh(y), y, 'z')
-    put(g, c + 3, hip - 2, 'G'); put(g, c + 3, hip - 1, 'G')                       # the gun grip
+    for x in range(c - 3, c + 3):                                                  # the gun belt, brass cartridges along it
+        put(g, x + sh(hip - 1), hip - 1, 'Y' if (x - c) % 2 else 'z')
+    put(g, c + sh(hip - 1), hip - 1, 'Y')                                          # the buckle
+    for y in (hip, hip + 1, hip + 2):                                             # the holster, 2 x 3, tan leather on the hip
+        put(g, c + 2 + sh(y), y, 'L'); put(g, c + 3 + sh(y), y, 'L')
+    put(g, c + 3, hip - 2, 'G'); put(g, c + 4, hip - 2, 'G'); put(g, c + 3, hip - 1, 'G')   # the gun's grip, out of it
     seg(g, c - 3 + sh(ty + 1), ty + 1, c + 2 + sh(hip - 2), hip - 2, 'T')          # the satchel strap, across the chest
     put(g, c + 2 + sh(ty + 1), ty + 1, 'o')                                        # the bandana's knot
     put(g, c + 2, ty + 1, 'o')
@@ -178,7 +180,7 @@ RIVAL = dict(_BODY, name='rdr2-micah', hair=[], shut='K', eyes=(0, 2),
              paint=dict(body=[_vest], head=[_brim_shadow('D'), _hair_long], face=[_moustache], end=[_hat('h', 'Q')]))
 CPAL = {'s':(226,176,136), 'K':INK, 'h':(120,80,46), 'Q':(40,24,16), 'D':(52,34,22), 'j':(120,84,56),
         'J':(88,60,40), 'A':(214,206,190), 'p':(62,50,44), 'k':INK, 'o':BANDANA, 'b':(72,44,26), 'z':(38,24,16),
-        'G':(70,70,80), 'T':(96,64,36)}
+        'G':(176,176,186), 'T':(96,64,36), 'L':(160,112,64), 'Y':(214,176,84)}
 RPAL = {'s':(206,164,130), 'K':INK, 'h':(236,232,222), 'Q':(52,40,32), 'D':(170,160,146), 'j':(110,128,150),
         'V':(88,104,124), 'W':(236,234,228), 'p':(44,40,60), 'k':INK, 'm':(64,44,34), 'y':(222,190,110)}
 
