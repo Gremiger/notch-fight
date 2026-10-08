@@ -1,5 +1,5 @@
 """Red Dead Redemption 2: Arthur Morgan's last sunrise on the mountain. Claude is Arthur (a hat, a worn coat, an
-orange bandana, a satchel). Micah Bell (a white hat, a moustache, a revolver) comes up the ridge; they fight,
+orange bandana, a satchel). Micah Bell (a cream hat, a moustache, a revolver) comes up the ridge; they fight,
 Arthur lands a few punches and coughs, and Micah runs. Arthur sits down on the ridge and the sun comes up over
 the peaks, the sky going from blue to gold. Close-up: his face lit orange, eyes half shut: THAT'S THE WAY IT IS.
 Then the sun goes back down, Arthur gets up, his horse nudges him, and the clip is back on the neutral pose:
@@ -12,17 +12,103 @@ register_bg(THEME, lambda v: (v+30,v+24,v+44))                       # the dotte
 N_ = 360                                                            # a multiple of 12: the guard bounce loops
 CLOSE = "THAT'S THE WAY IT IS."
 CLOSE_AT, CLOSE_LEN = 252, 44                                       # the close-up (ends before the sun goes down)
-CX, HX, MX, RX_IN = 50, 22, 68, W + 14                              # Arthur, his horse, where Micah stops, where he enters
+CX, HX, MX, RX_IN = 50, 20, 68, W + 14                              # Arthur, his horse, where Micah stops, where he enters
 INK = (16,14,22)
-PALE, PALE_SHADE, HORSE_LINE = (232,226,214), (170,160,150), (36,30,40)
+PALE, PALE_SHADE = (232,226,214), (170,160,150)
 SKIN, SKIN_SHADE, BANDANA, BANDANA_SHADE = (236,150,100), (168,92,66), (217,119,87), (150,64,48)
-HAT, HAT_SHADE = (92,58,34), (48,28,18)
+HAT, HAT_SHADE = (92,58,34), (48,28,18)                              # the close-up's hat
+
+# ---- the horse: a hand-drawn 34 x 24 sprite (rows of HPAL chars), facing right --------------------------
+HPAL = {'w':PALE, 'g':PALE_SHADE, 'd':(58,42,44), 'h':(30,24,28), 'e':INK, 'n':(176,112,104),
+        'x':(120,40,36), 'z':(92,56,30), 'b':(176,140,92), 'B':(126,94,60)}   # coat, grey shade, mane/tail, hooves,
+                                                                              # eye, nostril, blanket, saddle, bedroll
+HORSE = {
+ 'idle': S([
+  "...........................d......",
+  "...........................ww.....",
+  ".........................dwwwww...",
+  "..........................wwweww..",
+  "..........................dwwwwww.",
+  "...........................dwwwwnw",
+  ".........................ddwwwggw.",
+  ".....bbbbb..............ddwwwgg...",
+  "....BBBBBBB............ddwww......",
+  "....dwwwwww.zzzzzz....ddwww.......",
+  "...dd...wwwxxxxxxxxwwddwww........",
+  "..dd.wwwwwwxxxxxxxxwwwwww.........",
+  ".dddwwwwwwwxxxxxxxxwwwwwwww.......",
+  ".dd.wwwwwwwwwwwwwwwwwwwwwwww......",
+  "ddd.wwwwwwwwwwwwwwwwwwwwwwww......",
+  "dd...wwwwwwwwwwwwwwwwwwwwww.......",
+  "dd.....wwwggggggggggggggw.........",
+  "dd.....wwgg.........gg.ww.........",
+  "......wwgg..........gg.ww.........",
+  ".....wwgg..........gggwwww........",
+  ".....wwgg...........gg.ww.........",
+  ".....wwgg...........gg.ww.........",
+  ".....hhhh...........hh.hh.........",
+  ".....hhhh...........hh.hh.........",
+ ]),
+ 'swish': S([                                                        # the tail flicks
+  "...........................d......",
+  "...........................ww.....",
+  ".........................dwwwww...",
+  "..........................wwweww..",
+  "..........................dwwwwww.",
+  "...........................dwwwwnw",
+  ".........................ddwwwggw.",
+  ".....bbbbb..............ddwwwgg...",
+  "....BBBBBBB............ddwww......",
+  "...ddwwwwww.zzzzzz....ddwww.......",
+  ".ddd....wwwxxxxxxxxwwddwww........",
+  "ddd..wwwwwwxxxxxxxxwwwwww.........",
+  "dd.wwwwwwwwxxxxxxxxwwwwwwww.......",
+  "ddd.wwwwwwwwwwwwwwwwwwwwwwww......",
+  ".dd.wwwwwwwwwwwwwwwwwwwwwwww......",
+  ".dd..wwwwwwwwwwwwwwwwwwwwww.......",
+  ".d.....wwwggggggggggggggw.........",
+  ".d.....wwgg.........gg.ww.........",
+  "......wwgg..........gg.ww.........",
+  ".....wwgg..........gggwwww........",
+  ".....wwgg...........gg.ww.........",
+  ".....wwgg...........gg.ww.........",
+  ".....hhhh...........hh.hh.........",
+  ".....hhhh...........hh.hh.........",
+ ]),
+ 'nuzzle': S([                                                       # the head lowered to nudge him
+  "..................................",
+  "..................................",
+  "..................................",
+  "..................................",
+  "..........................w.......",
+  "...........................www....",
+  ".........................ddwwww...",
+  ".....bbbbb..............ddwwweww..",
+  "....BBBBBBB............ddww..wggw.",
+  "....dwwwwww.zzzzzz....ddwww...wggg",
+  "...dd...wwwxxxxxxxxwwddwww.....wwn",
+  "..dd.wwwwwwxxxxxxxxwwwwwwww...ggg.",
+  ".dddwwwwwwwxxxxxxxxwwwwwwww.......",
+  ".dd.wwwwwwwwwwwwwwwwwwwwwwww......",
+  "ddd.wwwwwwwwwwwwwwwwwwwwwwww......",
+  "dd...wwwwwwwwwwwwwwwwwwwwww.......",
+  "dd.....wwwggggggggggggggw.........",
+  "dd.....wwgg.........gg.ww.........",
+  "......wwgg..........gg.ww.........",
+  ".....wwgg..........gggwwww........",
+  ".....wwgg...........gg.ww.........",
+  ".....wwgg...........gg.ww.........",
+  ".....hhhh...........hh.hh.........",
+  ".....hhhh...........hh.hh.........",
+ ]),
+}
 
 # ---- people, built from a pose (engine/people.py: figure(), POSES) ----------------------------------------
 GW, GH, C = 24, 24, 11                                              # the grid and its centre column (they face right)
 POSES = dict(POSES)
 POSES['cough'] = ((2, 4), (5, 0), (5, 3), (3, -2), 3, 'stance')    # doubled over, a hand up to the mouth
-POSES['sit'] = ((-1, 4), (2, 6), (5, 3), (7, 6), 1, 'crouch')      # seated, hands on the knees, watching the sun
+POSES['sit'] = ((-1, 3), (-3, 6), (6, 4), (4, 2), -1, 'stand')     # seated on the ground: a hand on the ground behind, the
+                                                                    # forearm on the raised knee (the legs are _seated)
 _BODY = dict(w=GW, h=GH, c=C, legs=9, torso=7)
 
 def _satchel(g, at):                                                # a satchel on his back (the left side)
@@ -32,23 +118,69 @@ def _moustache(g, at):                                              # a thick mo
     y, o = at['hy'] + 3, at['sh'](at['hy'])
     for x in (at['c'] - 1, at['c'], at['c'] + 1): put(g, x + o, y, 'm')
 
-def _seated(g, at):                                                 # legs out in front on the ridge: a thigh, a shin, a boot
-    hip, c, h = at['hip'], at['c'], len(g)
-    for y in range(hip + 1, h):
-        for x in range(len(g[0])): g[y][x] = '.'
-    for y in (hip + 1, hip + 2): seg(g, c - 1, y, c + 7, y, 'p')
-    seg(g, c + 7, hip + 2, c + 7, h - 2, 'p')
-    for x in range(c + 6, c + 11): put(g, x, h - 1, 'k')
+def _seated(g, at):                                                 # on the ground: one leg out flat, one knee up
+    c, hip = at['c'], at['hip']
+    for x in range(c - 2, c + 12): put(g, x, hip, '.')              # the standing boot row goes
+    for x in range(c + 3, c + 9): put(g, x, hip - 1, 'p'); put(g, x, hip, 'p')   # the far leg, flat on the ground
+    for x in range(c + 7, c + 11): put(g, x, hip, 'k')              # its boot
+    seg(g, c, hip - 2, c + 4, hip - 6, 'p'); seg(g, c + 1, hip - 2, c + 5, hip - 6, 'p')   # the thigh, up to the knee
+    seg(g, c + 4, hip - 6, c + 4, hip, 'p'); seg(g, c + 5, hip - 6, c + 5, hip, 'p')       # the shin, down to the ground
+    for x in range(c + 3, c + 7): put(g, x, hip, 'k')               # its boot
 
-CLAUDE = dict(_BODY, name='rdr2-arthur', hair=['.hhhhh.', 'hhhhhhh'], hair_y=2, shut='K',
+def _coat(g, at):                                                   # the coat: a shaded back, an open front showing the
+    c, ty, hip, sh = at['c'], at['ty'], at['hip'], at['sh']         # shirt, a gun belt and holster, the satchel strap,
+    for y in range(ty + 1, hip - 1): put(g, c - 3 + sh(y), y, 'J')  # the bandana at the neck
+    for y in range(ty + 1, hip - 2): put(g, c + 1 + sh(y), y, 'A')
+    for x in range(c - 3, c + 3): put(g, x + sh(hip - 1), hip - 1, 'z')           # the gun belt
+    for y in (hip, hip + 1, hip + 2):                                             # the holster, 2 x 3, on the hip
+        put(g, c + 2 + sh(y), y, 'z'); put(g, c + 3 + sh(y), y, 'z')
+    put(g, c + 3, hip - 2, 'G'); put(g, c + 3, hip - 1, 'G')                       # the gun grip
+    seg(g, c - 3 + sh(ty + 1), ty + 1, c + 2 + sh(hip - 2), hip - 2, 'T')          # the satchel strap, across the chest
+    put(g, c + 2 + sh(ty + 1), ty + 1, 'o')                                        # the bandana's knot
+    put(g, c + 2, ty + 1, 'o')
+
+def _vest(g, at):                                                   # Micah's grey-blue vest: a darker back, a white shirt
+    c, ty, hip, sh = at['c'], at['ty'], at['hip'], at['sh']         # showing at the front
+    for y in range(ty + 1, hip): put(g, c - 3 + sh(y), y, 'V')
+    for y in range(ty + 1, hip - 1): put(g, c + 1 + sh(y), y, 'W')
+
+def _hat(felt, band):
+    """A cowboy hat over the head: a pinched crown with a dark band, a 10-px brim with curled-up ends. On a
+    seated man (his hip on the ground line) it is tilted down a row."""
+    def paint(g, at):
+        c, hy, h = at['c'], at['hy'], at['h']
+        o = at['sh'](hy)
+        b = hy if at['hip'] == h - 1 else hy - 1                    # the brim's row
+        for x in (c - 2, c - 1, c + 1, c + 2): put(g, x + o, b - 2, felt)     # the crown top, pinched in the middle
+        for x in range(c - 2, c + 3): put(g, x + o, b - 1, band)              # the band
+        for x in range(c - 5, c + 5): put(g, x + o, b, felt)                  # the brim
+        put(g, c - 5 + o, b - 1, felt); put(g, c + 4 + o, b - 1, felt)        # its ends, curled up
+    return paint
+
+def _brim_shadow(colour):
+    def paint(g, at):                                               # the brim's shadow across the eyes
+        c, hy, o = at['c'], at['hy'], at['sh'](at['hy'])
+        for x in range(c - 2, c + 3): put(g, x + o, hy + 1, colour)
+    return paint
+
+def _hair_long(g, at):                                              # Micah's blond hair, down the back under the hat
+    c, hy, o = at['c'], at['hy'], at['sh'](at['hy'])
+    for y in range(hy + 1, at['ty'] + 2): put(g, c - 3 + o, y, 'y')
+    put(g, c - 2 + o, hy + 4, 'y')
+
+CLAUDE = dict(_BODY, name='rdr2-arthur', hair=[], shut='K',
               body=dict(color='j', collar='o', hip='b'), leg=dict(color='p', boot='k'),
-              paint=dict(body=[_satchel]))
-CLAUDE_SIT = dict(CLAUDE, name='rdr2-arthur-sit', hair_y=1, paint=dict(body=[_satchel], legs=[_seated]))  # hat pulled down
-RIVAL = dict(_BODY, name='rdr2-micah', hair=['.hhhhh.', 'hhhhhhh'], hair_y=2, shut='K',
-             body=dict(color='j', hip='p'), leg=dict(color='p', boot='k'), paint=dict(face=[_moustache]))
-CPAL = {'s':(226,176,136), 'K':INK, 'h':HAT, 'j':(120,84,56), 'p':(62,50,44), 'k':INK, 'o':BANDANA,
-        'b':(72,44,26)}
-RPAL = {'s':(206,164,130), 'K':INK, 'h':(236,232,222), 'j':(52,48,66), 'p':(44,40,60), 'k':INK, 'm':(64,44,34)}
+              paint=dict(body=[_satchel, _coat], head=[_brim_shadow('D')], end=[_hat('h', 'Q')]))
+CLAUDE_SIT = dict(CLAUDE, name='rdr2-arthur-sit', legs=1, paint=dict(body=[_satchel, _coat], legs=[_seated],
+                  head=[_brim_shadow('D')], end=[_hat('h', 'Q')]))
+RIVAL = dict(_BODY, name='rdr2-micah', hair=[], shut='K', eyes=(0, 2),
+             body=dict(color='j', collar='W', hip='p'), leg=dict(color='p', boot='k'),
+             paint=dict(body=[_vest], head=[_brim_shadow('D'), _hair_long], face=[_moustache], end=[_hat('h', 'Q')]))
+CPAL = {'s':(226,176,136), 'K':INK, 'h':(120,80,46), 'Q':(40,24,16), 'D':(52,34,22), 'j':(120,84,56),
+        'J':(88,60,40), 'A':(214,206,190), 'p':(62,50,44), 'k':INK, 'o':BANDANA, 'b':(72,44,26), 'z':(38,24,16),
+        'G':(70,70,80), 'T':(96,64,36)}
+RPAL = {'s':(206,164,130), 'K':INK, 'h':(236,232,222), 'Q':(52,40,32), 'D':(170,160,146), 'j':(110,128,150),
+        'V':(88,104,124), 'W':(236,234,228), 'p':(44,40,60), 'k':INK, 'm':(64,44,34), 'y':(222,190,110)}
 
 def build(who, pose):
     """Arthur or Micah in a pose (POSES): engine/people.py's figure()."""
@@ -115,23 +247,6 @@ def _fx_dawn(d, im, e, f):
     """The whole sky, hills and sun for this frame: ('rd_dawn', {'k': 0..1})."""
     _paint_dawn(d, e[1]['k'], f)
 
-@fx('rd_horse')
-def _fx_horse(d, im, e, f):
-    """Arthur's pale horse, feet on the ridge, body at x: ('rd_horse', {'x': x}). The neck slopes forward at
-    about 45 degrees, the head points its muzzle forward and down, with an ear and a dark mane."""
-    x, fy = int(e[1]['x']), GROUND
-    d.rectangle([x - 9, fy - 7, x - 8, fy - 1], fill=PALE_SHADE); d.rectangle([x - 6, fy - 7, x - 5, fy - 1], fill=PALE_SHADE)
-    d.rectangle([x + 5, fy - 7, x + 6, fy - 1], fill=PALE); d.rectangle([x + 8, fy - 7, x + 9, fy - 1], fill=PALE)
-    d.polygon([(x - 11, fy - 12), (x - 16, fy - 8), (x - 14, fy - 3), (x - 10, fy - 7)], fill=PALE_SHADE)   # tail
-    d.ellipse([x - 11, fy - 14, x + 8, fy - 5], fill=PALE, outline=HORSE_LINE)                            # barrel
-    d.polygon([(x + 2, fy - 12), (x + 7, fy - 15), (x + 17, fy - 25), (x + 13, fy - 28)],
-              fill=PALE, outline=HORSE_LINE)                                                              # neck, ~45 degrees
-    d.polygon([(x + 12, fy - 29), (x + 17, fy - 31), (x + 25, fy - 23), (x + 24, fy - 20), (x + 18, fy - 22),
-               (x + 14, fy - 25)], fill=PALE, outline=HORSE_LINE)                                         # head, muzzle down
-    d.polygon([(x + 14, fy - 30), (x + 15, fy - 35), (x + 17, fy - 31)], fill=PALE, outline=HORSE_LINE)   # ear
-    d.line([x + 9, fy - 15, x + 16, fy - 26], fill=HORSE_LINE)                                            # mane
-    d.point((x + 18, fy - 26), fill=HORSE_LINE)                                                           # eye
-
 @fx('rd_spark')
 def _fx_spark(d, im, e, f):
     """A spark: (name, x, y, k), k the frames since it started."""
@@ -147,7 +262,6 @@ def _fx_cough(d, im, e, f):
         col = (196, 26, 36) if i % 2 else (150, 18, 28)
         d.rectangle([px, py, px + 1, py + 1], fill=col)
 
-# ---- the close-up ---------------------------------------------------------------------------------------
 def _face(im, d, t, f):                                             # his face in the sun, eyes half shut
     _paint_dawn(d, 1.0, f)
     ox = int(lerp(0, -3, ease(t)))                                  # a slow push in
@@ -176,6 +290,11 @@ def _face(im, d, t, f):                                             # his face i
 def nudge(f):                                                       # the horse steps in to nudge him, then back
     return 3 * math.sin(math.pi * (f - 330) / 18) if 330 <= f < 348 else 0.0
 
+def horse_frame(f):
+    """Idle: the tail flicks every 12 frames (a period of 24, which divides N_); he lowers his head to nudge him."""
+    if 332 <= f < 346: return HORSE['nuzzle']
+    return HORSE[pose_cycle(f, 'idle', 'swish', 12)]
+
 def clip_main(f):
     s = scene(f, THEME)
     k = k_of(f)
@@ -200,8 +319,7 @@ def clip_main(f):
     if CLOSE_AT <= f < CLOSE_AT + CLOSE_LEN:
         s['image'] = closeup((f - CLOSE_AT) / CLOSE_LEN, f, bg=SKIN, draw=_face, txt=CLOSE); return s
     s['under'].append(('rd_dawn', {'k': k}))
-    s['under'].append(('rd_horse', {'x': HX + nudge(f)}))
-    s['actors'] = [put_on(build('claude', me), mx, pal=CPAL)]
+    s['actors'] = [actor(horse_frame(f), int(HX + nudge(f)), pal=HPAL), put_on(build('claude', me), mx, pal=CPAL)]
     if rival: s['actors'].append(put_on(build('rival', rival), rx, flip=f < 118, pal=RPAL))
     return s
 
