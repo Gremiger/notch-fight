@@ -1,6 +1,6 @@
 """Red Dead Redemption 2: Arthur Morgan's last sunrise on the mountain. Claude is Arthur (a hat, a worn coat, an
 orange bandana, a satchel). Micah Bell (a white hat, a moustache, a revolver) comes up the ridge; they fight,
-Arthur lands a few punches and coughs, and Micah runs. Arthur sinks down on the ridge and the sun comes up over
+Arthur lands a few punches and coughs, and Micah runs. Arthur sits down on the ridge and the sun comes up over
 the peaks, the sky going from blue to gold. Close-up: his face lit orange, eyes half shut: THAT'S THE WAY IT IS.
 Then the sun goes back down, Arthur gets up, his horse nudges him, and the clip is back on the neutral pose:
 Arthur on the ridge with his horse under the pre-dawn stars."""
@@ -15,11 +15,14 @@ CLOSE_AT, CLOSE_LEN = 252, 44                                       # the close-
 CX, HX, MX, RX_IN = 50, 22, 68, W + 14                              # Arthur, his horse, where Micah stops, where he enters
 INK = (16,14,22)
 PALE, PALE_SHADE, HORSE_LINE = (232,226,214), (170,160,150), (36,30,40)
+SKIN, SKIN_SHADE, BANDANA, BANDANA_SHADE = (236,150,100), (168,92,66), (217,119,87), (150,64,48)
+HAT, HAT_SHADE = (92,58,34), (48,28,18)
 
 # ---- people, built from a pose (engine/people.py: figure(), POSES) ----------------------------------------
 GW, GH, C = 24, 24, 11                                              # the grid and its centre column (they face right)
 POSES = dict(POSES)
-POSES['cough'] = ((1, 4), (4, -2), (5, 1), (2, -3), 0, 'stance')    # a hand up to the mouth
+POSES['cough'] = ((2, 4), (5, 0), (5, 3), (3, -2), 3, 'stance')    # doubled over, a hand up to the mouth
+POSES['sit'] = ((-1, 4), (2, 6), (5, 3), (7, 6), 1, 'crouch')      # seated, hands on the knees, watching the sun
 _BODY = dict(w=GW, h=GH, c=C, legs=9, torso=7)
 
 def _satchel(g, at):                                                # a satchel on his back (the left side)
@@ -29,18 +32,28 @@ def _moustache(g, at):                                              # a thick mo
     y, o = at['hy'] + 3, at['sh'](at['hy'])
     for x in (at['c'] - 1, at['c'], at['c'] + 1): put(g, x + o, y, 'm')
 
+def _seated(g, at):                                                 # legs out in front on the ridge: a thigh, a shin, a boot
+    hip, c, h = at['hip'], at['c'], len(g)
+    for y in range(hip + 1, h):
+        for x in range(len(g[0])): g[y][x] = '.'
+    for y in (hip + 1, hip + 2): seg(g, c - 1, y, c + 7, y, 'p')
+    seg(g, c + 7, hip + 2, c + 7, h - 2, 'p')
+    for x in range(c + 6, c + 11): put(g, x, h - 1, 'k')
+
 CLAUDE = dict(_BODY, name='rdr2-arthur', hair=['.hhhhh.', 'hhhhhhh'], hair_y=2, shut='K',
               body=dict(color='j', collar='o', hip='b'), leg=dict(color='p', boot='k'),
               paint=dict(body=[_satchel]))
+CLAUDE_SIT = dict(CLAUDE, name='rdr2-arthur-sit', hair_y=1, paint=dict(body=[_satchel], legs=[_seated]))  # hat pulled down
 RIVAL = dict(_BODY, name='rdr2-micah', hair=['.hhhhh.', 'hhhhhhh'], hair_y=2, shut='K',
              body=dict(color='j', hip='p'), leg=dict(color='p', boot='k'), paint=dict(face=[_moustache]))
-CPAL = {'s':(226,176,136), 'K':INK, 'h':(92,58,34), 'j':(120,84,56), 'p':(62,50,44), 'k':INK, 'o':(217,119,87),
+CPAL = {'s':(226,176,136), 'K':INK, 'h':HAT, 'j':(120,84,56), 'p':(62,50,44), 'k':INK, 'o':BANDANA,
         'b':(72,44,26)}
 RPAL = {'s':(206,164,130), 'K':INK, 'h':(236,232,222), 'j':(52,48,66), 'p':(44,40,60), 'k':INK, 'm':(64,44,34)}
 
 def build(who, pose):
     """Arthur or Micah in a pose (POSES): engine/people.py's figure()."""
-    return figure(CLAUDE if who == 'claude' else RIVAL, POSES[pose])
+    if who == 'claude': return figure(CLAUDE_SIT if pose == 'sit' else CLAUDE, POSES[pose])
+    return figure(RIVAL, POSES[pose])
 
 def put_on(spr, wx, flip=False, pal=None):
     """An actor standing at world x."""
@@ -73,6 +86,10 @@ def k_of(f):
     if f < 350: return 1 - ease((f - 300) / 50)
     return 0.0
 
+def kb(f, a, b):
+    """A knockback: a hit pushes its target 2 px back for 4 frames, then 1 px until b, then none."""
+    return 2 if a <= f < a + 4 else (1 if a + 4 <= f < b else 0)
+
 def _paint_dawn(d, k, f):
     for y in range(H):
         t = min(1.0, y / 50)
@@ -100,18 +117,20 @@ def _fx_dawn(d, im, e, f):
 
 @fx('rd_horse')
 def _fx_horse(d, im, e, f):
-    """Arthur's pale horse, feet on the ridge, body at x: ('rd_horse', {'x': x})."""
+    """Arthur's pale horse, feet on the ridge, body at x: ('rd_horse', {'x': x}). The neck slopes forward at
+    about 45 degrees, the head points its muzzle forward and down, with an ear and a dark mane."""
     x, fy = int(e[1]['x']), GROUND
     d.rectangle([x - 9, fy - 7, x - 8, fy - 1], fill=PALE_SHADE); d.rectangle([x - 6, fy - 7, x - 5, fy - 1], fill=PALE_SHADE)
     d.rectangle([x + 5, fy - 7, x + 6, fy - 1], fill=PALE); d.rectangle([x + 8, fy - 7, x + 9, fy - 1], fill=PALE)
     d.polygon([(x - 11, fy - 12), (x - 16, fy - 8), (x - 14, fy - 3), (x - 10, fy - 7)], fill=PALE_SHADE)   # tail
-    d.ellipse([x - 11, fy - 14, x + 8, fy - 5], fill=PALE, outline=HORSE_LINE)
-    d.polygon([(x + 3, fy - 12), (x + 9, fy - 14), (x + 15, fy - 24), (x + 11, fy - 27), (x + 6, fy - 20)],
-              fill=PALE, outline=HORSE_LINE)                                                          # neck
-    d.polygon([(x + 10, fy - 28), (x + 14, fy - 30), (x + 21, fy - 24), (x + 21, fy - 21), (x + 15, fy - 22),
-               (x + 11, fy - 20)], fill=PALE, outline=HORSE_LINE)                                     # head
-    d.line([x + 6, fy - 25, x + 11, fy - 19], fill=HORSE_LINE)                                         # mane
-    d.point((x + 16, fy - 25), fill=HORSE_LINE)                                                        # eye
+    d.ellipse([x - 11, fy - 14, x + 8, fy - 5], fill=PALE, outline=HORSE_LINE)                            # barrel
+    d.polygon([(x + 2, fy - 12), (x + 7, fy - 15), (x + 17, fy - 25), (x + 13, fy - 28)],
+              fill=PALE, outline=HORSE_LINE)                                                              # neck, ~45 degrees
+    d.polygon([(x + 12, fy - 29), (x + 17, fy - 31), (x + 25, fy - 23), (x + 24, fy - 20), (x + 18, fy - 22),
+               (x + 14, fy - 25)], fill=PALE, outline=HORSE_LINE)                                         # head, muzzle down
+    d.polygon([(x + 14, fy - 30), (x + 15, fy - 35), (x + 17, fy - 31)], fill=PALE, outline=HORSE_LINE)   # ear
+    d.line([x + 9, fy - 15, x + 16, fy - 26], fill=HORSE_LINE)                                            # mane
+    d.point((x + 18, fy - 26), fill=HORSE_LINE)                                                           # eye
 
 @fx('rd_spark')
 def _fx_spark(d, im, e, f):
@@ -120,23 +139,38 @@ def _fx_spark(d, im, e, f):
 
 @fx('rd_cough')
 def _fx_cough(d, im, e, f):
-    """Red specks from the mouth: (name, x, y, k), k the frames since the cough."""
+    """A spray of red from the mouth: (name, x, y, k), k the frames since the cough. 2 px specks, 5 of them."""
     _, x, y, k = e
-    for i in range(3):
-        px, py = x - 2 * i - int(k * 0.5), y + i + int(k * 0.4)
-        d.point((px, py), fill=(190, 24, 34)); d.point((px - 1, py), fill=(140, 16, 26))
+    for i in range(5):
+        px = x + int((i - 2) * 1.6 + k * 0.5)
+        py = y + int(abs(i - 2) * 0.8 + k * 0.7)
+        col = (196, 26, 36) if i % 2 else (150, 18, 28)
+        d.rectangle([px, py, px + 1, py + 1], fill=col)
 
 # ---- the close-up ---------------------------------------------------------------------------------------
-def _face(im, d, t, f):                                             # his face, lit by the sun, eyes half shut
+def _face(im, d, t, f):                                             # his face in the sun, eyes half shut
     _paint_dawn(d, 1.0, f)
-    ox = int(lerp(0, -4, ease(t)))                                  # a slow push in
-    d.rectangle([14 + ox, 46, 60 + ox, 64], fill=(217,119,87))      # the bandana
-    d.rectangle([20 + ox, 26, 56 + ox, 48], fill=(236,150,100), outline=INK)   # the face, lit orange
-    d.rectangle([14 + ox, 18, 62 + ox, 22], fill=(92,58,34), outline=INK)     # the brim
-    d.rectangle([24 + ox, 8, 52 + ox, 19], fill=(92,58,34), outline=INK)      # the crown
-    d.rectangle([25 + ox, 31, 31 + ox, 32], fill=INK); d.rectangle([41 + ox, 31, 47 + ox, 32], fill=INK)   # eyes, half shut
-    d.rectangle([28 + ox, 40, 44 + ox, 42], fill=(120,72,46))       # moustache
-    d.rectangle([28 + ox, 43, 44 + ox, 47], fill=(132,84,56))       # stubble
+    ox = int(lerp(0, -3, ease(t)))                                  # a slow push in
+    def R(x0, y0, x1, y1): return [x0 + ox, y0, x1 + ox, y1]
+    d.polygon([(24 + ox, 50), (52 + ox, 50), (57 + ox, 64), (19 + ox, 64)], fill=SKIN_SHADE)    # neck
+    d.polygon([(16 + ox, 49), (60 + ox, 49), (57 + ox, 58), (38 + ox, 63), (20 + ox, 58)], fill=BANDANA)  # bandana
+    d.polygon([(44 + ox, 52), (54 + ox, 50), (50 + ox, 62)], fill=BANDANA_SHADE)                 # its knot
+    d.ellipse(R(20, 22, 56, 50), fill=SKIN_SHADE, outline=INK)                                   # shade side (left)
+    d.ellipse(R(27, 22, 57, 50), fill=SKIN, outline=INK)                                         # the sun side (right)
+    d.ellipse(R(44, 32, 52, 46), fill=(246,176,122))                                             # the lit cheek
+    d.rectangle(R(24, 6, 52, 18), fill=HAT, outline=INK)                                         # the crown
+    d.rectangle(R(14, 16, 62, 21), fill=HAT, outline=INK)                                        # the brim
+    d.rectangle(R(20, 22, 56, 26), fill=HAT_SHADE)                                               # the brim's shadow on the forehead
+    d.rectangle(R(27, 31, 35, 32), fill=INK); d.rectangle(R(41, 31, 49, 32), fill=INK)           # lids, half shut
+    d.rectangle(R(29, 33, 33, 33), fill=(240,232,220)); d.rectangle(R(43, 33, 47, 33), fill=(240,232,220))   # the eye under it
+    d.line([38 + ox, 35, 36 + ox, 40], fill=SKIN_SHADE)                                          # the nose
+    d.rectangle(R(33, 41, 43, 42), fill=(80,50,36))                                              # moustache
+    d.line([35 + ox, 44, 41 + ox, 44], fill=(120,60,44))                                         # mouth
+    rr = random.Random(5)                                                                        # stubble on the jaw
+    for _ in range(46):
+        x, y = rr.randint(24, 52), rr.randint(44, 52)
+        if ((x - 38) / 15) ** 2 + ((y - 46) / 7) ** 2 <= 1:
+            d.point((x + ox, y), fill=rr.choice([(110,78,58), (150,116,92), (96,68,52)]))
 
 # ---- the clip: starts and ends on the neutral pose, so frame N_ is frame 0 --------------------------------
 def nudge(f):                                                       # the horse steps in to nudge him, then back
@@ -145,29 +179,29 @@ def nudge(f):                                                       # the horse 
 def clip_main(f):
     s = scene(f, THEME)
     k = k_of(f)
-    me, rival, rx = ready(f), None, MX
+    me, rival, rx, mx = ready(f), None, MX, CX
     if 16 <= f < 52: rival, rx = pose_cycle(f, 'walk1', 'walk2'), lerp(RX_IN, MX, ease((f - 16) / 36))   # Micah walks in
     if 52 <= f < 118: rival = ready(f)                              # the standoff
     if 64 <= f < 70: me = 'jab'                                     # Arthur lands a punch
-    if 68 <= f < 80: rival, rx = 'hurt', MX + 4
+    if 68 <= f < 80: rival, rx = 'hurt', MX + 4 - kb(f, 68, 80)     # Micah is knocked back
     if 78 <= f < 86: rival = 'hook'                                 # Micah hits back
-    if 84 <= f < 94: me = 'hurt'
+    if 84 <= f < 94: me, mx = 'hurt', CX - kb(f, 84, 94)            # Arthur is knocked back
     if 94 <= f < 108: me = 'cough'                                  # the tuberculosis
     if 108 <= f < 114: me = 'jab'                                   # he still lands one
-    if 112 <= f < 118: rival, rx = 'hurt', MX + 4
+    if 112 <= f < 118: rival, rx = 'hurt', MX + 4 - kb(f, 112, 118)
     if 118 <= f < 152: rival, rx = pose_cycle(f, 'run1', 'run2', 3), lerp(MX, W + 30, (f - 118) / 34)   # Micah runs
     if 124 <= f < 146: me = 'crouch'                                # Arthur sinks down
-    if 146 <= f < 304: me = 'kneel'                                 # ...and sits on the ridge
+    if 146 <= f < 304: me = 'sit'                                   # ...and sits on the ridge, watching the sun
     if 304 <= f < 314: me = 'crouch'                                # gets up
     if 68 <= f < 76: s['fx'].append(('rd_spark', 60, 40, f - 68))
     if 84 <= f < 92: s['fx'].append(('rd_spark', 58, 36, f - 84))
     if 112 <= f < 118: s['fx'].append(('rd_spark', 60, 40, f - 112))
-    if 94 <= f < 106: s['fx'].append(('rd_cough', 51, 39, f - 94))
+    if 94 <= f < 106: s['fx'].append(('rd_cough', 53, 41, f - 94))
     if CLOSE_AT <= f < CLOSE_AT + CLOSE_LEN:
-        s['image'] = closeup((f - CLOSE_AT) / CLOSE_LEN, f, bg=(236,150,100), draw=_face, txt=CLOSE); return s
+        s['image'] = closeup((f - CLOSE_AT) / CLOSE_LEN, f, bg=SKIN, draw=_face, txt=CLOSE); return s
     s['under'].append(('rd_dawn', {'k': k}))
     s['under'].append(('rd_horse', {'x': HX + nudge(f)}))
-    s['actors'] = [put_on(build('claude', me), CX, pal=CPAL)]
+    s['actors'] = [put_on(build('claude', me), mx, pal=CPAL)]
     if rival: s['actors'].append(put_on(build('rival', rival), rx, flip=f < 118, pal=RPAL))
     return s
 
