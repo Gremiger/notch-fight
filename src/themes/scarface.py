@@ -35,25 +35,71 @@ POSES.update({
  'lower':  ((-1,4),(0,7),(3,4),(6,6),0,'stand'),                   # the rifle down, after
 })
 
-def _shirt_tie(g, at):                                              # dark shirt, orange tie
-    for y in range(at['ty'], at['ty'] + 2):
-        for x in (-1, 0, 1): put(g, at['c'] + x + at['sh'](y), y, 'b')
-    for y in range(at['ty'] + 2, at['ty'] + 6): put(g, at['c'] + at['sh'](y), y, 'o')
+def _jacket(g, at):                                                 # the open V: dark shirt, lapels, orange tie, shaded back
+    c, ty = at['c'], at['ty']
+    for y in range(ty, at['hip'] + 1): put(g, c - 3 + at['sh'](y), y, 'J')          # the back side, one shaded column
+    for y in range(ty, ty + 5):                                                    # the lapels, a shaded edge each side of the V
+        put(g, c - 2 + at['sh'](y), y, 'J'); put(g, c + 2 + at['sh'](y), y, 'J')
+    for y in range(ty, ty + 4):                                                    # the dark shirt in a V under the collar
+        for x in ((-1, 0, 1) if y < ty + 2 else (-1, 1)): put(g, c + x + at['sh'](y), y, 'b')
+    for y in range(ty + 2, ty + 6): put(g, c + at['sh'](y), y, 'o')                # the tie, down the middle
+
+def _slick(g, at):                                                 # slicked-back black hair hugging the skull
+    c, hy = at['c'], at['hy']; o = at['sh'](hy)
+    for x in range(c - 2, c + 3): put(g, x + o, hy, 'h')                           # the top of the skull
+    put(g, c - 3 + o, hy, 'h'); put(g, c - 3 + o, hy + 1, 'h'); put(g, c - 2 + o, hy + 1, 'h')   # a bit of volume at the back
+    put(g, c - 2 + o, hy + 3, 'h')                                                 # a short sideburn by the ear
 
 def _shades(g, at):                                                 # sunglasses
     o = at['sh'](at['hy'])
     for x in range(-2, 3): put(g, at['c'] + x + o, at['hy'] + 2, 'G')
 
-TONY = dict(name='scarface-tony', w=GW, h=GH, c=C, legs=9, torso=7, hair=['.hhhhh.', 'hhhhhhh'], hair_y=1,
-            leg=dict(color='J', boot='k', boot_rows=2), body=dict(color='j'),
+def _shirt(g, at):                                                 # a hitman's white shirt, a dark tie
+    c, ty = at['c'], at['ty']
+    for y in (ty, ty + 1):
+        for x in (-1, 0, 1): put(g, c + x + at['sh'](y), y, 'w')
+    for y in range(ty + 2, ty + 5): put(g, c + at['sh'](y), y, 'r')
+
+def _moustache(g, at):                                             # a thin moustache over the mouth
+    o = at['sh'](at['hy']); c, hy = at['c'], at['hy']
+    for x in (c, c + 1, c + 2): put(g, x + o, hy + 3, 'h')
+
+def _shine(g, at):                                                 # a bald head's shine
+    o = at['sh'](at['hy']); put(g, at['c'] - 1 + o, at['hy'] + 1, 'w')
+
+TONY = dict(name='scarface-tony', w=GW, h=GH, c=C, legs=9, torso=7, hair=[], hair_y=1,
+            leg=dict(color='j', back='J', boot='k', boot_rows=2), body=dict(color='j', hip='J'),
             arm=dict(sleeve='j', back_sleeve='J', fore='j', back_fore='J', hand='s', hand_w=1),
-            paint={'body': [_shirt_tie]})
-HIT = dict(name='scarface-hitman', w=GW, h=GH, c=C, legs=9, torso=7, hair=['hhhhh'], hair_y=1,
-           leg=dict(color='D', boot='k', boot_rows=2), body=dict(color='d', collar='w'),
-           arm=dict(sleeve='d', back_sleeve='D', fore='d', back_fore='D', hand='s', hand_w=1),
-           paint={'head': [_shades]})
+            paint={'body': [_jacket], 'head': [_slick]})
+HIT_A = dict(name='scarface-hitman-a', w=GW, h=GH, c=C, legs=9, torso=7, hair=['hhhhh'], hair_y=1,       # dark suit, moustache
+             leg=dict(color='D', boot='k', boot_rows=2), body=dict(color='d'),
+             arm=dict(sleeve='d', back_sleeve='D', fore='d', back_fore='D', hand='s', hand_w=1),
+             paint={'body': [_shirt], 'head': [_shades, _moustache]})
+HIT_B = dict(name='scarface-hitman-b', w=GW, h=GH, c=C, legs=9, torso=7, hair=['hhhhh'], hair_y=1,       # lighter grey suit
+             leg=dict(color='A', boot='k', boot_rows=2), body=dict(color='a'),
+             arm=dict(sleeve='a', back_sleeve='A', fore='a', back_fore='A', hand='s', hand_w=1),
+             paint={'body': [_shirt], 'head': [_shades]})
+HIT_C = dict(name='scarface-hitman-c', w=GW, h=GH, c=C, legs=9, torso=7, hair=[], hair_y=1,        # bald, shades
+             leg=dict(color='D', boot='k', boot_rows=2), body=dict(color='d'),
+             arm=dict(sleeve='d', back_sleeve='D', fore='d', back_fore='D', hand='s', hand_w=1),
+             paint={'body': [_shirt], 'head': [_shades, _shine]})
+HIT_D = dict(name='scarface-hitman-d', w=GW, h=GH, c=C, legs=9, torso=7, hair=['hhhhh'], hair_y=1,       # dark suit, shades
+             leg=dict(color='D', boot='k', boot_rows=2), body=dict(color='d'),
+             arm=dict(sleeve='d', back_sleeve='D', fore='d', back_fore='D', hand='s', hand_w=1),
+             paint={'body': [_shirt], 'head': [_shades]})
+HITS = [HIT_A, HIT_B, HIT_C, HIT_D]                                  # one per hitman, in HITMEN's order
 TPAL = {'s':(226,184,150),'K':INK,'h':(34,26,24),'j':(240,236,226),'J':(204,200,190),'b':(30,28,34),'o':ACCENT,'k':INK}
-HPAL = {'s':(214,170,134),'K':INK,'h':(18,14,12),'d':(44,44,58),'D':(30,30,40),'w':(214,214,224),'G':(8,8,12),'k':INK}
+HPAL = {'s':(214,170,134),'K':INK,'h':(18,14,12),'d':(44,44,58),'D':(30,30,40),'a':(150,150,164),'A':(104,104,120),
+        'w':(236,236,244),'r':(120,18,30),'G':(8,8,12),'k':INK}
+RIFLE = S([                                                          # the M16 with the M203 under the barrel; the grip at (5, 2)
+ "...ggggg......",                                                   # the carry handle
+ "wwwkkkkkkkkkkk",                                                   # the receiver and the barrel
+ "wwwwkkkkkkkkkk",                                                   # the stock, the body
+ "..wwmmkkLLLLLL",                                                   # the magazine, the grenade launcher's tube
+ "....mm........"])                                                  # the magazine's end
+RPAL = {'w':(84,62,40),'k':(26,26,30),'g':(74,74,84),'m':(40,40,46),'L':(126,126,134)}
+RIFLE_GRIP = (5, 2)                                                  # the grip cell, where the front hand is
+MUZZLE_DX = 9                                                        # the muzzle, past the barrel's end
 
 def ready(f):                                                       # the neutral pose: it moves every 12 frames, which divides N_
     return pose_cycle(f, 'guard', 'guard2')
@@ -136,11 +182,10 @@ def _fx_door(d, im, e, f):
 def _fx_m16(d, im, e, f):
     """The M16 with the grenade launcher under the barrel. x, y: the grip (Tony's front hand)."""
     x, y = int(e[1]), int(e[2])
-    d.rectangle([x - 9, y, x - 4, y + 1], fill=(84,62,40))          # the stock
-    d.rectangle([x - 4, y - 1, x + 11, y], fill=(26,26,30))         # receiver and barrel
-    d.line([x - 2, y - 2, x + 3, y - 2], fill=(70,70,78))           # the sight
-    d.rectangle([x + 1, y + 1, x + 8, y + 2], fill=(52,52,58))      # the grenade launcher
-    d.point((x + 11, y - 1), fill=(120,120,128))
+    x0, y0 = x - RIFLE_GRIP[0], y - RIFLE_GRIP[1]
+    for cy, row in enumerate(RIFLE):
+        for cx, ch in enumerate(row):
+            if ch != '.': d.point((x0 + cx, y0 + cy), fill=RPAL[ch])
 
 @fx('sc_muzzle')
 def _fx_muzzle(d, im, e, f):
@@ -195,17 +240,21 @@ def _fx_corpse(d, im, e, f):
     r = min(10, 4 + k * 0.6)
     d.ellipse([x - r, y - 2, x + r, y], fill=(150,14,14))              # the pool
     d.rectangle([x - 8, y - 4, x + 5, y - 1], fill=(70,70,92))          # the suit, flat
-    d.rectangle([x + 3, y - 4, x + 4, y - 1], fill=(220,220,230))       # the shirt at the collar
+    d.rectangle([x + 1, y - 4, x + 3, y - 1], fill=(236,236,244))       # the white shirt, open at the neck
+    d.point((x + 2, y - 2), fill=(120,18,30))                           # the dark tie
     d.rectangle([x + 5, y - 5, x + 9, y - 1], fill=(214,170,134))       # the head
     d.rectangle([x + 5, y - 5, x + 9, y - 4], fill=(18,14,12))          # the hair
+    d.rectangle([x - 12, y - 4, x - 11, y - 3], fill=(214,170,134))     # a hand flung out
+    d.rectangle([x - 10, y - 4, x - 9, y - 4], fill=(70,70,92))         # its sleeve
     d.rectangle([x - 10, y - 3, x - 8, y - 1], fill=INK)                 # the shoes
 
 @fx('sc_pistol')
 def _fx_pistol(d, im, e, f):
-    """A hitman's pistol at his hand: x, y, dir (-1 when he faces left)."""
+    """A hitman's pistol at his hand: x, y, dir (-1 when he faces left). A barrel and a grip, dark."""
     x, y, dr = int(e[1]), int(e[2]), e[3]
-    xs = sorted([x, x + 4 * dr])
-    d.rectangle([xs[0], y, xs[1], y + 1], fill=(20,20,24))
+    xs = sorted([x, x + 3 * dr])
+    d.rectangle([xs[0], y, xs[1], y], fill=(8,8,10))                    # the barrel and slide
+    d.point((x, y + 1), fill=(8,8,10))                                  # the grip
 
 @fx('sc_puff')
 def _fx_puff(d, im, e, f):
@@ -275,18 +324,19 @@ def clip_main(f):
     actors = [actor(figure(TONY, POSES[me]), CX, pal=TPAL)]
     if 52 <= f < 66: s['fx'].append(('sc_bang', CX - 3, 20))
     if 62 <= f < 256: s['fx'].append(('sc_m16', *hand_of(me)))
-    mx, my = hand_of(me)[0] + 11, hand_of(me)[1] - 1                 # the muzzle
+    mx, my = hand_of(me)[0] + MUZZLE_DX, hand_of(me)[1] - 1          # the muzzle
 
-    for tx, death, start in HITMEN:                                 # the hitmen, through the doors
+    for i, (tx, death, start) in enumerate(HITMEN):                 # the hitmen, through the doors
         walk_end = start + 18
         if f < start or f >= death + 4: continue
         if f >= death: pose = 'hurt'
         elif f < walk_end: pose = pose_cycle(f, 'walk1', 'walk2', 6)
         else: pose = 'point'
         x = tx if f >= walk_end else lerp(200, tx, (f - start) / 18)
-        actors.append(actor(figure(HIT, POSES[pose]), int(round(x)), flip=True, pal=HPAL))
-        if pose == 'point':
-            hx, hy = figure_point(HIT, POSES['point'], 'hand', int(round(x)), GROUND, True)
+        hit = HITS[i]
+        actors.append(actor(figure(hit, POSES[pose]), int(round(x)), flip=True, pal=HPAL))
+        if pose != 'hurt':                                          # the pistol in the hand, on the way in and at the shot
+            hx, hy = figure_point(hit, POSES[pose], 'hand', int(round(x)), GROUND, True)
             s['fx'].append(('sc_pistol', hx, hy, -1))
         if death <= f < death + 8: s['fx'].append(('sc_spurt', tx, GROUND - 14, f - death))
     for tx, death, start in HITMEN:                                 # the dead
