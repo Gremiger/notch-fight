@@ -199,6 +199,8 @@ def create(tid, parent=None, people=False, stage=False, fight=True, root=ROOT, r
     if tid in have: raise NewThemeError(f"theme '{tid}' already exists (src/themes/{have[tid]}.py)")
     if os.path.exists(path): raise NewThemeError(f'{os.path.relpath(path, root)} already exists')
     if parent and parent not in have: raise NewThemeError(f"--sub-of: no theme '{parent}'. Known: {', '.join(sorted(have))}")
+    if parent and not tid.startswith(parent + '-'):                 # a sub-theme is named after its parent: dbz-buu, naruto-edo
+        raise NewThemeError(f"a sub-theme of '{parent}' is named '{parent}-<something>' (e.g. {parent}-{tid})")
     text = source(tid, parent, have.get(parent), people, stage, fight, fx_prefix(tid, fx_names(root)))
     new_readme = readme_edit(_read(readme), tid, module, bool(parent), fight)
     with open(path, 'w') as fh: fh.write(text)
