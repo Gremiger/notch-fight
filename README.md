@@ -411,7 +411,12 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
 - **New clip in an existing theme:** add a `clip_<name>(f)` returning a scene to that theme's file
   and append `clip('<name>', <frames>, clip_<name>)` to its `CLIPS`. It must start and end on the
   theme's neutral pose.
-- **New theme:** create `src/themes/<id>.py` with `from engine import *`, `THEME = '<id>'`,
+- **New theme, the quick way:** `nf new-theme <id> [--sub-of <theme>] [--people] [--2.5d] [--no-fight]` writes
+  a skeleton that already imports, renders, loops and passes `nf check` (a palette, a background, one clip with
+  a line of text and a close-up, TODOs where your content goes), adds the theme to the table below and to the
+  source tree, and prints the next steps. `--people` builds Claude and the rival with `figure()`, `--2.5d` lays
+  the scene on a `Stage`, `--no-fight` leaves out the rival.
+- **New theme, by hand:** create `src/themes/<id>.py` with `from engine import *`, `THEME = '<id>'`,
   `register_bg(THEME, ...)`, its sprites/effects (`@fx('name')`) and `CLIPS`. Nothing else to
   touch: themes are auto-discovered and transitions to/from it are generated.
 - **Off by default:** for a clip most people may not want (a football club, a brand), ship it off so
