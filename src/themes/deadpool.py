@@ -548,5 +548,112 @@ def clip_review(f):
     s['actors']=acts
     return s
 
+# ==== byebyebye =======================================================================================
+# The Deadpool & Wolverine opening: Deadpool dances to NSYNC's "Bye Bye Bye" (about 170 BPM, a beat every
+# 7 frames at 20 fps) and the TVA squad rushes in from both sides; he takes them out on the beat.
+BBB_N=300
+BEAT0,BEAT=14,7
+DANCE_X=92
+TVA_L,TVA_R=58,126                                                 # where the agents stand, left and right
+AGENT_PAL={'y':(196,170,110),'b':(96,64,36),'P':(226,182,140),'W':(250,250,250),'k':(30,24,20)}   # khaki, brown
+# (side, enter frame, kill frame, move, callout): every kill lands on a beat (BEAT0 + n*BEAT)
+KILLS=[('L',50,77,'slash','SHLICK!'), ('R',54,91,'kick',None), ('L',88,105,'wave','BYE!'),
+       ('R',92,119,'katana',None), ('L',150,175,'baton','WHACK!'), ('R',150,196,'wave','BYE BYE!')]
+
+@fx('dp_blood')
+def _fx_blood(d,im,e,f):
+    """Blood spurting from a hit, k frames after it: drops fly out and arc down."""
+    _,x,y,k=e
+    for i in range(12):
+        rr=random.Random(i*31+int(x))
+        px=x+rr.uniform(-2.2,2.2)*k; py=y+rr.uniform(-3.2,-1.2)*k+0.35*k*k
+        if 0<=px<W-1 and 0<=py<GROUND: d.rectangle([int(px),int(py),int(px)+1,int(py)],fill=RED if i%3 else RED_D)
+
+@fx('dp_note')
+def _fx_note(d,im,e,f):
+    """A music note floating up off the dance, k frames old (it fades as it rises)."""
+    _,x,y,k=e
+    x,y=int(x),int(y-k*0.6); c=(250,250,250) if k<8 else (150,150,160)
+    d.rectangle([x,y-3,x,y],fill=c); d.rectangle([x-1,y,x,y+1],fill=c)               # stem and head
+
+@fx('dp_baton')
+def _fx_baton(d,im,e,f):
+    """The TVA agent's baton, taken off him, in Deadpool's hand (it points where the katana would)."""
+    _,hx,hy,a=e; c,s=math.cos(math.radians(a)),math.sin(math.radians(a))
+    d.line([hx,hy,hx+c*8,hy+s*8],fill=AGENT_PAL['y']); d.point((hx+c*8,hy+s*8),fill=AGENT_PAL['b'])
+
+def closeup_dance(t,f):
+    """Primer plano: the mask mid-dance, bopping on the beat, and OH HELL YEAH."""
+    def draw(im,d,t,f):
+        ox=2 if ((f-BEAT0)//BEAT)%2==0 else -2                                     # bops on the beat
+        d.rectangle([22+ox,6,86+ox,64],fill=RED); d.rectangle([80+ox,6,86+ox,64],fill=RED_D)
+        d.line([54+ox,6,54+ox,64],fill=RED_D)
+        for x0 in (30,58):
+            d.polygon([(x0+ox-2,20),(x0+ox+22,20),(x0+ox+20,42),(x0+ox,42)],fill=(18,16,18))
+            d.rectangle([x0+ox+3,27,x0+ox+17,36],fill=(250,250,250))
+        if t>=0.15: FX['dp_box'](d,im,('dp_box',"OH HELL YEAH",128,28),f)
+    return closeup(t,f,bg=(30,18,14),draw=draw)
+
+def _strike(f,k,side,move):
+    """Deadpool on the beat k: a lunge at the agent on `side` (x, pose, flip), the hit (k..k+2), the
+    spring back (k+3..k+6). None outside those 13 frames."""
+    L=side=='L'; tx=70 if L else 114
+    if k-6<=f<k: return ez(DANCE_X,tx,(f-(k-6))/6),'dash',L
+    if k<=f<k+3: return tx,('armsup' if move=='wave' else 'dash' if move=='kick' else 'punch'),L
+    if k+3<=f<k+7: return ez(tx,DANCE_X,(f-k-3)/4),guard_pose(f),L
+    return None
+
+def _agent(f,side,enter,k):
+    """A TVA agent (x, pose, y): rushes in from its side from `enter`, swings, goes down on k and is gone
+    8 frames later. None when not on screen."""
+    if not enter<=f<k+8: return None
+    L=side=='L'; start,stop=(-16,TVA_L) if L else (W+16,TVA_R)
+    if f<k:
+        pose='attack' if k-12<=f<k-6 else 'idle'                                  # they swing first
+        return ez(start,stop,(f-enter)/14), pose, GROUND-(((f-enter)//3)%2 if f<enter+14 else 0)
+    return stop+(f-k)*(-0.8 if L else 0.8), 'hurt', GROUND
+
+def clip_byebyebye(f):
+    s=scene(f,THEME)
+    if 126<=f<166: s['image']=closeup_dance((f-126)/40,f); return s          # the mask, mid-dance
+    x,y,pose,mood,flip=30,GROUND,guard_pose(f),'normal',False
+    weapon=None
+    # 1) the dance: Deadpool steps out of the neutral pose and hops on the beat
+    if BEAT0<=f<262:
+        beat=(f-BEAT0)//BEAT
+        x=ez(30,DANCE_X,(f-BEAT0)/20) if f<34 else DANCE_X
+        y=GROUND-int(3*math.sin(math.pi*((f-BEAT0)%BEAT)/BEAT))
+        pose,mood=('armsup' if beat%2==0 else guard_pose(f)),'happy'
+    if cue(f,BEAT0,'BYE BYE BYE'): s['fx'].append(('dp_box','BYE BYE BYE',DANCE_X,4))   # 22 frames
+    for bs in range(BEAT0,262,2*BEAT):                                                  # a note every other beat
+        if (bs<77 or bs>=203) and 0<=f-bs<16:
+            s['fx'].append(('dp_note',DANCE_X+(-30 if (bs//BEAT)%4<2 else 30),GROUND-26,f-bs))
+    # 2) the TVA squad: each kill lands on a beat; the lunge, the hit, the spring back
+    for side,enter,k,move,txt in KILLS:
+        st=_strike(f,k,side,move)
+        if st:
+            x,pose,flip=st; y=GROUND; mood='angry'
+            if pose in GRIP and move in ('slash','katana','baton'): weapon='baton' if move=='baton' else 'katana'
+        if txt and k<=f<k+hold(txt): callout(s,txt)                      # a shout only where it has room
+        if k<=f<k+9: s['fx'].append(('dp_blood',TVA_L if side=='L' else TVA_R,GROUND-9,f-k))
+    # 3) the last agent down: he keeps dancing and waves bye, the arms crossing on each beat
+    if 203<=f<262:
+        pose,mood,flip='armsup','happy',((f-BEAT0)//BEAT)%2==1
+    if cue(f,216,'BYE, TVA.'): s['fx'].append(('dp_box','BYE, TVA.',DANCE_X,4))
+    # 4) back to the neutral pose
+    if 262<=f<284: x,flip,pose,y,mood=ez(DANCE_X,30,(f-262)/22),True,guard_pose(f),GROUND,'normal'
+    if f>=284: x,flip,pose,y,mood=30,False,guard_pose(f),GROUND,'normal'
+    acts=[]
+    for side,enter,k,move,txt in KILLS:
+        a=_agent(f,side,enter,k)
+        if a:
+            ax,apose,ay=a; acts.append(actor(WOLV[apose],int(round(ax)),ay,flip=side=='R',pal=AGENT_PAL))
+    acts.append(actor(DP[mood][pose],x,y,flip=flip,pal=DPAL))
+    if weapon:
+        hx,hy=hand_at(DP[mood][pose],x,int(y),flip,*GRIP[pose],h=11)
+        s['fx'].append(('dp_katana' if weapon=='katana' else 'dp_baton',hx,hy,180 if flip else 0))
+    s['actors']=acts
+    return s
+
 CLIPS = [clip('bub', N_, clip_bub), clip('notchverse', 365, clip_notchverse), clip('webcam', 377, clip_webcam),
-         clip('review', 377, clip_review)]
+         clip('review', 377, clip_review), clip('byebyebye', BBB_N, clip_byebyebye)]
