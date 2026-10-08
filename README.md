@@ -366,6 +366,7 @@ src/
 │   ├── loop.py        # time that loops: the clip's length, wrapped frames, periods that divide it
 │   ├── ambient.py     # rain, snow, ash, embers, fireflies, fog, torch, stars, flashes (they loop on their own)
 │   ├── director.py    # text: how long it stays up, wrapping, the biggest that fits; a close-up template
+│   ├── stage25.py     # 2.5D: a floor with depth (vanishing point or camera), sizes, shadows, order, paths
 │   └── render.py      # scene/actor model, backgrounds, render(), callout(), clip()
 ├── themes/            # one file per theme: sprites, its own effects, its clips, CLIPS = [...]
 │   ├── dbz.py  ygo.py  kny.py  jjk.py  fn.py  pkm.py  snk.py  nrt.py  hxh.py  fma.py  mk.py  jojo.py  apex.py  cs.py  hl.py  rm.py  inv.py  phm.py  arg.py  odyssey.py  dnd.py  eternauta.py  cai.py  thebear.py  lol.py  thisisfine.py  wednesday.py  memento.py  skyrim.py  haikyuu.py  fightclub.py  arcane.py  basterds.py  basterds_cinema.py  hp.py  meshi.py  terraria.py  mist.py  deadpool.py  spidey.py  coraline.py
@@ -434,6 +435,13 @@ See `CLAUDE.md` for the rules (a new clip is auto-set to play first).
   has the common ones (guard, jab, hook, hurt, cheer, point, walk, run, jump, kneel, crouch);
   `figure_point()` finds a hand or the head on screen (to hang a sword, a bat, a wand on it). The six
   themes with posed people (haikyuu, fightclub, arcane, basterds, arg-cordoba, hp) are built this way.
+- **Depth, 2.5D** (`engine/stage25.py`): a `Stage` is a floor seen at an angle, a point on it `(wx, z, h)`
+  (world x, depth 0 far .. 1 near, height). `proj()` puts it on screen, with a vanishing point
+  (`vp_x`, a court seen from the side), a camera with `parallax` (a pitch the camera follows) or
+  neither (a floor seen from the front); `place()` makes an actor sized (and faded) for its depth,
+  `shadow()` lays its shadow, `back_to_front()` orders a scene, `quad()` / `line()` draw on the floor,
+  `arc()` is a throw through the air and `ring()` a path round an ellipse. haikyuu, arg-86 and
+  arg-cordoba are drawn with it.
 - **Text, the easy way** (`engine/director.py`): `hold(txt)` is how many frames a line needs (0.5 s + 0.2 s
   a word, at least 1 s), `cue(f, start, txt)` whether it's up; `text_block(im, txt, box)` draws it as
   big as fits in a box, wrapped into even lines; the `caption` effect does the same; and
