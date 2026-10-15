@@ -83,7 +83,7 @@ def cpal(f=0, skin=SKIN):
             'k': (28, 26, 38), 'p': (42, 42, 58), 'u': (56, 58, 78), 'T': t, 't': t}
 def ppal(f=0):
     t = teal(f)
-    return {'s': (150, 100, 70), 'K': INK, 'n': (34, 46, 100), 'm': (136, 36, 50), 'y': (232, 190, 70), 'k': (28, 26, 38),
+    return {'s': (150, 100, 70), 'K': INK, 'n': (44, 70, 160), 'm': (178, 40, 58), 'y': (232, 190, 70), 'k': (28, 26, 38),
             'p': (42, 42, 58), 'u': (56, 58, 78), 'T': t, 't': t}
 BPAL = {'s': (150, 98, 66), 'K': INK, 'k': (22, 22, 28), 'q': (118, 100, 80), 'b': (70, 48, 34)}
 KPAL = {'s': (170, 116, 82), 'K': INK, 'h': (30, 24, 28), 'r': (30, 24, 28), 'W': (240, 240, 246), 'B': (130, 186, 232), 'g': (70, 150, 90),
@@ -211,48 +211,74 @@ def crystal(d, x, y, h, w=3, up=True, c=(222, 48, 60)):
 
 @fx('ea_shaft')
 def _fx_shaft(d, im, e, f):
-    """The mine shaft, scrolling up as Claude runs down: ('ea_shaft', offset)."""
-    off = e[1]; L, R = SL, SR
-    d.rectangle([0, 0, L, H], fill=(52, 34, 46)); d.rectangle([R, 0, W, H], fill=(52, 34, 46))
-    d.line([L, 0, L, H], fill=(96, 56, 66)); d.line([R, 0, R, H], fill=(96, 56, 66))
-    for y in range(-12, H + 12, 12): yy = y + int(off) % 12; d.line([0, yy, L - 2, yy], fill=(44, 28, 40)); d.line([R + 2, yy, W, yy], fill=(44, 28, 40))
-    for k in range(2):                                                   # timber beams across
+    """The mine shaft: rock walls and red crystals scrolling up as Claude runs down: ('ea_shaft', offset)."""
+    off = int(e[1]); L, R = SL, SR
+    for y in range(H): d.line([L, y, R, y], fill=mix((26, 8, 22), (90, 22, 40), y / H))
+    for x0, x1 in ((0, L), (R, W)):                                       # the walls: stones in rows
+        d.rectangle([x0, 0, x1, H], fill=(56, 36, 48))
+        for row in range(-1, 8):
+            rid = row + off // 10; y = row * 10 - off % 10; xx = x0 - (rid * 7) % 11
+            while xx <= x1:
+                w = 8 + (xx * 7 + rid * 13) % 9; a, b = max(xx, x0), min(xx + w - 2, x1)
+                if a < b:
+                    d.rectangle([a, y, b, y + 8], fill=((70, 46, 58), (50, 32, 44), (82, 56, 66), (62, 40, 54))[(xx + rid) % 4]); d.line([a, y, b, y], fill=(100, 68, 78))
+                xx += w
+    d.line([L, 0, L, H], fill=(30, 14, 26)); d.line([R, 0, R, H], fill=(30, 14, 26))
+    for k in range(2):                                                    # timber beams across
         y = int((k * 36 - off) % 72) - 8; d.rectangle([L, y, R, y + 2], fill=(86, 58, 44)); d.line([L, y, R, y], fill=(120, 84, 60))
-    for i, (side, y0, h) in enumerate(((0, 6, 9), (1, 20, 12), (0, 30, 6), (1, 44, 10), (0, 52, 8), (1, 58, 7), (0, 18, 7), (1, 2, 8))):
-        y = int((y0 * 2.2 - off * 1.0) % 90) - 10
-        glow(im, L - 4 if side == 0 else R + 4, y, 8, RED, 0.25)
-        if side == 0:
-            for dx, hh in ((0, h), (-3, h - 3)): d.polygon([(L, y - 3 + dx), (L + hh // 2 + 2, y + dx), (L, y + 3 + dx)], fill=(214, 48, 62))
-        else:
-            for dx, hh in ((0, h), (3, h - 3)): d.polygon([(R, y - 3 + dx), (R - hh // 2 - 2, y + dx), (R, y + 3 + dx)], fill=(214, 48, 62))
+    rr = random.Random(11)
+    for i in range(28):                                                   # dense crystals growing out of both walls
+        side = i % 2; y = int((i * 4.5 + rr.randint(0, 3) - off) % 126) - 12; h = rr.randint(6, 13); x = L if side == 0 else R; dn = 1 if side == 0 else -1
+        if y < -8 or y > H + 8: continue
+        glow(im, x + dn * 4, y, 7, RED, 0.2); d = ImageDraw.Draw(im)
+        for dy, hh in ((0, h), (-3, h - 4), (3, h - 3)):
+            d.polygon([(x, y + dy - 3), (x + dn * hh, y + dy), (x, y + dy + 3)], fill=(214, 48, 62)); d.line([x, y + dy - 2, x + dn * hh, y + dy], fill=(255, 160, 160))
 
 @fx('ea_ghoul')
 def _fx_ghoul(d, im, e, f):
-    """A small ghoul on the wall: ('ea_ghoul', x, y, look 0..1): its eyes turn towards Claude as look grows."""
-    _, x, y, look = e
-    d.ellipse([x - 4, y - 3, x + 4, y + 4], fill=(70, 70, 86)); d.ellipse([x - 3, y - 7, x + 1, y - 2], fill=(86, 86, 104))
+    """A hunched grey ghoul clinging to the right wall: ('ea_ghoul', x, y(feet), look 0..1). It faces left, its
+    eyes light up as it turns towards Claude."""
+    _, x, y, look = e; G, RIM = (74, 76, 94), (150, 154, 176)
+    d.line([x + 3, y - 4, x + 7, y], fill=G, width=2)
+    d.ellipse([x - 5, y - 15, x + 7, y - 2], fill=G, outline=RIM)                       # the hump
+    d.ellipse([x - 10, y - 12, x - 3, y - 5], fill=G, outline=RIM)                      # the head, low
+    d.line([x - 4, y - 8, x - 9, y - 1], fill=G, width=2); d.line([x - 2, y - 7, x - 5, y], fill=G, width=2)    # arms hanging
     if look > 0.4:
-        d.point((x - 3, y - 5), fill=RED); d.point((x - 1, y - 5), fill=RED)
-        if look > 0.8: glow(im, x - 2, y - 5, 4, RED, 0.5)
-    d.line([x - 4, y, x - 8, y + 4], fill=(70, 70, 86)); d.line([x + 4, y + 1, x + 7, y + 6], fill=(70, 70, 86))
+        d.point((x - 9, y - 9), fill=RED); d.point((x - 7, y - 9), fill=RED)
+        if look > 0.8: glow(im, x - 8, y - 9, 4, RED, 0.5)
 
 @fx('ea_beast')
 def _fx_beast(d, im, e, f):
-    """The hulking grey beast of the lost miners: ('ea_beast', x, feet, hole 0..1, crumble 0..1)."""
-    _, x, y, hole, cr, *hy = e; hy = hy[0] if hy else y - 28
-    G, Gd, Gl = (92, 96, 114), (60, 64, 80), (130, 136, 156)
+    """The hulking grey beast of the lost miners, facing left: ('ea_beast', x, feet, hole 0..1, crumble 0..1[, hole_y[, light]])."""
+    _, x, y, hole, cr, *r = e; hy = r[0] if r else y - 22; light = r[1] if len(r) > 1 else 0
+    G, Gd, Gl, Gk = (98, 102, 120), (62, 66, 82), (140, 146, 164), (38, 40, 52)
     if cr >= 1: return
     j = int(cr * 8)
-    d.rectangle([x - 15, y - 16, x - 6, y], fill=Gd); d.rectangle([x + 6, y - 16, x + 15, y], fill=Gd)                 # legs
-    d.polygon([(x - 24, y - 44 + j), (x + 24, y - 44 + j), (x + 17, y - 12), (x - 17, y - 12)], fill=G)              # the body
-    d.polygon([(x - 24, y - 44 + j), (x - 10, y - 50 + j), (x + 10, y - 50 + j), (x + 24, y - 44 + j)], fill=Gl)
-    d.ellipse([x - 8, y - 58 + j, x + 8, y - 44 + j], fill=Gd)                                                        # the small head
-    d.rectangle([x - 5, y - 52 + j, x - 3, y - 51 + j], fill=RED); d.rectangle([x + 2, y - 52 + j, x + 4, y - 51 + j], fill=RED)
-    glow(im, x, y - 52 + j, 8, RED, 0.35); d = ImageDraw.Draw(im)
-    d.line([x - 24, y - 42 + j, x - 30, y - 20, x - 27, y - 4], fill=G, width=4); d.line([x + 24, y - 42 + j, x + 30, y - 20, x + 27, y - 4], fill=G, width=4)
-    for cx_, cy_, h in ((-18, -44, 11), (-8, -48, 9), (18, -44, 12), (26, -40, 8), (-26, -36, 8)): crystal(d, x + cx_, y + cy_ + j, h, 3)
+    d.rectangle([x - 12, y - 10, x - 4, y], fill=Gd); d.rectangle([x + 6, y - 10, x + 14, y], fill=Gk)                 # stubby legs
+    d.line([x - 4, y - 30 + j, x - 14, y - 14, x - 18, y - 3], fill=Gd, width=5)                                       # the far arm
+    d.ellipse([x - 24, y - 46 + j, x + 26, y - 10], fill=Gd)                                                           # the hump
+    for lx, ly, rr_ in ((20, -40, 6), (26, -28, 5), (8, -47, 6), (-6, -48, 5), (24, -16, 5), (-24, -22, 5)):          # merged bodies: a lumpy outline
+        d.ellipse([x + lx - rr_, y + ly - rr_ + j, x + lx + rr_, y + ly + rr_ + j], fill=Gd)
+    d.ellipse([x - 22, y - 36 + j, x + 12, y - 8], fill=G)                                                             # the chest
+    d.ellipse([x - 24, y - 42 + j, x - 4, y - 28 + j], fill=Gl)                                                        # a shoulder catching the light
+    d.ellipse([x + 4, y - 44 + j, x + 22, y - 30 + j], fill=G)
+    d.ellipse([x - 27, y - 37 + j, x - 14, y - 26 + j], fill=Gk)                                                       # the small head, sunk between the shoulders
+    for ex, ey in ((-25, -33), (-22, -35), (-24, -30), (-20, -32)): d.point((x + ex, y + ey + j), fill=RED)
+    glow(im, x - 22, y - 32 + j, 7, RED, 0.4); d = ImageDraw.Draw(im)
+    d.line([x - 20, y - 34 + j, x - 33, y - 16, x - 31, y - 4], fill=G, width=5)                                       # the near arm, knuckles on the ground
+    d.ellipse([x - 36, y - 7, x - 26, y + 1], fill=Gl); d.rectangle([x - 35, y - 3, x - 27, y - 2], fill=Gd)
+    for cx_, cy_, h in ((-2, -46, 10), (8, -48, 13), (18, -44, 9), (26, -33, 8), (-12, -44, 7), (14, -17, 6)): crystal(d, x + cx_, y + cy_ + j, h, 3)
     if hole > 0:
-        r = int(2 + 7 * hole); d.ellipse([x - r - 1, hy - r - 1, x + r + 1, hy + r + 1], fill=TEAL); d.ellipse([x - r + 1, hy - r + 1, x + r - 1, hy + r - 1], fill=(14, 8, 18))
+        r_ = int(2 + 7 * hole); hx = x - 10
+        d.ellipse([hx - r_ - 1, hy - r_ - 1, hx + r_ + 1, hy + r_ + 1], fill=TEAL)
+        d.ellipse([hx - r_ + 1, hy - r_ + 1, hx + r_ - 1, hy + r_ - 1], fill=TEAL_L if light else (14, 8, 18))
+        if light: glow(im, hx, hy, r_ + 6, TEAL_L, 0.55)
+
+@fx('ea_ledge')
+def _fx_ledge(d, im, e, f):
+    """A crystal ledge Claude stands on, a few px above the floor: ('ea_ledge',)."""
+    d.rectangle([0, GROUND - 5, 112, GROUND + 1], fill=(74, 42, 56)); d.line([0, GROUND - 5, 112, GROUND - 5], fill=(150, 70, 84)); d.line([112, GROUND - 5, 112, GROUND + 1], fill=(40, 20, 34))
+    for x, h in ((4, 8), (10, 5), (104, 7), (109, 4)): crystal(d, x, GROUND - 5, h, 2)
 
 @fx('ea_supay')
 def _fx_supay(d, im, e, f):
@@ -312,7 +338,7 @@ def _fx_shards(d, im, e, f):
         a = rr.uniform(0, 6.28); v = rr.uniform(2, 5); px, py = x + math.cos(a) * v * k, y + math.sin(a) * v * k + 0.25 * k * k
         d.rectangle([px, py, px + 1, py + 1], fill=rr.choice([RED, (255, 140, 140), TEAL_L]))
 
-def slope_y2(x): return 62 - 0.2 * x
+def slope_y2(x): return 62 - 0.13 * x
 
 @fx('ea_ground')
 def _fx_ground(d, im, e, f):
@@ -331,31 +357,37 @@ def _fx_ground(d, im, e, f):
 
 @fx('ea_apu')
 def _fx_apu(d, im, e, f):
-    """The Apu, a giant stone head with glowing blue glyphs: ('ea_apu', dx, dy, flare 0..1 (eye), glyph 0..1)."""
-    _, dx, dy, fl, gl = e
-    P = lambda pts: [(x + dx, y + dy) for x, y in pts]
-    head = [(60, 80), (72, 44), (90, 22), (110, 7), (132, 4), (152, 10), (162, 20), (176, 28), (185, 36), (184, 46), (170, 50), (158, 54), (148, 66), (142, 80)]
-    d.polygon(P(head), fill=(50, 40, 56)); d.polygon(P([(x + 1 if x < 100 else x - 1, y) for x, y in head]), fill=STONE)
-    for band in (((72, 56), (84, 32), (98, 18), (108, 24), (98, 38), (90, 58)), ((112, 64), (120, 46), (134, 34), (140, 40), (130, 52), (124, 66))):
-        d.polygon(P(band), fill=mix((46, 58, 100), (60, 90, 150), gl), outline=mix((70, 70, 90), BLUE, gl))
-    d.polygon(P([(110, 7), (132, 4), (152, 10), (162, 20), (150, 20), (132, 12), (112, 16), (92, 30)]), fill=(148, 124, 120))        # lit brow
-    d.polygon(P([(112, 8), (104, -6), (110, -8), (124, 6)]), fill=(120, 106, 108)); d.polygon(P([(130, 4), (130, -10), (136, -10), (140, 5)]), fill=(120, 106, 108))   # horns
-    d.polygon(P([(60, 80), (72, 44), (90, 22), (96, 30), (84, 52), (78, 80)]), fill=(76, 68, 78))
-    d.polygon(P([(158, 54), (170, 50), (184, 46), (184, 40), (170, 42), (156, 46)]), fill=(84, 76, 84))                                 # the snout's lower plane
-    d.line(P([(150, 28), (164, 32), (176, 36)]), fill=(70, 62, 70)); d.polygon(P([(176, 40), (180, 40), (180, 43), (176, 43)]), fill=(40, 34, 44))
-    gc = mix(STONE, mix((60, 120, 190), BLUE, 0.5 + 0.5 * math.sin(f * 0.5)), gl)
-    for row, y in enumerate((32, 42, 52)):
-        for i in range(8):
-            x = 78 + i * 6 + row * 4; yy = y - (i * 1.2)
-            if not (x < 150 - row * 6 and yy > 10): continue
-            k = (i * 3 + row * 5) % 4; xx, yy = x + dx, yy + dy
-            if k == 0: d.line([(xx, yy), (xx + 2, yy - 2), (xx + 4, yy)], fill=gc)
-            elif k == 1: d.rectangle([xx, yy - 2, xx + 2, yy], outline=gc)
-            elif k == 2: d.line([xx, yy, xx + 4, yy], fill=gc); d.point((xx + 2, yy - 2), fill=gc)
-            else: d.line([(xx, yy - 2), (xx + 3, yy - 2), (xx + 3, yy), (xx, yy)], fill=gc)
-    ex, ey = 150 + dx, 22 + dy                                                            # the blue eye
-    glow(im, ex, ey, int(5 + 9 * fl), BLUE, 0.35 + 0.5 * fl); d = ImageDraw.Draw(im)
-    d.polygon([(ex - 8, ey + 3), (ex + 6, ey - 4), (ex + 10, ey), (ex, ey + 5)], fill=BLUE_L if fl > 0.5 else (120, 170, 235))
+    """The Apu: a huge stone llama's head and neck in profile, blue glyph bands round the neck:
+    ('ea_apu', dx, dy, flare 0..1 (the eye), glyph 0..1[, bow 0..1: the snout tips down])."""
+    _, dx, dy, fl, gl, *b = e; bow = b[0] if b else 0
+    lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+    P = lambda pts: [(x + dx, y + dy) for x, y in pts]; OUTL = (40, 32, 46)
+    body = [(80, 72), (86, 42), (94, 26), (100, 20), (124, 14), (150, 24), (172, 30), (178, 36), (174, 42), (150, 44), (132, 49), (126, 72)]
+    ld.polygon(P(body), fill=STONE, outline=OUTL)
+    for ear in (((97, 22), (102, -3), (111, 18)), ((109, 18), (119, -5), (125, 16))):                               # two tall pointed ears
+        ld.polygon(P(ear), fill=(122, 108, 112), outline=OUTL)
+    ld.polygon(P([(104, 6), (102, -3), (108, 12)]), fill=(84, 74, 82))
+    ld.polygon(P([(100, 20), (124, 14), (150, 24), (172, 30), (166, 32), (150, 30), (124, 22), (104, 28)]), fill=(156, 132, 126))   # the lit top of the head
+    ld.polygon(P([(80, 72), (86, 42), (94, 26), (100, 28), (94, 44), (90, 72)]), fill=(72, 64, 78))                 # the neck's shadowed back
+    ld.polygon(P([(132, 49), (150, 44), (174, 42), (172, 39), (150, 38), (134, 43)]), fill=(84, 76, 86))            # under the jaw
+    ld.line(P([(152, 38), (176, 37)]), fill=(34, 28, 38)); ld.point(P([(172, 32)])[0], fill=(34, 28, 38))           # mouth, nostril
+    ld.line(P([(130, 23), (148, 20)]), fill=(64, 54, 66))                                                           # brow
+    gc = mix((90, 90, 104), mix((60, 120, 190), BLUE, 0.5 + 0.5 * math.sin(f * 0.5)), gl)
+    for y, xr in ((32, 118), (44, 130), (54, 129), (63, 128)):                                                       # the glyph bands round the neck
+        xl = int(94 - (y - 26) * 0.318)
+        ld.polygon(P([(xl, y), (xr, y), (xr, y + 5), (xl, y + 5)]), fill=mix((56, 52, 70), (40, 56, 110), gl))
+        for i, x in enumerate(range(xl + 3, xr - 4, 6)):
+            xx, yy = x + dx, y + dy
+            if (i + y) % 2: ld.line([(xx, yy + 4), (xx, yy + 2), (xx + 2, yy + 2), (xx + 2, yy), (xx + 4, yy)], fill=gc)   # a step-fret
+            else: ld.polygon([(xx + 2, yy), (xx + 4, yy + 2), (xx + 2, yy + 4), (xx, yy + 2)], outline=gc)                # a diamond
+    ec = BLUE_L if fl > 0.5 else (130, 180, 240); w = 1 + int(2 * fl)
+    ld.polygon(P([(133, 29), (146, 22), (148, 24 + w // 2), (137, 31 + w // 2)]), fill=ec)                         # the narrow blue eye slit
+    piv = (100 + dx, 56 + dy); ang = -30 * bow
+    if bow: lay = lay.rotate(ang, resample=Image.NEAREST, center=piv)
+    im.paste(lay, (0, 0), lay)
+    a = math.radians(ang); vx, vy = 141 + dx - piv[0], 26 + dy - piv[1]
+    ex, ey = piv[0] + vx * math.cos(a) + vy * math.sin(a), piv[1] - vx * math.sin(a) + vy * math.cos(a)
+    glow(im, ex, ey, int(4 + 9 * fl), BLUE, 0.3 + 0.5 * fl)
 
 @fx('ea_rock')
 def _fx_rock2(d, im, e, f):
@@ -365,23 +397,22 @@ def _fx_rock2(d, im, e, f):
 
 @fx('ea_ride')
 def _fx_ride(d, im, e, f):
-    """A rider on a small dirt bike with glowing wheel rings, tilted up the slope: ('ea_ride', spr, pal, x, y, ring 0..1)."""
+    """A rider on a long, low dirt bike with small wheels (a thin teal ring), tilted up the slope:
+    ('ea_ride', rider sprite or None, pal, x, y, ring 0..1)."""
     _, spr, pal, x, y, ring = e
-    lay = Image.new('RGBA', (52, 44), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
-    rc = mix((60, 60, 70), TEAL, ring); sp = (f * 0.7)
-    for wx in (9, 36):
-        ld.ellipse([wx - 6, 26, wx + 6, 38], fill=(40, 34, 42), outline=rc)
-        ld.ellipse([wx - 5, 27, wx + 5, 37], outline=rc)
-        a = sp + (0 if wx == 9 else 1); ld.line([wx, 32, wx + math.cos(a) * 4, 32 + math.sin(a) * 4], fill=(150, 130, 120))
-    ld.line([9, 32, 17, 22], fill=(86, 58, 44), width=2); ld.line([17, 22, 34, 20], fill=(120, 84, 60), width=3)
-    ld.line([34, 20, 36, 32], fill=(86, 58, 44), width=2); ld.line([32, 14, 38, 14], fill=(60, 50, 52), width=1); ld.line([34, 20, 35, 14], fill=(60, 50, 52))
-    ld.rectangle([14, 19, 24, 21], fill=(60, 40, 40))
+    lay = Image.new('RGBA', (60, 40), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+    rc = mix((70, 70, 80), TEAL, ring)
+    for wx in (9, 46):
+        ld.ellipse([wx - 5, 29, wx + 5, 39], fill=(34, 28, 36), outline=rc)
+        a = f * 0.9 + (wx > 20); ld.line([wx, 34, wx + math.cos(a) * 3, 34 + math.sin(a) * 3], fill=(170, 150, 140))
+    ld.line([9, 34, 20, 27], fill=(80, 56, 44), width=2); ld.polygon([(14, 26), (38, 22), (40, 27), (20, 30)], fill=(128, 88, 60))
+    ld.line([37, 23, 46, 34], fill=(70, 62, 70), width=2); ld.line([35, 19, 41, 19], fill=(60, 50, 52)); ld.rectangle([13, 24, 25, 26], fill=(48, 34, 40))
     if spr:
-        r = sprite_img(spr, pal); lay.paste(r, (10, 19 - r.height + 11), r)
-    lay = lay.rotate(12, resample=Image.NEAREST, expand=True)
-    im.paste(lay, (int(x - lay.width / 2), int(y - lay.height + 10)), lay)
+        r = sprite_img(shrink(spr, 0.8), pal); lay.paste(r, (15, 28 - r.height + 3), r)
+    lay = lay.rotate(8, resample=Image.NEAREST, expand=True)
+    im.paste(lay, (int(x - lay.width / 2), int(y - lay.height + 9)), lay)
     if ring > 0.5:
-        for k in range(3): d.point((x - 22 - k * 3, y - 1 - k % 2), fill=TEAL_L if k == 0 else TEAL)
+        for k in range(3): d.point((x - 28 - k * 3, y - 1 - k % 2), fill=TEAL_L if k == 0 else TEAL)
 
 # ---- the close-ups -----------------------------------------------------------------------------------------
 def _supay_face(im, d, t, f):
@@ -424,21 +455,26 @@ def _cal_face(im, d, t, f):
     d.line([gx - 3, gy - 3, gx + 3, gy + 3], fill=xc, width=2); d.line([gx - 3, gy + 3, gx + 3, gy - 3], fill=xc, width=2)
 
 def _hands(im, d, t, f):
-    """Pietro's hands making the mountain sign (a triangle of thumbs and index fingers), the triangle glowing."""
-    for y in range(H): d.line([0, y, W, y], fill=mix((120, 70, 100), (250, 160, 90), y / H))
-    G, TIP = (26, 24, 34), teal(f); cx = 38
-    for sgn in (-1, 1):
-        px = cx + sgn * 24
-        d.polygon([(px - 6, 64), (px + 6, 64), (px + sgn * 8 + 2, 46), (px + sgn * 4 - 4, 46)], fill=(136, 36, 50))                   # the maroon sleeve
-        d.line([px + sgn * 2 - 1, 62, px + sgn * 4, 46], fill=(232, 190, 70)); d.line([px + sgn * 2 + 3, 62, px + sgn * 6, 46], fill=(232, 190, 70))
-        d.ellipse([px - 9, 28, px + 9, 50], fill=G)                                                                                 # the palm
-        d.line([px - sgn * 3, 33, cx + sgn * 1, 10], fill=G, width=5)                                                               # index finger up to the apex
-        d.line([px - sgn * 3, 44, cx + sgn * 1, 44], fill=G, width=5)                                                               # thumb along the base
-        d.ellipse([cx + sgn * 2 - 2, 8, cx + sgn * 2 + 2, 12], fill=TIP); d.ellipse([cx + sgn * 2 - 2, 42, cx + sgn * 2 + 2, 46], fill=TIP)
-    inner = [(cx, 14), (cx + 12, 41), (cx - 12, 41)]
-    g = ease((t - 0.35) / 0.4)
-    d.polygon(inner, fill=mix((70, 70, 120), (150, 245, 255), g))
-    if g > 0: glow(im, cx, 32, int(8 + 10 * g), TEAL, 0.55 * g)
+    """Pietro's hands, seen from the front, making the mountain sign: thumbs touching at the bottom, index fingers at
+    the top, a triangle between them with the sky showing through (it glows teal-white), sleeves going out of frame."""
+    for y in range(H): d.line([0, y, W, y], fill=mix((244, 150, 100), (255, 224, 160), y / H))
+    G, GL, TIP, cx = (24, 22, 32), (70, 66, 88), teal(f), 38
+    g = ease((t - 0.3) / 0.4)
+    tri = [(cx, 12), (cx + 14, 40), (cx - 14, 40)]
+    d.polygon(tri, fill=mix((255, 226, 170), TEAL_L, g))                                                              # the sky through the triangle
+    if g > 0: glow(im, cx, 32, int(10 + 12 * g), TEAL, 0.65 * g); d = ImageDraw.Draw(im)
+    for s in (-1, 1):
+        px = cx + s * 22
+        d.polygon([(px - 8, 64), (px + 8, 64), (px + 6, 50), (px - 6, 50)], fill=(170, 40, 56))                       # the maroon sleeve, gold stripes
+        d.line([px - 3, 50, px - 4, 64], fill=(240, 196, 70)); d.line([px + 3, 50, px + 4, 64], fill=(240, 196, 70))
+        d.rectangle([px - 7, 47, px + 7, 51], fill=G); d.line([px - 7, 49, px + 7, 49], fill=TIP)                      # the glove's teal cuff
+        d.ellipse([px - 9, 33, px + 9, 49], fill=G, outline=GL)                                                        # the palm
+        for k in range(3): d.ellipse([px + s * 9 - 2 + s * 0, 36 + k * 4 - 1, px + s * 9 + 3, 36 + k * 4 + 3], fill=G, outline=GL)   # curled fingers
+        d.line([px - s * 5, 36, cx + s * 1, 12], fill=G, width=4)                                                      # the index finger up to the apex
+        d.line([px - s * 5, 36, cx + s * 1, 12], fill=GL, width=1)
+        d.line([px - s * 3, 42, cx + s * 1, 43], fill=G, width=4)                                                      # the thumb along the base
+        d.ellipse([cx + s * 2 - 2, 10, cx + s * 2 + 2, 14], fill=TIP); d.ellipse([cx + s * 2 - 2, 41, cx + s * 2 + 2, 45], fill=TIP)   # teal fingertips
+    d.polygon([(cx, 17), (cx + 10, 38), (cx - 10, 38)], fill=mix((255, 226, 170), TEAL_L, g))
 
 # ---- the clips -----------------------------------------------------------------------------------------------
 def lookout(f, pose=None, x=CX):
@@ -464,14 +500,14 @@ def clip_salamanca(f):
         s['actors'] = [actor(cal('dash' if f % 4 < 2 else 'run2'), x, pal=cpal(f))]
         s['fx'] += [('ea_trail', x - 6, GROUND - 8, x - 64, GROUND - 8), ('ea_trail', x - 6, GROUND - 3, x - 44, GROUND - 3)]
         return s
-    if f < 150:                                                                     # down the shaft, red crystals, ghouls turn, the beast rises
+    if f < 150:                                                                     # down the shaft, feet on the wall, red crystals, ghouls turn, the beast rises
         s = scene(f, 'ea-mine'); k = f - 86
         s['under'].append(('ea_shaft', k * 4))
-        for i, y in enumerate((12, 34, 54)): s['under'].append(('ea_ghoul', SR - 6, y, ease((f - 100 - i * 4) / 12)))
-        if f >= 118: s['under'].append(('ea_beast', 92, 64 + 70 * (1 - ease((f - 118) / 28)), 0, 0))
-        y = 34 + math.sin(k * 0.4) * 1.5
-        s['actors'] = [actor(rotate90(cal('wall' if f % 4 < 2 else 'dash'), 1), SL + 12, y + 12, pal=cpal(f))]
-        s['fx'].append(('ea_trail', SL + 2, y - 8, SL + 2, y - 44))
+        for i, y in enumerate((20, 40, 60)): s['under'].append(('ea_ghoul', SR - 5, y, ease((f - 100 - i * 5) / 12)))
+        if f >= 118: s['under'].append(('ea_beast', 94, 64 + 70 * (1 - ease((f - 118) / 28)), 0, 0))
+        y = 30 + math.sin(k * 0.4) * 1.5
+        s['fx'].append(('ea_rot', figure(CAL, POSES['wall' if f % 4 < 2 else 'dash']), cpal(f), SL + 11, y, -60))
+        s['fx'] += [('ea_trail', SL + 2, y + 6, SL + 2, y - 34), ('ea_trail', SL + 6, y + 2, SL + 6, y - 24)]      # the teal jet, going UP behind him
         return s
     if f < 172:                                                                     # the red void: the Supay crawls out of the water
         s = scene(f, 'ea-void'); s['under'].append(('ea_supay', 96, ease((f - 150) / 20)))
@@ -481,68 +517,136 @@ def clip_salamanca(f):
         return shot(closeup((f - 172) / CLOSE_LEN, f, bg=(150, 18, 28), draw=_supay_face, txt='¿TENÉS MIEDO?', color=(255, 240, 150), outline=(70, 6, 16)))
     if f < 244:
         return shot(closeup((f - 208) / CLOSE_LEN, f, bg=(40, 14, 30), draw=_cal_face, txt='NO.', text_from=0.5, color=TEAL_L, outline=(10, 30, 36)))
-    s = scene(f, 'ea-cave'); k = f - 244                                            # the teal fist goes through the beast
-    bx, hole, cr, pose, x = 134, 0, 0, 'guard', 36
-    if k >= 12: pose, x = 'jab', 36 + min(72, (k - 12) * 10)
+    s = scene(f, 'ea-cave'); k = f - 244                                            # on a crystal ledge, the teal fist goes through the beast
+    bx, hole, cr, pose, x, fy = 128, 0, 0, 'guard', 22, GROUND - 6
+    if k >= 12: pose, x = 'jab', min(bx - 23, 22 + (k - 12) * 10)
     if k >= 20: hole = ease((k - 20) / 8); s['shake'] = rshake(2) if k < 30 else (0, 0)
-    if k >= 28: cr = min(1, (k - 28) / 10)
-    s['actors'] = [actor(cal(pose), x, pal=cpal(f))]
-    hx, hy = figure_point(CAL, POSES[pose], 'hand', x, GROUND)
-    s['under'].append(('ea_beast', bx, GROUND, hole, cr, hy))
+    if k >= 32: cr = min(1, (k - 32) / 10)
+    light = 1 if 24 <= k < 32 else 0                                                # light shows through the hole before he falls apart
+    s['under'].append(('ea_ledge',))
+    hx, hy = figure_point(CAL, POSES[pose], 'hand', x, fy)
+    s['under'].append(('ea_beast', bx, GROUND, hole, cr, hy, light))
+    s['actors'] = [actor(cal(pose), x, fy, pal=cpal(f))]
     if 12 <= k < 20: s['fx'].append(('ea_trail', x - 6, hy + 2, x - 40, hy + 2))
     if k >= 4: s['fx'].append(('ea_fist', hx + 1, hy + 1, max(1, 2 + min(4, (k - 4) // 2) - max(0, k - 34))))
-    if k >= 20: s['fx'].append(('ea_fist', bx + 22, hy + 1, 5 - min(4, (k - 20) // 3)))                       # out through his back
-    if k >= 20: s['fx'].append(('ea_shards', bx + 22, hy, k - 20))
-    if k >= 28: s['fx'].append(('ea_shards', bx, GROUND - 46, k - 28))                                       # the crystals shatter
-    if 20 <= k < 23: s['flash'] = 0.4; s['flashc'] = TEAL_L; s['fc'] = (bx, GROUND - 28)
+    if k >= 20: s['fx'] += [('ea_fist', bx + 22, hy + 1, max(1, 5 - (k - 20) // 3)), ('ea_shards', bx + 22, hy, k - 20)]       # out through his back
+    if k >= 32: s['fx'].append(('ea_shards', bx, GROUND - 46, k - 32))                                          # the crystals shatter
+    if 20 <= k < 23: s['flash'] = 0.4; s['flashc'] = TEAL_L; s['fc'] = (bx, hy)
     return s
 
 ST = Stage(far_y=38, near_y=62, vp_x=92, far_scale=0.7, far_below=0.3, far_k=0.8)   # the pitch seen at an angle
 ZC, ZR, ZK = 0.82, 0.6, 0.04                                                           # depth: Claude near, the big guy behind, the kids by the rope
+GOLAZO = '¡GOLAZO!'
+
+# Hand-drawn poses (26x26 grids): the bicycle kick in three stills, Cal's celebration seen from the front, the big guy sat dazed.
+def _thick(g, x0, y0, x1, y1, c, n=2, side=False):
+    for i in range(n): seg(g, x0 + (i if side else 0), y0 + (0 if side else i), x1 + (i if side else 0), y1 + (0 if side else i), c)
+def _fill(g, x0, y0, x1, y1, c):
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1): put(g, x, y, c)
+def _x(g, pts):
+    for x, y in pts: put(g, x, y, 'W')
+
+_KICK = {}
+def kick(k):
+    """The bicycle kick: 'A' takes off leaning back, 'B' flat in the air, feet over head, 'C' the kick."""
+    if k in _KICK: return _KICK[k]
+    g = blank(26, 26)
+    if k == 'A':
+        _fill(g, 7, 4, 11, 8, 's'); _fill(g, 9, 2, 12, 3, 'O'); _fill(g, 8, 4, 12, 4, 'O'); put(g, 7, 3, 'h'); _fill(g, 6, 4, 6, 6, 'h'); put(g, 12, 3, 'O'); put(g, 11, 1, 'O')
+        put(g, 9, 6, 'K'); put(g, 11, 6, 'K'); _fill(g, 8, 9, 10, 9, 'T')
+        for i in range(4): seg(g, 8 + i, 10, 12 + i, 18, 'j')
+        _fill(g, 8, 10, 11, 10, 'N'); _x(g, [(11, 13), (13, 13), (12, 14), (11, 15), (13, 15)])
+        seg(g, 8, 11, 3, 8, 'k'); seg(g, 3, 8, 1, 4, 'k'); _fill(g, 1, 3, 2, 3, 't')
+        seg(g, 13, 11, 18, 12, 'k'); seg(g, 18, 12, 21, 9, 'k'); _fill(g, 22, 8, 22, 9, 't')
+        _thick(g, 12, 18, 13, 24, 'p', 2, True); _fill(g, 13, 25, 16, 25, 'u'); _fill(g, 12, 23, 14, 23, 'T')
+        _thick(g, 14, 18, 20, 17, 'p', 2); _thick(g, 20, 17, 22, 21, 'p', 2, True); _fill(g, 22, 22, 25, 22, 'u')
+    else:
+        c = k == 'C'; hy = 17 if c else 15
+        _fill(g, 3, hy, 7, hy + 4, 's'); _fill(g, 1, hy - 1, 2, hy + 5, 'O'); put(g, 0, hy + 1, 'O'); put(g, 0, hy + 3, 'O')
+        _fill(g, 2, hy - 2, 3, hy - 2, 'h'); _fill(g, 2, hy + 6, 3, hy + 6, 'h')
+        put(g, 6, hy + 1, 'K'); put(g, 6, hy + 3, 'K'); _fill(g, 8, hy, 8, hy + 3, 'T')
+        for i in range(4): seg(g, 9, hy + i, 17, hy - 3 + i, 'j')
+        _fill(g, 9, hy, 9, hy + 3, 'N'); _x(g, [(12, hy - 1), (14, hy - 1), (13, hy), (12, hy + 1), (14, hy + 1)])
+        seg(g, 11, hy, 11, hy - 6, 'k'); seg(g, 11, hy - 6, 13, hy - 9, 'k'); _fill(g, 13, hy - 10, 14, hy - 10, 't')
+        seg(g, 10, hy + 3, 6, hy + 7, 'k'); seg(g, 6, hy + 7, 3, min(25, hy + 9), 'k'); _fill(g, 2, min(25, hy + 10), 3, min(25, hy + 10), 't')
+        if not c:
+            _thick(g, 17, 12, 18, 2, 'p', 2, True); _fill(g, 18, 0, 21, 1, 'u'); _fill(g, 18, 4, 19, 4, 'T')
+        else:
+            _thick(g, 17, 14, 21, 4, 'p', 2, True); _fill(g, 21, 2, 24, 3, 'u'); _fill(g, 20, 6, 21, 6, 'T')
+        _thick(g, 17, hy - 1, 22, hy + 1, 'p', 2); _thick(g, 22, hy + 1, 24, hy - 3, 'p', 2, True); _fill(g, 24, hy - 5, 25, hy - 4, 'u')
+    _KICK[k] = to_sprite(g); return _KICK[k]
+KICK_FOOT = (22, 3)                                                                   # where the ball meets the boot in 'C'
+
+_FRONT = {}
+def front(f):
+    """Cal facing us, elbows wide, hands behind the head: a 'W' of arms over the hair; it sways on a 20-frame loop."""
+    w = loop.wave(f, 20); key = (round(w), f % 2 if False else 0)
+    sway = 1 if w > 0.5 else (-1 if w < -0.5 else 0); up = 1 if w > 0 else 0
+    if (sway, up) in _FRONT: return _FRONT[(sway, up)]
+    g = blank(26, 26); c = 13
+    _fill(g, c - 2, 4, c + 2, 8, 's'); _fill(g, c - 3, 3, c + 3, 4, 'O'); put(g, c - 2, 2, 'O'); put(g, c, 1, 'O'); put(g, c + 2, 2, 'O'); put(g, c - 3, 5, 'h'); put(g, c + 3, 5, 'h'); put(g, c, 0, 'h'); put(g, c + 1, 0, 'h')
+    put(g, c - 1, 6, 'K'); put(g, c + 1, 6, 'K'); _fill(g, c - 1, 9, c + 1, 9, 'T')
+    _fill(g, c - 4, 10, c + 4, 17, 'j'); _fill(g, c - 4, 10, c + 4, 10, 'N'); _x(g, [(c - 1, 13), (c + 1, 13), (c, 14), (c - 1, 15), (c + 1, 15)])
+    for s in (-1, 1):
+        seg(g, c + s * 4, 11, c + s * 9, 10 + up, 'k'); seg(g, c + s * 9, 10 + up, c + s * 5, 4 + up, 'k')                   # upper arm out, forearm up behind the head
+        put(g, c + s * 4, 4 + up, 't'); put(g, c + s * 5, 3 + up, 't')
+        _fill(g, c + s * 3 - (1 if s < 0 else 0), 18, c + s * 3 + (0 if s < 0 else 1), 25, 'p'); _fill(g, c + s * 3 - 1 - (1 if s < 0 else 0), 25, c + s * 3 + 1 + (0 if s < 0 else 1), 25, 'u')
+        _fill(g, c + s * 3 - (1 if s < 0 else 0), 23, c + s * 3 + (0 if s < 0 else 1), 23, 'T')
+    g = [([ '.'] * sway + r)[:26] if sway > 0 else (r[-sway:] + ['.'] * -sway if sway < 0 else r) for r in g]
+    _FRONT[(sway, up)] = to_sprite(g); return _FRONT[(sway, up)]
+
+_SIT = []
+def sit():
+    """The big guy sat on the ground, dazed (facing right: drawn flipped)."""
+    if _SIT: return _SIT[0]
+    g = blank(28, 20); c = 12
+    _fill(g, c - 2, 1, c + 2, 5, 's'); put(g, c, 3, 'K'); put(g, c + 2, 3, 'K'); put(g, c + 1, 5, 'K'); put(g, c + 2, 5, 'K')
+    _fill(g, c - 4, 6, c + 4, 13, 'k'); seg(g, c - 4, 7, c - 8, 13, 's'); seg(g, c - 3, 7, c - 7, 13, 's'); seg(g, c + 4, 8, c + 7, 13, 's')
+    _fill(g, c - 4, 14, c + 14, 16, 'q'); _fill(g, c + 13, 12, c + 15, 16, 'b'); _fill(g, c - 1, 17, c + 14, 17, 'q')
+    _SIT.append(to_sprite(g)); return _SIT[0]
 
 def clip_potrero(f):
-    if f < 20 or f >= 218: return lookout(f)
-    s = scene(f, 'ea-pitch'); k = f - 20
-    wx = lerp(-15, 78, k / 42) if f < 62 else (lerp(78, 124, (f - 62) / 12) if f < 74 else 128)
-    cxs, cys = ST.proj(wx, ZC); Fy = cys
-    bx_ = 0; items = []
-    # the big bald guy blocks the way, lunges, then is left behind
-    rp = pose_cycle(f, 'guard', 'guard2') if f < 64 else ('jab' if f < 70 else ('hurt' if f < 100 else 'kneel'))
-    items.append((ZR, ST.place(figure(BIG, POSES[rp]), 112, ZR, flip=True, pal=BPAL)))
-    # the kids at the rope: they jump after the goal
-    for i, (spec, wk) in enumerate(zip(KIDS, (-22, -8, 6))):
-        hop = int(abs(math.sin((f - 104 + i * 2) * 0.5)) * 4) if 104 <= f < 210 else 0
-        items.append((ZK, ST.place(figure(spec, POSES['cheer' if 104 <= f < 210 else 'stand']), wk, ZK, h=hop, pal=KPAL)))
-    # Claude
-    air = 78 <= f < 126
-    if not air:
-        pose = ('run1' if f % 6 < 3 else 'run2') if f < 74 else ('guard' if f < 78 else 'hands_head')
-        if 74 <= f < 78: pose = 'jab'
-        items.append((ZC, actor(cal(pose), cxs, Fy, pal=cpal(f))))
+    if f < 16 or f >= 160: return lookout(f)
+    s = scene(f, 'ea-pitch')
+    wx = lerp(-15, 72, (f - 16) / 48) if f < 64 else (lerp(72, 134, (f - 64) / 12) if f < 76 else 134)
+    cxs, Fy = ST.proj(wx, ZC); items = []
+    # the big bald guy blocks the way, lunges, is fooled, and sits dazed
+    if f < 80:
+        rp = pose_cycle(f, 'guard', 'guard2') if f < 64 else ('jab' if f < 72 else 'hurt')
+        items.append((ZR, ST.place(figure(BIG, POSES[rp]), 96, ZR, flip=True, pal=BPAL)))
     else:
-        if f < 98: u = (f - 78) / 20; ang = 100 * min(1, (f - 78) / 12); cy = lerp(Fy - 12, Fy - 6, u * u) - 16 * math.sin(math.pi * u); cx = cxs - 2 * u
-        elif f < 118: ang, cy, cx = 100, Fy - 6, cxs - 2
-        else: u = (f - 118) / 8; ang = lerp(100, 0, ease(u)); cy = lerp(Fy - 6, Fy - 12, u) - 6 * math.sin(math.pi * u); cx = cxs - 2 * (1 - u)
-        s['fx'].append(('ea_rot', figure(CAL, POSES['run1']), cpal(f), cx, cy, ang))
-        if f < 92: s['fx'].append(('ea_trail', cx - 6, cy + 4, cx - 30, cy + 8))
+        items.append((ZR, ST.place(sit(), 96, ZR, flip=True, pal=BPAL)))
+        if f < 150: s['fx'].append(('dizzy', 96 + 3, ST.proj(96, ZR)[1] - 17))
+    for i, (spec, wk) in enumerate(zip(KIDS, (-22, -8, 6))):                       # the kids at the rope jump after the goal
+        up = 108 <= f < 156; hop = int(abs(math.sin((f - 108 + i * 2) * 0.5)) * 4) if up else 0
+        items.append((ZK, ST.place(figure(spec, POSES['cheer' if up else 'stand']), wk, ZK, h=hop, pal=KPAL)))
+    rot = None                                                                      # Claude: running, then the three kick stills, then the front-facing celebration
+    if f < 74: items.append((ZC, actor(cal('run1' if f % 6 < 3 else 'run2'), cxs, Fy, pal=cpal(f))))
+    elif f < 86: items.append((ZC, actor(cal('guard' if f < 82 else 'crouch'), cxs, Fy, pal=cpal(f))))
+    elif f < 116:
+        kc = {86: 'A', 90: 'B', 94: 'C'}
+        st = 'A' if f < 90 else ('B' if f < 94 else ('C' if f < 98 else 'B'))
+        if f < 98: cx, cy = (cxs - 4 + (f - 86), Fy - 18 - (f - 86) * 2) if f < 90 else (131, 36 - (f - 90) // 2) if f < 94 else (130, 32)
+        else: u = min(1, (f - 98) / 10); cx, cy = 130 - 3 * u, lerp(32, Fy - 14, u * u)
+        items.append((ZC, actor(kick(st), cx, cy + 13, pal=cpal(f))))
+    elif f < 122: items.append((ZC, actor(cal('crouch' if f >= 118 else 'hurt'), cxs - 3, Fy, pal=cpal(f))))
+    else: items.append((ZC, actor(front(f), 131, Fy, pal=cpal(f))))
     s['actors'] = ST.back_to_front(items)
-    if 66 <= f < 72: s['fx'].append(('ring', cxs + 4, Fy - 1, 2 + (f - 66) * 2, TEAL))                     # a sneaker flashes teal
-    # the ball
-    ch = False
-    if f < 72: bx, by = cxs + 9, Fy - 2 - abs(math.sin(f * 0.8)) * 3
-    elif f < 84: u = (f - 72) / 12; bx, by = lerp(cxs + 9, 136, u), lerp(Fy - 2, 24, u) - 10 * math.sin(math.pi * u) * 0
-    elif f < 88: bx, by = 136, 24 - (f - 84) * 0.5
-    elif f < 100: u = (f - 88) / 12; bx, by = lerp(137, 166, u), lerp(24, 41, u); ch = True
-    else: bx, by = 166, min(47, 41 + (f - 100) * 0.8)
-    if f >= 84 and f < 100: ch = True
-    if f < 210: s['fx'].append(('ea_ball', bx, by, ch))
-    if 88 <= f < 92: s['fx'].append(('spark', 136, 24, 4 - (f - 88)))
-    if 100 <= f < 112: s['fx'].append(('ea_net', f - 100))
-    if 100 <= f < 108: s['shake'] = rshake(1)
-    if cue(f, 102, GOLAZO): s['fx'].append(('caption', GOLAZO, dict(box=(2, 1, W - 2, 25), color=(255, 232, 90), outline=(70, 30, 20), shadow=None, max_scale=3)))
+    if 68 <= f < 74: s['fx'].append(('ring', cxs + 4, Fy - 1, 2 + (f - 68) * 2, TEAL))                       # a sneaker flashes teal
+    ch = False                                                                      # the ball
+    if f < 76: bx, by = cxs + 9, Fy - 2 - abs(math.sin(f * 0.8)) * 3
+    elif f < 90: u = (f - 76) / 14; bx, by = lerp(cxs + 9, 138, u), lerp(Fy - 2, 20, 1 - (1 - u) ** 2)
+    elif f < 96: bx, by = 138, 20 + (f - 90) * 0.2
+    elif f < 106: u = (f - 96) / 10; bx, by = lerp(138, 166, u), lerp(21, 41, u); ch = True
+    else: bx, by = 166, min(47, 41 + (f - 106) * 0.8)
+    if 90 <= f < 106: ch = True
+    if f < 150: s['fx'].append(('ea_ball', bx, by, ch))
+    if 94 <= f < 98: s['fx'].append(('spark', 138, 21, 5 - (f - 94)))
+    if 106 <= f < 118: s['fx'].append(('ea_net', f - 106))
+    if 106 <= f < 112: s['shake'] = rshake(1)
+    if cue(f, 106, GOLAZO): s['fx'].append(('caption', GOLAZO, dict(box=(2, 1, W - 2, 25), color=(255, 232, 90), outline=(70, 30, 20), shadow=None, max_scale=3)))
     return s
-
-GOLAZO = '¡GOLAZO!'
 
 @fx('ea_tri')
 def _fx_tri(d, im, e, f):
@@ -555,39 +659,38 @@ ROCKS = ((70, 100, 6), (92, 106, 7), (122, 112, 6), (82, 118, 5), (106, 124, 7),
 APU_TXT, SIGN_TXT = 'APU...', 'PERMISO, APU.'
 
 def clip_apu(f):
-    if f < 20 or f >= 278: return lookout(f)
-    if 140 <= f < 182:
-        return shot(closeup((f - 140) / 42, f, bg=(120, 70, 100), draw=_hands, txt=APU_TXT, color=BLUE_L, outline=(20, 30, 70)))
-    s = scene(f, 'ea-slope'); k = f - 20
-    cr = ease((f - 60) / 20) if f < 182 else 0
-    dy = 0 if f < 70 else (70 * (1 - ease((f - 70) / 30)))
-    fl = 1.0 if f < 182 else 1 - 0.85 * ease((f - 186) / 20)
-    bow = ease((f - 206) / 28) if f >= 206 else 0
-    if f >= 70: s['under'].append(('ea_apu', -26 - 8 * bow, dy + 64 * bow, fl, 1.0 if f < 232 else 0.3))
-    s['under'].append(('ea_ground', f if f < 140 or f >= 226 else 140, cr if f < 232 else 0))
+    if f < 20 or f >= 260: return lookout(f)
+    if 140 <= f < 176:
+        return shot(closeup((f - 140) / 36, f, bg=(244, 150, 100), draw=_hands, txt=APU_TXT, color=BLUE_L, outline=(20, 30, 70)))
+    s = scene(f, 'ea-slope')
+    cr = ease((f - 60) / 20) if f < 176 else 0
+    if f < 176: dy = -4 if f < 70 else -4 + 74 * (1 - ease((f - 70) / 30))
+    else: dy = -4 + 80 * ease((f - 212) / 16)
+    fl = 1.0 if f < 176 else 1 - 0.85 * ease((f - 182) / 20)
+    bow = ease((f - 198) / 14) if f >= 198 else 0
+    if 70 <= f < 230: s['under'].append(('ea_apu', -14, dy, fl, 1.0, bow))
+    s['under'].append(('ea_ground', f if f < 140 or f >= 220 else 140, cr))
     if 62 <= f < 104: s['shake'] = rshake(1)
     if f < 140:                                                                      # riding up the slope; Claude swerves, Pietro stalls
         sw = 7 * math.sin(math.pi * (f - 104) / 30) if 104 <= f < 134 else 0
         cx_ = 112 - (max(0, f - 126) * 1.6 if f > 126 else 0)
-        px = 64 - ((f - 118) * 1.4 if f > 118 else 0); px = max(px, 44)
-        ring_p = 1 - ease((f - 118) / 10)
-        s['fx'].append(('ea_ride', figure(PIETRO, POSES['crouch']), ppal(f), px, slope_y2(px) + 8, ring_p))
+        px = max(64 - ((f - 118) * 1.4 if f > 118 else 0), 44)
+        s['fx'].append(('ea_ride', figure(PIETRO, POSES['crouch']), ppal(f), px, slope_y2(px) + 8, 1 - ease((f - 118) / 10)))
         s['fx'].append(('ea_ride', cal('crouch'), cpal(f), cx_, slope_y2(cx_) + 4 + sw, 1.0 if f < 128 else 0.3))
         for x, t0, sz in ROCKS:
             y = (f - t0) * 4 - 8; g = slope_y2(x) + 2
             if 0 <= f - t0: s['fx'].append(('ea_rock', x, min(y, g), sz))
-    elif f < 226:                                                                    # the sign: both make it, the Apu calms and bows
-        t = min(1, (f - 182) / 14)
+    elif f < 228:                                                                    # the sign: both make it, the Apu calms and bows
+        t = min(1, (f - 176) / 14)
         s['actors'] = [actor(figure(PIETRO, POSES['sign']), 36, slope_y2(36) + 8, pal=ppal(f)), actor(cal('sign'), 62, slope_y2(62) + 8, pal=cpal(f))]
-        for sp, pl, x in ((figure(PIETRO, POSES['sign']), ppal(f), 36), (CAL, None, 62)):
-            hx, hy = figure_point(PIETRO if x == 36 else CAL, POSES['sign'], 'hand', x, slope_y2(x) + 8)
-            s['fx'].append(('ea_tri', hx, hy, 3, ease(t)))
-        if cue(f, 190, SIGN_TXT): s['fx'].append(('caption', SIGN_TXT, dict(box=(2, 1, W - 2, 25), color=BLUE_L, outline=(40, 24, 70), shadow=None, max_scale=2)))
-        if 206 <= f < 226: s['fx'] += [('dust', 120 + (i * 17 + f * 3) % 60, slope_y2(150) + 4 - (f + i) % 6) for i in range(6)]
+        for x, sp in ((36, PIETRO), (62, CAL)):
+            hx, hy = figure_point(sp, POSES['sign'], 'hand', x, slope_y2(x) + 8); s['fx'].append(('ea_tri', hx, hy, 3, ease(t)))
+        if cue(f, 184, SIGN_TXT): s['fx'].append(('caption', SIGN_TXT, dict(box=(2, 1, W - 2, 25), color=BLUE_L, outline=(40, 24, 70), shadow=None, max_scale=2)))
+        if 212 <= f < 228: s['fx'] += [('dust', 100 + (i * 17 + f * 3) % 70, slope_y2(140) + 4 - (f + i) % 6) for i in range(6)]
     else:                                                                            # they ride off, the way open
-        u = f - 226
-        for spr, pl, x0, d_ in ((figure(PIETRO, POSES['crouch']), ppal(f), 36, 4), (cal('crouch'), cpal(f), 62, 8)):
-            x = x0 + u * 3.4 + 0.02 * u * u; s['fx'].append(('ea_ride', spr, pl, x, slope_y2(x) + 8, 1.0))
+        u = f - 228
+        for spr, pl, x0 in ((figure(PIETRO, POSES['crouch']), ppal(f), 36), (cal('crouch'), cpal(f), 62)):
+            x = x0 + u * 4.2 + 0.02 * u * u; s['fx'].append(('ea_ride', spr, pl, x, slope_y2(x) + 8, 1.0))
     return s
 
-CLIPS = [clip('salamanca', 300, clip_salamanca), clip('potrero', 240, clip_potrero), clip('apu', 300, clip_apu)]
+CLIPS = [clip('salamanca', 300, clip_salamanca), clip('potrero', 180, clip_potrero), clip('apu', 280, clip_apu)]
