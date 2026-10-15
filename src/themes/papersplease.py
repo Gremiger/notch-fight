@@ -170,9 +170,9 @@ def room(f, wk=None, wkind=None, by=None, bk=None, items=(), doc=False, hand=HOM
                 if dis <= th: im.putpixel((x, y), p[:3])
                 else:                                                             # a pixel breaking loose and floating off
                     q = (dis - th) / (1 - th)
-                    if q < 0.8: out.append((x + int((rg.random() - 0.3) * 26 * q), y - int(rg.random() * 16 * q), tuple(int(lerp(a, b, q)) for a, b in zip(p[:3], (190,190,215)))))
+                    if q < 0.95: out.append((x + int((rg.random() - 0.3) * 26 * q), y - int((0.4 + rg.random()) * 20 * q), (200,200,210) if rg.random() < 0.6 else (190,70,60)))
         for x, y, c in out:
-            if 1 <= x < 60 and 21 <= y < 46: im.putpixel((x, y), c)
+            if 1 <= x < 60 and 22 <= y < 46: im.putpixel((x, y), c)
         d = ImageDraw.Draw(im); _counter(d)
     for it in items:                                                              # on the counter
         x = int(it[1])
@@ -263,13 +263,13 @@ def _stamp_draw(im, d, k, kind, pagefn):
     _bg(d); pagefn(im, d)
     c, c2 = ((200,40,36), (110,20,20)) if kind == 'red' else ((80,150,54), (40,92,30))
     word = 'DENIED' if kind == 'red' else 'APPROVED'; hx = 90
-    if k < 8: yb = lerp(42, 18, ease(k / 8))                                      # up
-    elif k < 12: yb = 18 + (k % 2)                                                # a held breath
-    elif k == 12: yb = 28                                                         # then down fast
-    elif k == 13: yb = 37
+    if k < 8: yb = lerp(42, 28, ease(k / 8))                                      # up
+    elif k < 12: yb = 28 + (k % 2)                                                # a held breath
+    elif k == 12: yb = 33                                                         # then down fast
+    elif k == 13: yb = 39
     elif k < 20: yb = 42                                                          # pressed
-    elif k < 28: yb = lerp(42, 24, ease((k - 20) / 8))
-    else: yb = 24
+    elif k < 28: yb = lerp(42, 32, ease((k - 20) / 8))
+    else: yb = 32
     yb = int(yb)
     if k >= 14:                                                                   # the mark, big
         sc = 3 if kind == 'red' else 2                                            # APPROVED is longer: crisper at 2
@@ -280,18 +280,21 @@ def _stamp_draw(im, d, k, kind, pagefn):
             for i in range(8):
                 a = i * 0.8 + 0.3; r = 14 + (k - 13) * 4
                 d.point((hx + int(math.cos(a) * r * 1.6), yb + int(math.sin(a) * r * 0.2) - 1), fill=(236,232,210))
-    p2 = (hx, yb - 28); p1 = (hx - 52, -18)
-    d.line([p1, p2], fill=COAT, width=13); d.line([(p1[0] + 4, p1[1]), (p2[0] + 4, p2[1])], fill=COATD, width=2)
-    d.line([(p2[0] - 9, p2[1] - 9), p2], fill=ORANGE, width=13)                    # the orange cuff
-    d.rectangle([hx-6,yb-26,hx+6,yb-14], fill=(206,176,148)); d.rectangle([hx-6,yb-16,hx+6,yb-14], fill=(170,140,116))
-    d.rectangle([hx-4,yb-14,hx+4,yb-6], fill=(60,60,62)); d.rectangle([hx-12,yb-6,hx+12,yb], fill=c); d.rectangle([hx-12,yb-2,hx+12,yb], fill=c2)
+    top = yb - 22                                                                 # the greatcoat sleeve comes down from the top edge
+    d.rectangle([hx-10,-2,hx+10,top-5], fill=COAT); d.rectangle([hx+6,-2,hx+10,top-5], fill=COATD)
+    for y in range(top - 14, top - 4, 5): d.line([hx-9,y,hx+4,y+1], fill=COATD)
+    d.rectangle([hx-11,top-5,hx+11,top], fill=ORANGE); d.line([hx-11,top-2,hx+11,top-2], fill=ORD)   # the scarf-orange cuff
+    d.rectangle([hx-9,top,hx+9,top+8], fill=(206,176,148)); d.rectangle([hx-9,top+6,hx+9,top+8], fill=(170,140,116))
+    for x in (hx-5,hx,hx+5): d.line([x,top+1,x,top+6], fill=(170,140,116))      # the fingers round the handle
+    d.rectangle([hx-5,yb-14,hx+5,yb-6], fill=(124,84,50)); d.rectangle([hx-5,yb-14,hx-3,yb-6], fill=(160,114,70))
+    d.rectangle([hx-13,yb-6,hx+13,yb], fill=c); d.rectangle([hx-13,yb-2,hx+13,yb], fill=c2)
 
 def stamp_frame(k, kind, pagefn):
     """The stamp slamming down: it winds up, drops, the whole frame jolts and flashes, the mark is there."""
     im = closeup(k / L_STAMP, k, draw=lambda im, d, t, f: _stamp_draw(im, d, k, kind, pagefn), zoom=None)
     sh = {14:(0,4),15:(-3,-2),16:(3,2),17:(-2,-1),18:(2,1),19:(-1,0),20:(1,0)}.get(k)
     if sh: im = shift(im, *sh)
-    if k in (14, 15): im = Image.blend(im, Image.new('RGB', (W, H), (255,255,255)), 0.6 if k == 14 else 0.2)
+    if k == 14: im = Image.blend(im, Image.new('RGB', (W, H), (255,255,255)), 0.3)
     return im
 
 def pg_koll(im, d): page(im, d, 28, 28, 152, 62, 'KOLECHIA', (74,90,108), bars=(42,48,54))
