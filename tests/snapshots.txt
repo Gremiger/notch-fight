@@ -78,6 +78,9 @@ naruto-shikamaru__kagemane 7d7fe364b284cc18
 naruto-zabuza__waterdragon e62846844f60947d
 nrt__shadowclone c131e3463447dac1
 odyssey__nobody 86a5604591d72052
+papersplease__denied 2a51ed82bb4aa5de
+papersplease__jorji 1e2555661b835d45
+papersplease__permission a5142f1fa02f6615
 phm__astrophage 86a61722e1aae35c
 phm__rocky 9294807cceca67ee
 pkm__psychic ecf7b4e90e05dfd9
