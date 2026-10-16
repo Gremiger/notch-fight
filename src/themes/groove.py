@@ -12,16 +12,16 @@ from engine import *
 from engine.people import put, seg, blank, to_sprite, _row
 
 THEME = 'groove'
-N_ = 336                                                            # idle cycles of 8 and 16 frames divide it
-CX = 98                                                            # Claude (Kronk), next to the levers
+N_ = 288                                                            # idle cycles of 8, 16 and 24 frames divide it
+CX = 90                                                            # Claude (Kronk), next to the levers
 YX = 38                                                             # Yzma, on the trapdoor
 INK = (16,14,22)
 LINE1 = "PULL THE LEVER, KRONK!"
 CLOSE = "WHY DO WE EVEN HAVE THAT LEVER?"
 CLUNK = "CLUNK!"
-LINE1_AT = 10
-WRONG_AT = 126
-CLOSE_AT, CLOSE_LEN = 158, 52
+LINE1_AT = 8
+WRONG_AT = 106
+CLOSE_AT, CLOSE_LEN = 138, 46
 PINK, GOLD = (255,160,230), (255,226,110)
 
 WRONG = "WRONG LEVEEEER!"
@@ -30,65 +30,77 @@ def mix(a, b, k): return (a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k)
 def sm(f, a, b): return max(0.0, min(1.0, (f - a) / (b - a)))
 
 # ---- Kronk, built from a pose (engine/people.py: figure(), POSES) ----------------------------------------
-GW, GH, C = 42, 36, 14
-TY = GROUND - 12 - 12                                                # screen row of his shoulders (34)
-XO = C - GW // 2                                                    # screen x of his hand = CX + XO + its column
+GW, GH, C = 56, 46, 28
+L_, T_ = 10, 22                                                     # short legs, a huge torso
+TY = GROUND - L_ - T_                                               # screen row of his shoulders (29); his hand is at CX + its column
 def _kface(g, at):
-    """A tiny head with a square jaw, beady eyes that dart, a big grin."""
+    """A small head, a square jaw, thick brows, beady eyes that dart, a wide grin with teeth."""
     c, hy, sh, fl = at['c'], at['hy'], at['sh'], at['flags']
     for y in range(hy, hy + 6):
-        w = 3 if y < hy + 4 else 4
-        for x in range(c - w, c + w + 1): put(g, x + sh(y), y, 's')
-    for x in (c - 2, c - 1, c + 1, c + 2): put(g, x + sh(hy + 1), hy + 1, 'W')
-    for x in {'r': (c - 1, c + 2), 'l': (c - 2, c + 1)}[fl.get('look', 'r')]: put(g, x + sh(hy + 1), hy + 1, 'K')
+        for x in range(c - 4, c + 5): put(g, x + sh(y), y, 's')
+    for y, x in ((hy + 2, c + 4), (hy + 3, c + 4), (hy + 3, c + 5)): put(g, x + sh(y), y, 'n')
+    for x in (c - 3, c - 2, c + 1, c + 2): put(g, x + sh(hy + 2), hy + 2, 'W'); put(g, x + sh(hy + 1), hy + 1, 'h')
+    for x in {'r': (c - 2, c + 2), 'l': (c - 3, c + 1)}[fl.get('look', 'r')]: put(g, x + sh(hy + 2), hy + 2, 'K')
     if fl.get('mood', 'smile') == 'smile':
-        for x in range(c - 2, c + 3): put(g, x + sh(hy + 3), hy + 3, 'W')
-        put(g, c - 3 + sh(hy + 3), hy + 3, 'm'); put(g, c + 3 + sh(hy + 3), hy + 3, 'm')
+        for x in range(c - 3, c + 4): put(g, x + sh(hy + 4), hy + 4, 'W')
+        put(g, c - 4 + sh(hy + 4), hy + 4, 'm'); put(g, c + 4 + sh(hy + 4), hy + 4, 'm')
     else:
-        for y in (hy + 3, hy + 4):
+        for y in (hy + 4, hy + 5):
             for x in (c, c + 1): put(g, x + sh(y), y, 'm')
-def _kskirt(g, at):
-    c, hip = at['c'], at['hip']
+def _klegs(g, at):
+    c, hip, h = at['c'], at['hip'], at['h']
+    for y in range(hip + 1, h):
+        for x in list(range(c - 6, c - 1)) + list(range(c + 2, c + 7)): put(g, x, y, 'b' if y == h - 1 else 's')
     for y in range(hip + 1, hip + 4):
-        for x in range(c - 7, c + 8): put(g, x, y, 'G' if y == hip + 3 else 'j')
-    for x in range(c - 7, c + 8, 2): put(g, x, hip + 2, 'o')
-def _kchest(g, at):
-    c, ty, hip = at['c'], at['ty'], at['hip']
-    o = at['sh']
-    for dy, w in ((2, 1), (3, 2), (4, 3), (5, 2), (6, 1)):
-        for x in range(c - w, c + w + 1): put(g, x + o(ty + dy), ty + dy, 'G')
+        for x in range(c - 9, c + 10): put(g, x, y, 'G' if y == hip + 3 else 'j')
+    for x in range(c - 9, c + 10, 3): put(g, x, hip + 2, 'o')
+def _kbody(g, at):
+    """The inverted triangle: huge shoulders, a narrow waist, a gold diamond on the chest."""
+    c, ty, T, sh = at['c'], at['ty'], at['T'], at['sh']
+    for i in range(T - 3):
+        y = ty + i; half = round(12 - 6 * i / (T - 1)); o = sh(y)
+        for x in range(c - half + o, c + half + o + 1): put(g, x, y, 'j')
+        if i < 3:
+            for x in (c - half + o, c - half + 1 + o, c + half + o, c + half - 1 + o): put(g, x, y, 's')
+    for x in range(c - 8, c + 9): put(g, x + sh(ty + 3), ty + 3, 'G')
+    for dy, w in ((5, 1), (6, 2), (7, 3), (8, 4), (9, 3), (10, 2), (11, 1)):
+        for x in range(c - w, c + w + 1): put(g, x + sh(ty + dy), ty + dy, 'G')
 def _karms(g, at):
-    """Thicker arms: a second line beside each (he is huge)."""
+    """Big arms: three cells thick, a fist at the end."""
     c, ty, T, sh = at['c'], at['ty'], at['T'], at['sh']
     be, bh, fe, fh = at['pose'][:4]
     for e, h, front in ((be, bh, False), (fe, fh, True)):
-        pts = [(c + (7 if front else -7) + sh(ty + 1), ty + 1), (c + e[0] + sh(ty), ty + _row(e[1], T)),
+        pts = [(c + (12 if front else -12) + sh(ty + 1), ty + 1), (c + e[0] + sh(ty), ty + _row(e[1], T)),
                (c + h[0] + sh(ty), ty + _row(h[1], T))]
         for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
-            dx, dy = (0, 1) if abs(x1 - x0) >= abs(y1 - y0) else (1, 0)
-            seg(g, x0 + dx, y0 + dy, x1 + dx, y1 + dy, 's')
-CLAUDE = dict(name='groove-kronk', w=GW, h=GH, c=C, legs=12, torso=12, head=6, torso_cols=(-7, 7), eyes=(),
+            for k in (1, 2):
+                dx, dy = (0, k) if abs(x1 - x0) >= abs(y1 - y0) else (k, 0)
+                seg(g, x0 + dx, y0 + dy, x1 + dx, y1 + dy, 's')
+        hx, hy_ = pts[-1]
+        for dx in range(3):
+            for dy in range(3): put(g, hx + dx, hy_ + dy, 's')
+CLAUDE = dict(name='groove-kronk', w=GW, h=GH, c=C, legs=L_, torso=T_, head=6, torso_cols=(-6, 6), eyes=(),
               body=dict(color='j', top='G', belt='o', hip='G'),
-              arm=dict(sleeve='s', hand='s', hand_w=2, shoulders=((-7, 1), (7, 1))),
+              arm=dict(sleeve='s', hand='s', hand_w=3, shoulders=((-12, 1), (12, 1))),
               leg=dict(color='s', boot='b', boot_rows=1, gap=-3, stand=(-2, 2)),
-              hair=['hhhhhhh', 'hhhhhhh', 'ooooooo'], hair_x=-3, hair_y=2,
-              paint=dict(legs=[_kskirt], body=[_kchest], head=[_kface], end=[_karms]))
+              hair=['....hhhhhhhh..', '..hhhhhhhhhhhh', '.hhhhhhhhhhhhh', '.hhhhhhhhhhh..', '.ooooooooo....'], hair_x=-5, hair_y=4,
+              paint=dict(legs=[_klegs], body=[_kbody], head=[_kface], end=[_karms]))
 CPAL = {'s':(190,128,86),'K':INK,'h':(22,18,28),'j':(196,46,46),'G':(240,192,64),'o':(217,119,87),'b':(116,74,46),
-        'W':(246,246,246),'m':(60,24,24),'k':INK,'p':(60,52,70)}
+        'W':(246,246,246),'m':(60,24,24),'n':(150,98,66),'k':INK,'p':(60,52,70)}
 
 def kp(hx, hy, lean=0, legs='stand'):
     """A Kronk pose with his front hand at (hx, hy) from (c, shoulders row): the elbow falls in between."""
-    return ((-8, 5), (-8, 10), (round(7 + (hx - 7) * 0.45), round(1 + (hy - 1) * 0.45) + 3), (hx, hy), lean, legs)
+    return ((-14, 6), (-15, 13), (round(12 + (hx - 12) * 0.5), round(1 + (hy - 1) * 0.5) + 4), (hx, hy), lean, legs)
 POSES = dict(POSES)
-POSES.update(kstand=kp(9, 10), kstand2=kp(9, 9))
+POSES.update(kstand=kp(15, 14), kstand2=kp(15, 13))
 
 def build(pose, **flags):
     return figure(CLAUDE, POSES[pose] if isinstance(pose, str) else pose, **flags)
 
 # ---- Yzma: tall, thin, a feathered headdress, long bony arms (a sprite grid, outlined by the engine) -----
-YW, YH, YC = 38, 40, 19
+YW, YH, YC = 44, 44, 22
 YPAL = {'P':(110,54,160),'p':(70,34,108),'V':(238,116,186),'U':(172,104,228),'g':(244,198,70),'y':(196,150,190),
-        'Y':(150,106,150),'e':(70,90,235),'w':(246,246,246),'k':(20,14,26),'r':(204,40,80),'b':(150,210,255),'D':(60,50,90)}
+        'Y':(150,106,150),'e':(140,64,226),'w':(246,246,246),'k':(20,14,26),'r':(204,40,80),'b':(150,210,255),'D':(60,50,90)}
 _yz_cache = {}
 def yz_rows(arm, eyes, mouth, wet, tap, sway, sweat):
     key = (arm, eyes, mouth, wet, tap, sway, sweat)
@@ -99,53 +111,53 @@ def yz_rows(arm, eyes, mouth, wet, tap, sway, sweat):
             for xx in range(x0, x1 + 1): put(g, xx, yy, ch)
     def A(pts, ch='y'):
         for (x0, y0), (x1, y1) in zip(pts, pts[1:]): seg(g, x0, y0, x1, y1, ch)
-    R(c - 4, 38, c - 2, 39, 'k'); R(c + 1, 38 - tap, c + 3, 39 - tap, 'k')       # shoes (one taps)
-    for y in range(19, 38):                                                        # the dress
-        half = round(3 + 4.5 * (y - 19) / 18)
-        R(c - half, y, c + half, y, 'P'); put(g, c - half, y, 'p'); put(g, c - half + 1, y, 'p')
+    R(c - 3, 42, c - 2, 43, 'k'); R(c + 1, 42 - tap, c + 2, 43 - tap, 'k')       # shoes (one taps)
+    for y in range(21, 42):                                                        # a stick-thin dress
+        half = round(2 + 3.2 * ((y - 21) / 20) ** 1.5)
+        R(c - half, y, c + half, y, 'P'); put(g, c - half, y, 'p')
         if y % 4 == 1: put(g, c + 1, y, 'p')
-    R(c - 7, 37, c + 7, 37, 'V'); R(c - 6, 36, c + 6, 36, 'g')
-    R(c - 3, 18, c + 3, 19, 'p'); put(g, c - 4, 17, 'V'); put(g, c + 4, 17, 'V'); R(c - 1, 16, c, 17, 'y')   # collar, neck
-    for y in range(9, 16):                                                         # the long face
-        half = 3 if y <= 12 else (2 if y <= 14 else 1)
+    R(c - 5, 41, c + 5, 41, 'V'); R(c - 5, 40, c + 5, 40, 'g')
+    R(c - 2, 20, c + 2, 21, 'p'); put(g, c - 4, 19, 'V'); put(g, c + 4, 19, 'V'); put(g, c - 3, 20, 'V'); put(g, c + 3, 20, 'V')
+    R(c - 1, 17, c, 19, 'y'); put(g, c - 1, 18, 'Y')                                # a bony neck
+    for y in range(8, 17):                                                         # a long narrow head, a pointed chin
+        half = 2 if y <= 13 else (1 if y <= 15 else 0)
         R(c - half, y, c + half, y, 'y')
-    R(c - 3, 9, c - 3, 12, 'Y'); put(g, c + 4, 12, 'y'); put(g, c + 4, 13, 'y'); put(g, c + 5, 13, 'y')   # the nose
-    R(c - 3, 10, c + 3, 10, 'e')                                                   # the eye shadow
-    if eyes == 'shut': R(c - 3, 11, c - 1, 11, 'k'); R(c + 1, 11, c + 3, 11, 'k'); pl = []
-    elif eyes == 'wide': R(c - 3, 10, c - 1, 12, 'w'); R(c + 1, 10, c + 3, 12, 'w'); pl = [(c - 2, 11), (c + 2, 11)]
+    R(c - 2, 11, c - 2, 13, 'Y'); put(g, c + 3, 13, 'y'); put(g, c + 3, 14, 'y'); put(g, c + 4, 14, 'y')   # cheek, long nose
+    R(c - 2, 9, c + 2, 10, 'e')                                                    # heavy purple eyeshadow
+    if eyes == 'shut': R(c - 2, 11, c - 1, 11, 'k'); R(c + 1, 11, c + 2, 11, 'k'); pl = []
+    elif eyes == 'wide': R(c - 2, 10, c - 1, 12, 'w'); R(c + 1, 10, c + 2, 12, 'w'); pl = [(c - 1, 11), (c + 2, 11)]
     else:
-        R(c - 3, 11, c - 1, 12, 'w'); R(c + 1, 11, c + 3, 12, 'w')
-        pl = {'fwd': [(c - 1, 11), (c + 3, 11)], 'down': [(c - 1, 12), (c + 3, 12)], 'cam': [(c - 2, 12), (c + 2, 12)],
-              'glare': [(c - 1, 12), (c + 3, 12)]}[eyes]
+        R(c - 2, 11, c - 1, 12, 'w'); R(c + 1, 11, c + 2, 12, 'w')
+        pl = {'fwd': [(c - 1, 11), (c + 2, 11)], 'down': [(c - 1, 12), (c + 2, 12)], 'cam': [(c - 2, 12), (c + 1, 12)],
+              'glare': [(c - 1, 12), (c + 2, 12)]}[eyes]
     for x, y in pl: put(g, x, y, 'k')
-    if eyes == 'glare':                                                            # heavy lids and angry brows
-        R(c - 3, 11, c - 1, 11, 'k'); R(c + 1, 11, c + 3, 11, 'k'); put(g, c - 2, 10, 'k'); put(g, c - 1, 10, 'k')
-        put(g, c + 1, 10, 'k'); put(g, c + 2, 10, 'k'); put(g, c - 3, 9, 'k'); put(g, c + 3, 9, 'k')
-    put(g, c - 4, 11, 'k'); put(g, c + 4, 11, 'k'); put(g, c - 4, 10, 'k')       # the lashes
+    if eyes == 'glare':
+        R(c - 2, 11, c - 1, 11, 'k'); R(c + 1, 11, c + 2, 11, 'k'); put(g, c - 2, 9, 'k'); put(g, c - 1, 9, 'k'); put(g, c + 1, 9, 'k'); put(g, c + 2, 9, 'k')
+    put(g, c - 3, 10, 'k'); put(g, c - 3, 11, 'k'); put(g, c + 3, 10, 'k')       # the lashes
     if mouth == 'shut': R(c - 1, 14, c + 1, 14, 'r')
     elif mouth == 'frown': R(c - 1, 14, c + 1, 14, 'r'); put(g, c - 2, 14, 'k'); put(g, c + 2, 14, 'k')
-    elif mouth == 'open': R(c - 1, 14, c + 1, 15, 'k'); R(c - 1, 14, c + 1, 14, 'r'); put(g, c, 15, 'V')
+    elif mouth == 'open': R(c - 1, 14, c + 1, 15, 'k'); R(c - 1, 14, c + 1, 14, 'r')
     elif mouth == 'wide': R(c - 2, 13, c + 2, 15, 'k'); R(c - 1, 13, c + 1, 13, 'w'); put(g, c, 15, 'r')
     elif mouth == 'teeth': R(c - 2, 14, c + 2, 14, 'w'); R(c - 1, 15, c + 1, 15, 'w'); put(g, c, 14, 'k'); put(g, c, 15, 'k')
-    wetl = wet > 0
-    s = sway
-    R(c - 5 + s, 8, c + 5 + s, 8, 'g'); R(c - 5 + s, 7, c + 5 + s, 7, 'V'); put(g, c + s, 7, 'w')      # headdress band
-    for x in range(c - 5, c + 6):
-        hgt = 6 - abs(x - c) // 2 - (1 if (x - c) % 2 else 0)
+    wetl = wet > 0; s = sway
+    R(c - 7 + s, 7, c + 7 + s, 7, 'g'); R(c - 7 + s, 6, c + 7 + s, 6, 'V'); put(g, c + s, 6, 'w')   # the headband
+    for x in range(c - 10, c + 11):                                                # a big feather fan
+        hgt = 7 - round(abs(x - c) * 0.45) - (1 if (x - c) % 2 else 0)
         if wetl: hgt = max(1, hgt // 2)
-        R(x + s, 7 - hgt, x + s, 6, ('U', 'V', 'P')[(x - c) % 3])
+        R(x + s, 6 - hgt, x + s, 5, ('U', 'V', 'P')[(x - c) % 3])
+    for yy in range(6, 9 if not wetl else 17):
+        put(g, c - 8 + s, yy, 'U'); put(g, c + 8 + s, yy, 'P')
     if wetl:
-        for yy in range(9, 17): put(g, c - 4, yy, 'D'); put(g, c + 4, yy, 'D') if yy < 12 else None
-        for yy in range(7, 13): put(g, c - 6 + s, yy, 'U'); put(g, c + 6 + s, yy, 'P')
-    if sweat: put(g, c + 5, 8 + sweat, 'b'); put(g, c + 5, 9 + sweat, 'b')
-    put(g, c - 3, 20, 'p'); put(g, c + 3, 20, 'p')
-    L, F = (c - 3, 20), (c + 3, 20)
-    if arm == 'point': A([L, (c - 7, 25), (c - 4, 29)]); A([F, (c + 15, 17)]); A([(c + 15, 17), (c + 17, 16)]); put(g, c + 18, 16, 'r')
-    elif arm == 'cross': A([L, (c - 4, 25), (c + 3, 26)]); A([F, (c + 4, 25), (c - 3, 27)])
-    elif arm == 'clasp': A([L, (c - 4, 25), (c, 28)]); A([F, (c + 4, 25), (c + 1, 28)])
-    elif arm == 'up': A([L, (c - 9, 13), (c - 11, 6)]); A([F, (c + 9, 13), (c + 11, 6)]); R(c - 12, 4, c - 10, 6, 'y'); R(c + 10, 4, c + 12, 6, 'y')
-    elif arm == 'fist': A([L, (c - 7, 25), (c - 4, 29)]); A([F, (c + 9, 16), (c + 8, 11)]); R(c + 7, 9, c + 9, 11, 'y')
-    else: A([L, (c - 7, 25), (c - 4, 29)]); A([F, (c + 7, 25), (c + 4, 29)])      # hands on hips
+        for yy in range(8, 18): put(g, c - 3, yy, 'D'); put(g, c + 3, yy, 'D') if yy < 13 else None
+    if sweat: put(g, c + 4, 8 + sweat, 'b'); put(g, c + 4, 9 + sweat, 'b')
+    put(g, c - 2, 22, 'p'); put(g, c + 2, 22, 'p')
+    L, F = (c - 2, 22), (c + 2, 22)
+    if arm == 'point': A([L, (c - 6, 27), (c - 3, 31)]); A([F, (c + 16, 19)]); A([(c + 16, 19), (c + 19, 18)]); put(g, c + 20, 18, 'r')
+    elif arm == 'cross': A([L, (c - 3, 27), (c + 2, 28)]); A([F, (c + 3, 27), (c - 2, 29)])
+    elif arm == 'clasp': A([L, (c - 3, 27), (c, 30)]); A([F, (c + 3, 27), (c + 1, 30)])
+    elif arm == 'up': A([L, (c - 8, 15), (c - 11, 7)]); A([F, (c + 8, 15), (c + 11, 7)]); R(c - 12, 5, c - 10, 7, 'y'); R(c + 10, 5, c + 12, 7, 'y')
+    elif arm == 'fist': A([L, (c - 6, 27), (c - 3, 31)]); A([F, (c + 8, 18), (c + 7, 13)]); R(c + 6, 11, c + 8, 13, 'y')
+    else: A([L, (c - 6, 27), (c - 3, 31)]); A([F, (c + 6, 27), (c + 3, 31)])
     _yz_cache[key] = [''.join(r) for r in g]; return _yz_cache[key]
 
 def stretched(rows, k):
@@ -318,58 +330,61 @@ def _fx_wrong(d, im, e, f):
 
 # ---- the close-up: Kronk, puzzled, scratching his head ----------------------------------------------------
 def _face(im, d, t, f):
-    SK, DK = (190,128,86), (150,98,66)
-    k = f - CLOSE_AT; cx = 40 + (1 if (k // 6) % 2 else 0)
+    SK, DK, HAIR = (190,128,86), (150,98,66), (22,18,28)
+    k = f - CLOSE_AT; cx = 38 + (1 if (k // 6) % 2 else 0)
     for y in range(H): d.line([0, y, 78, y], fill=(int(36 - y * 0.2), int(26 + y * 0.3), int(54 - y * 0.2)))
-    d.rectangle([cx - 25, 3, cx + 25, 18], fill=(22,18,28), outline=INK); d.rectangle([cx - 14, 0, cx + 14, 4], fill=(22,18,28))       # the flat-top
-    d.rectangle([cx - 27, 16, cx + 27, 23], fill=(217,119,87), outline=INK); d.rectangle([cx - 2, 17, cx + 2, 22], fill=(240,192,64))   # the headband
-    d.rectangle([cx - 28, 30, cx - 22, 40], fill=SK, outline=INK); d.rectangle([cx + 22, 30, cx + 28, 40], fill=SK, outline=INK)       # ears
-    d.rectangle([cx - 24, 23, cx + 24, 59], fill=SK, outline=INK)                                                                    # the square jaw
+    d.polygon([(cx - 24, 24), (cx - 25, 12), (cx - 15, 4), (cx - 2, 0), (cx + 16, 1), (cx + 29, 6), (cx + 33, 12), (cx + 26, 14), (cx + 25, 24)], fill=HAIR, outline=INK)
+    d.line([cx - 12, 6, cx + 18, 4], fill=(70,60,96)); d.line([cx - 4, 10, cx + 22, 9], fill=(70,60,96))                          # the quiff's shine
+    d.rectangle([cx - 26, 29, cx - 22, 39], fill=SK, outline=INK); d.rectangle([cx + 22, 29, cx + 26, 39], fill=SK, outline=INK)   # ears
+    d.polygon([(cx - 24, 20), (cx + 24, 20), (cx + 24, 52), (cx + 20, 60), (cx - 20, 60), (cx - 24, 52)], fill=SK, outline=INK)     # the square jaw
+    d.rectangle([cx - 24, 20, cx + 24, 25], fill=(217,119,87), outline=INK); d.rectangle([cx - 2, 21, cx + 2, 24], fill=(240,192,64))   # the headband
     look = (k // 8) % 2 * 2 - 1
-    for ex in (cx - 13, cx + 7):
-        d.rectangle([ex, 31, ex + 7, 36], fill=(246,246,246), outline=INK); d.rectangle([ex + 3 + look, 31, ex + 5 + look, 33], fill=INK)
-    d.line([cx - 15, 27, cx - 6, 24], fill=INK, width=2)                                                                              # one brow up
-    d.line([cx + 6, 28, cx + 15, 30], fill=INK, width=2)                                                                              # one frowning
-    d.rectangle([cx - 4, 36, cx + 3, 46], fill=DK, outline=INK)                                                                       # the big nose
+    for ex in (cx - 15, cx + 7):
+        d.rectangle([ex, 33, ex + 8, 38], fill=(246,246,246), outline=INK); d.rectangle([ex + 3 + look, 33, ex + 5 + look, 35], fill=INK)
+    d.line([cx - 17, 30, cx - 5, 26], fill=INK, width=4)                                                                          # thick brows: one up
+    d.line([cx + 5, 29, cx + 17, 32], fill=INK, width=4)                                                                          # one frowning
+    d.rectangle([cx - 4, 38, cx + 4, 48], fill=DK, outline=INK)
     mh = 3 + (k // 5) % 2
-    d.ellipse([cx - 5, 50, cx + 4, 50 + mh + 3], fill=(60,24,24), outline=INK)                                                        # a puzzled "o"
+    d.ellipse([cx - 6, 51, cx + 5, 51 + mh + 4], fill=(60,24,24), outline=INK)
     off = int(3 * math.sin(k * 0.9))
-    d.line([cx + 40, 62, cx + 26 + off, 14], fill=INK, width=9); d.line([cx + 40, 62, cx + 26 + off, 14], fill=SK, width=7)           # the arm
-    d.rectangle([cx + 20 + off, 6, cx + 31 + off, 16], fill=SK, outline=INK)
-    for fx_ in (cx + 21, cx + 24, cx + 27, cx + 30): d.line([fx_ + off, 8, fx_ + off - 1, 13], fill=INK)                              # fingers scratching
+    for wd, col in ((13, INK), (11, SK)): d.line([cx + 14 + off, 0, cx + 42, 12, cx + 42, 64], fill=col, width=wd)               # the arm
+    px = cx + 4 + off
+    d.rectangle([px, -2, px + 17, 8], fill=SK, outline=INK)                                                                       # the palm
+    for i in range(4):
+        fx_ = px + i * 4 + (1 if (k + i) % 2 else 0); d.rectangle([fx_, 8, fx_ + 3, 15 - (i % 2)], fill=SK, outline=INK)            # fingers on the hair
+    d.rectangle([px + 17, 2, px + 21, 6], fill=SK, outline=INK)                                                                   # the thumb
     big_text(im, '?', 6, (255,226,110), scale=3, cx=9, outline=INK)
 
 # ---- the clip -----------------------------------------------------------------------------------------------
 def lever_angles(f):
-    a1 = 0.35 * math.sin(math.pi * (f - 52) / 8) if 52 <= f < 60 else 0.0
+    a1 = 0.35 * math.sin(math.pi * (f - 42) / 6) if 42 <= f < 48 else 0.0
     a2 = 0.0
-    if 84 <= f < 92: a2 = PULL * ease((f - 84) / 8)
-    elif 92 <= f < 298: a2 = PULL
-    elif 298 <= f < 306: a2 = PULL * (1 - ease((f - 298) / 8))
+    if 66 <= f < 74: a2 = PULL * ease((f - 66) / 8)
+    elif 74 <= f < 262: a2 = PULL
+    elif 262 <= f < 270: a2 = PULL * (1 - ease((f - 262) / 8))
     return a1, a2
 
 def _tip(px, a): return px - LEVL * math.sin(a), PIVY - LEVL * math.cos(a)
 
 def hand_xy(f):
     """Where Kronk's hand is while he deals with the levers (None: at his side)."""
-    a1, a2 = lever_angles(f); idle = (CX + XO + 9, TY + 10); t1, t2 = _tip(P1, a1), _tip(P2, a2)
-    if f < 36 or f >= 108: return None
-    if f < 44: return mix(idle, t1, ease((f - 36) / 8))
-    if f < 62: return t1
-    if f < 70: return mix(_tip(P1, 0), t2, ease((f - 62) / 8))
-    if f < 100: return t2
-    return mix(t2, idle, ease((f - 100) / 8))
+    a1, a2 = lever_angles(f); idle = (CX + 15, TY + 14); t1, t2 = _tip(P1, a1), _tip(P2, a2)
+    if f < 32 or f >= 88: return None
+    if f < 38: return mix(idle, t1, ease((f - 32) / 6))
+    if f < 50: return t1
+    if f < 56: return mix(_tip(P1, 0), t2, ease((f - 50) / 6))
+    if f < 80: return t2
+    return mix(t2, idle, ease((f - 80) / 8))
 
 def kronk(f):
     look = 'r'; mood = 'smile'
-    if 44 <= f < 90: look = 'l' if (f // 4) % 2 else 'r'
-    if 96 <= f < 214 or 262 <= f < 290: look = 'l'
-    if 100 <= f < 158 or 214 <= f < 246 or 262 <= f < 290: mood = 'oh'
+    if 38 <= f < 66: look = 'l' if (f // 3) % 2 else 'r'
+    if 78 <= f < 190 or 230 <= f < 262: look = 'l'
+    if 84 <= f < 138 or 190 <= f < 214 or 230 <= f < 262: mood = 'oh'
     h = hand_xy(f)
-    if h:
-        pose = kp(round(h[0]) - (CX + XO), round(h[1]) - TY, lean=1)
-    elif 210 <= f < 232: pose = ((-8, 5), (-8, 10), (10, -3), (1 + 2 * ((f // 3) % 2), -9), 0, 'stand')
-    elif 246 <= f < 262: pose = ((-8, 5), (-8, 10), (11, -2), (12 + 2 * ((f // 3) % 2), -10), 0, 'stand')
+    if h: pose = kp(round(h[0]) - CX, round(h[1]) - TY, lean=1)
+    elif 184 <= f < 200: pose = ((-14, 6), (-15, 13), (17, -4), (3 + 3 * ((f // 3) % 2), -10), 0, 'stand')
+    elif 214 <= f < 230: pose = ((-14, 6), (-15, 13), (18, 1), (19 + 2 * ((f // 3) % 2), -8), 0, 'stand')
     else: pose = 'kstand' if (loop.frame(f) // 8) % 2 == 0 else 'kstand2'
     return build(pose, look=look, mood=mood)
 
@@ -378,38 +393,32 @@ def yzma(f):
     y = dict(x=YX, feet=GROUND, arm='akimbo', eyes='fwd', mouth='frown', tap=1 if loop.frame(f) % 8 < 4 else 0,
              sway=0, sweat=0, wet=0.0, stretch=1.0)
     cart = gator_ = None
-    if 10 <= f < 46:
-        y.update(arm='point', mouth=('wide' if (f // 3) % 2 else 'open') if f < 34 else 'shut', tap=0)
-    elif 46 <= f < 98: y.update(arm='cross' if 56 <= f < 84 else 'akimbo', tap=1 if f % 4 < 2 else 0)
-    elif 98 <= f < 122:
-        y.update(arm='clasp', eyes='down' if f < 108 else ('shut' if 114 <= f < 117 else 'cam'), mouth='shut' if f < 118 else ('open' if f < 120 else 'frown'), tap=0,
-                 sweat=max(0, min(5, (f - 114) // 2)) if f >= 114 else 0)
-    elif 122 <= f < WRONG_AT: y.update(arm='up', eyes='wide', mouth='open', feet=GROUND - (f - 121), tap=0)
-    elif 126 <= f < 140:
-        t = f - 126; y.update(arm='up', eyes='wide', mouth='wide', feet=GROUND - 4 + 0.5 * 1.7 * t * t, stretch=1 + min(0.5, t * 0.07), tap=0)
+    if 8 <= f < 40: y.update(arm='point', mouth=('wide' if (f // 3) % 2 else 'open') if f < 30 else 'shut', tap=0)
+    elif 40 <= f < 80: y.update(arm='cross' if 48 <= f < 66 else 'akimbo', tap=1 if f % 4 < 2 else 0)
+    elif 80 <= f < 102:
+        y.update(arm='clasp', eyes='down' if f < 88 else ('shut' if 94 <= f < 97 else 'cam'), mouth='shut' if f < 98 else ('open' if f < 100 else 'frown'),
+                 tap=0, sweat=max(0, min(5, (f - 92) // 2)) if f >= 92 else 0)
+    elif 102 <= f < WRONG_AT: y.update(arm='up', eyes='wide', mouth='open', feet=GROUND - (f - 101), tap=0)
+    elif 106 <= f < 120:
+        t = f - 106; y.update(arm='up', eyes='wide', mouth='wide', feet=GROUND - 4 + 0.5 * 1.7 * t * t, stretch=1 + min(0.5, t * 0.07), tap=0)
         if y['feet'] - YH * y['stretch'] > H: y = None
-    elif 140 <= f < 214: y = None
-    elif 214 <= f < 336:
-        wet = 1.0 if f < 290 else max(0.0, 1 - (f - 290) / 32)
-        y.update(wet=wet, tap=0)
-        cb = GROUND + 52 * (1 - ease(sm(f, 214, 240))) if f < 286 else GROUND + 52 * ease(sm(f, 286, 298))
-        jit = (1 if (f // 2) % 2 else 0) if 214 <= f < 240 else 0
-        if f < 240: y.update(arm='cross', mouth='frown', feet=cb - 7 + jit, x=YX + jit)
-        elif f < 262: y.update(arm='fist' if (f // 2) % 2 else 'akimbo', eyes='glare', mouth='teeth' if (f // 4) % 2 else 'frown', feet=GROUND - 7)
-        elif f < 278: y.update(sway=2 if f % 4 < 2 else -2, eyes='glare', mouth='wide', feet=GROUND - 7)
-        elif f < 280: y.update(eyes='glare', mouth='frown', feet=GROUND - 7)
-        elif f < 290:
-            k = sm(f, 280, 290); y.update(eyes='glare', mouth='frown', x=YX + 28 * ease(k), feet=GROUND - 7 + 7 * k - 7 * math.sin(math.pi * k))
-        elif f < 304: y.update(eyes='glare', mouth='frown', x=YX + 28, feet=GROUND, tap=1 if f % 4 < 2 else 0)
-        elif f < 328: y.update(eyes='fwd', x=YX + 28 - 28 * sm(f, 304, 328), feet=GROUND - (1 if (f // 3) % 2 else 0))
-        else: y.update(wet=0.0)
-        if f >= 286 and f < 304: cart = None
-        if f < 298: cart = (YX, cb)
-        if f < 286: pass
-        if 214 <= f < 270: gator_ = dict(x=YX - 10 + (y['sway'] // 2 if y else 0), y=(cb if f < 240 else GROUND) - 35, tail=(f // 2) % 2)
-        if 270 <= f < 282:
-            t = sm(f, 270, 282); gator_ = dict(x=YX - 10 - 54 * t, y=(GROUND - 35) - 10 * t + 60 * t * t, tail=(f // 2) % 2, flip=False)
-        if f < 214 or f >= 328: cart = None
+    elif 120 <= f < 190: y = None
+    elif 190 <= f < 282:
+        y.update(wet=1.0 if f < 256 else max(0.0, 1 - (f - 256) / 24), tap=0)
+        cb = GROUND + 52 * (1 - ease(sm(f, 190, 212))) if f < 252 else GROUND + 52 * ease(sm(f, 252, 262))
+        jit = (1 if (f // 2) % 2 else 0) if f < 212 else 0
+        if f < 212: y.update(arm='cross', mouth='frown', feet=cb - 7 + jit, x=YX + jit)
+        elif f < 230: y.update(arm='fist' if (f // 2) % 2 else 'akimbo', eyes='glare', mouth='teeth' if (f // 4) % 2 else 'frown', feet=GROUND - 7)
+        elif f < 244: y.update(sway=2 if f % 4 < 2 else -2, eyes='glare', mouth='wide', feet=GROUND - 7)
+        elif f < 246: y.update(eyes='glare', mouth='frown', feet=GROUND - 7)
+        elif f < 254:
+            k = sm(f, 246, 254); y.update(eyes='glare', mouth='frown', x=YX + 28 * ease(k), feet=GROUND - 7 + 7 * k - 7 * math.sin(math.pi * k))
+        elif f < 268: y.update(eyes='glare', mouth='frown', x=YX + 28, feet=GROUND, tap=1 if f % 4 < 2 else 0)
+        else: y.update(eyes='fwd', x=YX + 28 - 28 * sm(f, 268, 282), feet=GROUND - (1 if (f // 2) % 2 else 0))
+        if f < 262: cart = (YX, cb)
+        if f < 236: gator_ = dict(x=YX - 10 + (y['sway'] // 2), y=(cb if f < 212 else GROUND) - 44, tail=(f // 2) % 2)
+        elif f < 248:
+            t = sm(f, 236, 248); gator_ = dict(x=YX - 10 - 54 * t, y=(GROUND - 44) - 10 * t + 60 * t * t, tail=(f // 2) % 2)
     return y, cart, gator_
 
 def clip_lever(f):
@@ -417,19 +426,20 @@ def clip_lever(f):
     if CLOSE_AT <= f < CLOSE_AT + CLOSE_LEN:
         s['image'] = closeup((f - CLOSE_AT) / CLOSE_LEN, f, bg=(30,22,44), draw=_face, txt=CLOSE, max_scale=2); return s
     a1, a2 = lever_angles(f)
-    p = ease(sm(f, 92, 98)) if f < 200 else 1 - ease(sm(f, 298, 306))
-    if f < 92 or f >= 306: p = 0.0
+    p = ease(sm(f, 72, 78)) if f < 200 else 1 - ease(sm(f, 262, 270))
+    if f < 72 or f >= 270: p = 0.0
     s['under'] += [('gr_lab', a1, a2), ('gr_door', p)]
     y, cart, gat = yzma(f)
     s['fx'].append(('gr_yz', dict(yz=y, cart=cart, gator=gat)))
     s['actors'] = [actor(kronk(f), CX, pal=CPAL)]
-    if cue(f, LINE1_AT, LINE1): s['fx'].append(('caption', LINE1, dict(box=(2, 2, W - 2, 17), max_scale=2, color=PINK, shadow=None, outline=INK)))
-    if cue(f, 92, CLUNK): s['fx'].append(('caption', CLUNK, dict(box=(60, 2, W - 2, 17), max_scale=2, color=GOLD, shadow=None, outline=INK)))
+    box = (2, 1, W - 2, 15)
+    if cue(f, LINE1_AT, LINE1): s['fx'].append(('caption', LINE1, dict(box=box, max_scale=2, color=PINK, shadow=None, outline=INK)))
+    if cue(f, 72, CLUNK): s['fx'].append(('caption', CLUNK, dict(box=(60, 1, W - 2, 15), max_scale=2, color=GOLD, shadow=None, outline=INK)))
     if cue(f, WRONG_AT, WRONG, extra=12): s['fx'].append(('gr_wrong', ease(sm(f, WRONG_AT, WRONG_AT + 26))))
-    if 92 <= f < 96: s['shake'] = ((1, 0), (-1, 1), (1, 0), (0, 0))[f - 92]; s['fx'].append(('gr_spark', P2 - 4, PIVY, f - 92))
-    if 298 <= f < 300: s['shake'] = (0, 1)
-    if 141 <= f < 150: s['fx'].append(('gr_splash', f - 141))
-    if 262 <= f < 280: s['fx'].append(('gr_spray', YX, 24, f - 262))
+    if 72 <= f < 76: s['shake'] = ((1, 0), (-1, 1), (1, 0), (0, 0))[f - 72]; s['fx'].append(('gr_spark', P2 - 4, PIVY, f - 72))
+    if 262 <= f < 264: s['shake'] = (0, 1)
+    if 121 <= f < 130: s['fx'].append(('gr_splash', f - 121))
+    if 230 <= f < 248: s['fx'].append(('gr_spray', YX, 22, f - 230))
     return s
 
 CLIPS = [clip('lever', N_, clip_lever)]
