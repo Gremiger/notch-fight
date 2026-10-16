@@ -357,48 +357,55 @@ def _fx_ground(d, im, e, f):
 
 @fx('ea_apu')
 def _fx_apu(d, im, e, f):
-    """The Apu: a huge stone llama, head and long neck in profile facing right, two banana ears, a slit eye, blue glyph
-    bands round the neck: ('ea_apu', dx, dy, flare 0..1 (the eye), glyph 0..1[, bow 0..1: the head tips forward and down])."""
+    """The Apu: a huge stone llama, a tall neck banded with blue glyphs and a short blunt head in profile facing right, two
+    banana ears, a slit eye: ('ea_apu', dx, dy, flare 0..1 (the eye), glyph 0..1[, bow 0..1: the neck bends, the head drops, ears lay back])."""
     _, dx, dy, fl, gl, *b = e; bow = b[0] if b else 0
-    lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
-    sq = lambda y: y if y >= 40 else 40 - (40 - y) * 0.8                                                       # a shorter head over the long neck
-    P = lambda pts: [(x + dx, sq(y) + dy) for x, y in pts]; OUTL = (40, 32, 46)
+    mk = lambda: (lambda l: (l, ImageDraw.Draw(l)))(Image.new('RGBA', (W, H), (0, 0, 0, 0)))
+    (nl, nd), (hl, hd), (el, ed) = mk(), mk(), mk()
+    P = lambda pts: [(x + dx, y + dy) for x, y in pts]; OUTL = (40, 32, 46)
     SD, SM, SL, SLL = (78, 68, 82), (112, 98, 102), (164, 136, 124), (214, 172, 134)
-    L = lambda y: 90 - (y - 30) * 0.25; R = lambda y: 110 + (y - 30) * 0.3
-    ear = lambda pts, c: ld.polygon(P(pts), fill=c, outline=OUTL)
-    ear([(94, 18), (88, 8), (84, 0), (87, -1), (95, 5), (103, 15)], SD)                                            # far ear, banana, up and back
-    ear([(102, 16), (97, 6), (95, 0), (98, -1), (105, 5), (111, 14)], SM)                                         # near ear
-    ld.line(P([(97, 4), (101, 12)]), fill=SL)
-    ld.polygon(P([(86, 26), (L(70), 70), (R(70), 70), (114, 36)]), fill=SM, outline=OUTL)                         # the long neck
-    ld.polygon(P([(86, 26), (L(70), 70), (L(70) + 10, 70), (100, 30)]), fill=SD)                                  # shadowed left
-    ld.polygon(P([(110, 34), (R(70) - 8, 70), (R(70), 70), (114, 36)]), fill=SL)                                  # sunset-lit right edge
-    head = [(86, 26), (88, 17), (95, 13), (110, 12), (124, 17), (138, 23), (147, 28), (150, 33), (146, 38), (134, 39), (120, 37), (112, 35)]
-    ld.polygon(P(head), fill=SM, outline=OUTL)
-    ld.polygon(P([(88, 17), (95, 13), (110, 12), (124, 17), (138, 23), (147, 28), (140, 27), (124, 22), (110, 17), (96, 18)]), fill=SL)   # lit forehead and bridge
-    ld.polygon(P([(110, 12), (124, 17), (131, 20), (118, 17)]), fill=SLL)
-    ld.polygon(P([(86, 26), (88, 17), (96, 18), (100, 28), (112, 35), (100, 34)]), fill=SD)                      # dark back of the head
-    ld.polygon(P([(112, 35), (120, 37), (134, 39), (146, 38), (140, 36), (122, 34)]), fill=SD)                    # under the jaw
-    ld.line(P([(114, 31), (124, 33), (134, 30)]), fill=SD)                                                         # carved chevron cheek
-    ld.polygon(P([(143, 26), (147, 28), (150, 33), (147, 35), (144, 31)]), fill=SLL)                             # blunt muzzle, lit
-    ld.line(P([(139, 34), (148, 33)]), fill=(34, 28, 38)); ld.point(P([(145, 29)])[0], fill=(34, 28, 38))        # mouth, nostril
+    L = lambda y: 88 - (y - 28) * 0.24; R = lambda y: 112 + (y - 28) * 0.24
+    nd.polygon(P([(88, 26), (L(74), 74), (R(74), 74), (112, 26)]), fill=SM, outline=OUTL)                          # the tall neck
+    nd.polygon(P([(88, 26), (L(74), 74), (L(74) + 11, 74), (98, 26)]), fill=SD)                                    # shadowed left
+    nd.polygon(P([(106, 26), (R(74) - 8, 74), (R(74), 74), (112, 26)]), fill=SL)                                   # sunset-lit right
     gc = mix((90, 90, 104), mix((60, 120, 190), BLUE, 0.5 + 0.5 * math.sin(f * 0.5)), gl)
-    for k, y in enumerate((34, 41, 48, 55)):                                                                       # glyph bands round the neck
+    for k, y in enumerate((33, 39, 45, 51, 57, 63)):                                                               # glyph bands stacked up the neck
         xl, xr = int(L(y)) + 1, int(R(y)) - 1
-        ld.polygon(P([(xl, y), (xr, y), (xr, y + 5), (xl, y + 5)]), fill=mix((56, 52, 70), (34, 48, 100), gl))
+        nd.polygon(P([(xl, y), (xr, y), (xr, y + 5), (xl, y + 5)]), fill=mix((56, 52, 70), (34, 48, 100), gl))
         for i, x in enumerate(range(xl + 2, xr - 4, 6)):
             xx, yy = x + dx, y + dy; t = (i + k) % 4
-            if t == 0: ld.line([(xx, yy + 4), (xx, yy + 2), (xx + 2, yy + 2), (xx + 2, yy), (xx + 4, yy)], fill=gc)      # step-fret
-            elif t == 1: ld.polygon([(xx + 2, yy), (xx + 4, yy + 2), (xx + 2, yy + 4), (xx, yy + 2)], outline=gc)         # diamond
-            elif t == 2: ld.line([(xx, yy + 4), (xx + 1, yy + 1), (xx + 2, yy + 4), (xx + 3, yy + 1), (xx + 4, yy + 4)], fill=gc)   # zigzag
-            else: ld.point([(xx + 2, yy), (xx + 2, yy + 1), (xx, yy + 2), (xx + 1, yy + 2), (xx + 2, yy + 2), (xx + 3, yy + 2), (xx + 4, yy + 2), (xx + 2, yy + 3), (xx + 2, yy + 4)], fill=gc)   # chakana cross
-    ec = BLUE_L if fl > 0.5 else (130, 180, 240); w = 1 + int(2 * fl)
-    ld.polygon(P([(120, 20), (134, 24), (133, 26 + w // 2), (121, 22 + w // 2)]), fill=ec)                         # the narrow slanted blue eye
-    piv = (98 + dx, 52 + dy); ang = -30 * bow
-    if bow: lay = lay.rotate(ang, resample=Image.NEAREST, center=piv)
-    im.paste(lay, (0, 0), lay)
-    a = math.radians(ang); vx, vy = 128 + dx - piv[0], sq(23) + dy - piv[1]
-    ex, ey = piv[0] + vx * math.cos(a) + vy * math.sin(a), piv[1] - vx * math.sin(a) + vy * math.cos(a)
-    glow(im, ex, ey, int(3 + 6 * fl), BLUE, 0.25 + 0.4 * fl)
+            if t == 0: nd.line([(xx, yy + 4), (xx, yy + 2), (xx + 2, yy + 2), (xx + 2, yy), (xx + 4, yy)], fill=gc)      # step-fret
+            elif t == 1: nd.polygon([(xx + 2, yy), (xx + 4, yy + 2), (xx + 2, yy + 4), (xx, yy + 2)], outline=gc)         # diamond
+            elif t == 2: nd.line([(xx, yy + 4), (xx + 1, yy + 1), (xx + 2, yy + 4), (xx + 3, yy + 1), (xx + 4, yy + 4)], fill=gc)   # zigzag
+            else: nd.point([(xx + 2, yy), (xx + 2, yy + 1), (xx, yy + 2), (xx + 1, yy + 2), (xx + 2, yy + 2), (xx + 3, yy + 2), (xx + 4, yy + 2), (xx + 2, yy + 3), (xx + 2, yy + 4)], fill=gc)   # chakana cross
+    head = [(89, 26), (90, 16), (96, 10), (105, 10), (112, 14), (116, 20), (121, 23), (123, 26), (123, 31), (119, 34), (111, 34), (106, 31), (101, 30)]
+    hd.polygon(P(head), fill=SM, outline=OUTL)
+    hd.polygon(P([(90, 16), (96, 10), (105, 10), (112, 14), (116, 20), (121, 23), (117, 22), (110, 18), (101, 15), (94, 17)]), fill=SL)   # lit forehead and bridge
+    hd.polygon(P([(100, 11), (105, 10), (110, 13), (104, 13)]), fill=SLL)
+    hd.polygon(P([(89, 26), (90, 16), (95, 17), (98, 26), (101, 30), (96, 30)]), fill=SD)                          # dark back of the head
+    hd.polygon(P([(106, 31), (111, 34), (119, 34), (123, 31), (117, 32), (110, 31)]), fill=SD)                     # soft jaw underside
+    hd.polygon(P([(120, 23), (123, 26), (123, 31), (121, 31), (120, 27)]), fill=SLL)                               # lit muzzle front
+    hd.line(P([(103, 27), (110, 28), (114, 25)]), fill=SD)                                                         # carved cheek chevron
+    hd.line(P([(113, 31), (121, 30)]), fill=(34, 28, 38)); hd.point(P([(120, 25)])[0], fill=(34, 28, 38))         # mouth, nostril
+    ec = BLUE_L if fl > 0.5 else (130, 180, 240); w = 1 + int(fl + 0.5)
+    hd.polygon(P([(102, 17), (112, 20), (111, 21 + w // 2), (102, 19 + w // 2)]), fill=ec)                         # the narrow slanted blue eye
+    for pts, c in (([(95, 14), (91, 7), (89, 2), (92, 2), (97, 8), (101, 13)], SD), ([(101, 12), (99, 5), (98, 1), (101, 1), (105, 6), (108, 12)], SM)):
+        ed.polygon(P(pts), fill=c, outline=OUTL)                                                                    # banana ears, up and a bit back
+    ed.line(P([(99, 5), (102, 11)]), fill=SL)
+    jx, jy = 99 + dx, 30 + dy; yb = 56 + dy
+    sh = lambda y: bow * 26 * max(0, (yb - y) / (yb - 24 - dy)) ** 2                                                # the neck leans forward from its base
+    if bow:
+        out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+        for y in range(H): out.paste(nl.crop((0, y, W, y + 1)), (int(round(sh(y))), y))
+        nl = out
+        el = el.rotate(60 * bow, resample=Image.NEAREST, center=(97 + dx, 12 + dy))                                  # ears laid back
+    tx = sh(jy); ang = -42 * bow
+    for src, rot in ((nl, False), (el, True), (hl, True)):
+        if bow and rot: src = src.rotate(ang, resample=Image.NEAREST, center=(jx, jy), translate=(int(round(tx)), 0))
+        im.paste(src, (0, 0), src)
+    a = math.radians(ang); vx, vy = 107 + dx - jx, 19 + dy - jy
+    ex, ey = jx + vx * math.cos(a) + vy * math.sin(a) + tx, jy - vx * math.sin(a) + vy * math.cos(a)
+    glow(im, ex, ey, int(3 + 4 * fl), BLUE, 0.2 + 0.3 * fl)
 
 @fx('ea_rock')
 def _fx_rock2(d, im, e, f):
