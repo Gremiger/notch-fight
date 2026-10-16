@@ -14,15 +14,16 @@ LINE = "WIND'S HOWLING."
 CLOSE = "SWALLOW"
 LINE_AT = 8
 CLOSE_AT, CLOSE_LEN = LINE_AT + hold(LINE) + 4, 40                  # 32..72
+BL = 34                                                             # the silver blade's length
 GXL = 128                                                           # where the griffin crashes
 ORANGE = (217,119,87)
 
 # ---- people ------------------------------------------------------------------------------------------------
-GW, GH, C = 24, 24, 11
+GW, GH, C = 26, 34, 13
 POSES = dict(POSES)
 POSES.update({
- 'idle1': ((-1,4),(0,7),(2,4),(3,7),0,'stand'),
- 'idle2': ((-1,4),(0,7),(2,4),(3,6),0,'stand'),
+ 'idle1': ((-1,5),(0,9),(2,5),(2,9),0,'stand'),
+ 'idle2': ((-1,5),(0,9),(2,5),(3,8),0,'stand'),
  'aard':  ((1,4),(3,6),(5,2),(11,-1),1,'stance'),                   # the palm out
  'draw1': ((-1,4),(0,7),(-1,-2),(-6,-4),-1,'stance'),               # the hand at the hilt
  'draw2': ((1,4),(3,6),(4,-3),(6,-6),1,'stance'),                   # the sword out and up
@@ -36,18 +37,20 @@ BLADE = {'draw1': 60, 'draw2': 80, 'sword': 38, 'igni': 62}
 
 def _chest(g, at):
     c, ty, sh = at['c'], at['ty'], at['sh']
-    for i in range(5): put(g, c - 2 + i + sh(ty + i), ty + i, 'o')            # the orange strap across the chest
-    put(g, c + 1 + sh(ty + 3), ty + 3, 'm')                                  # the wolf medallion
+    seg(g, c - 3, ty, c + 2, ty + 6, 'o')                                    # the orange strap across the chest
+    put(g, c + 1 + sh(ty + 5), ty + 5, 'm'); put(g, c + 1 + sh(ty + 4), ty + 4, 'm')                                  # the wolf medallion
     for x in range(-3, 3): put(g, c + x + sh(at['hip']), at['hip'], 'c')    # the mail skirt
 
 def _hilts(g, at):
+    """Two hilts sticking up over the back shoulder (one is gone once the silver sword is drawn)."""
     c, ty = at['c'], at['ty']
-    hilts = [((-3, 1), (-7, -4))] + ([] if at['flags'].get('drawn') else [((-4, 2), (-8, -2))])
+    hilts = [((-5, 3), (-6, -12))] + ([] if at['flags'].get('drawn') else [((-7, 4), (-10, -9))])
     for (x0, y0), (x1, y1) in hilts:
-        seg(g, c + x0, ty + y0, c + x1, ty + y1, 'g')
-        seg(g, c + x0 - 1, ty + y0 - 1, c + x1 + 1, ty + y1 + 1, 'o')       # the orange grip wrap
-        put(g, c + x1, ty + y1 - 1, 'b'); put(g, c + x1 - 1, ty + y1, 'b')  # the pommel
-        put(g, c + x0 + 1, ty + y0 + 1, 'b'); put(g, c + x0 - 2, ty + y0 - 2, 'b')
+        seg(g, c + x0, ty + y0, c + x1, ty + y1, 'g')                              # the scabbard up to the grip
+        gx, gy = c + x1 + (x0 - x1) // 4, ty + y1 + (y0 - y1) // 4                  # the crossguard, 3 cells under the top
+        seg(g, c + x1, ty + y1, gx, gy - 1, 'o')                                     # the orange grip wrap
+        put(g, c + x1, ty + y1 - 1, 'b')                                             # the pommel
+        for k in (-2, -1, 0, 1, 2): put(g, gx + k, gy, 'b')
 
 def _face(g, at):
     c, hy, o, fl = at['c'], at['hy'], at['sh'](at['hy']), at['flags']
@@ -55,12 +58,12 @@ def _face(g, at):
     put(g, c + o, hy + 1, 'r'); put(g, c - 1 + o, hy + 3, 'r')               # the scar
     t = fl.get('tail', 0)                                                    # the ponytail
     for y in (1, 2): put(g, c - 3 + o, hy + y, 'h')
-    for y in (3, 4, 5): put(g, c - 4 + t + o, hy + y, 'h')
+    for y in (3, 4, 5, 6): put(g, c - 4 + t + o, hy + y, 'h')
     if fl.get('dark'):                                                       # dark veins, black eyes
         for dx, dy in ((-1, 2), (1, 3), (2, 3), (1, 1), (2, 1), (3, 3)): put(g, c + dx + o, hy + dy, 'v')
         for ex in (0, 2): put(g, c + ex + o, hy + 2, 'K')
 
-_BODY = dict(w=GW, h=GH, c=C, legs=9, torso=7)
+_BODY = dict(w=GW, h=GH, c=C, legs=13, torso=9)
 CLAUDE = dict(_BODY, name='witcher-claude', eye='y', hair=['.hhhhh', 'hhhh..'], hair_x=-3, hair_y=1,
               leg=dict(color='p', boot='k', boot_rows=2),
               body=dict(color='j', top='c', collar='c', belt='g'),
@@ -172,20 +175,24 @@ def _fx_feather(d, im, e, f):
 
 @fx('wi_blade')
 def _fx_blade(d, im, e, f):
-    """The silver sword: (name, x, y, angle, length, flip, gleam)."""
+    """The silver sword, 2 px with a light edge and a crossguard: (name, x, y, angle, length, flip, gleam)."""
     _, x, y, ang, ln, flip, gl = e
     if ln <= 0: return
     a = math.radians(ang); dx = math.cos(a) * (-1 if flip else 1); dy = -math.sin(a)
-    tip = (x + dx * ln, y + dy * ln)
-    for ox, oy in ((1, 0), (-1, 0), (0, 1), (0, -1)): d.line([x + ox, y + oy, tip[0] + ox, tip[1] + oy], fill=INK)
-    d.line([x, y, tip[0], tip[1]], fill=(226,236,250)); d.line([x - dy * 2, y + dx * 2, x + dy * 2, y - dx * 2], fill=ORANGE)
+    tip = (x + dx * ln, y + dy * ln); nx, ny = -dy, dx
+    d.line([x, y, tip[0], tip[1]], fill=INK, width=4)
+    d.line([x - nx * 3, y - ny * 3, x + nx * 3, y + ny * 3], fill=INK, width=4)
+    d.line([x, y, tip[0], tip[1]], fill=(168,184,212), width=2)
+    d.line([x - nx * .5, y - ny * .5, tip[0] - nx * .5, tip[1] - ny * .5], fill=(250,252,255))
+    d.line([x - nx * 3, y - ny * 3, x + nx * 3, y + ny * 3], fill=(206,210,222), width=2)
+    d.line([x, y, x - dx * 3, y - dy * 3], fill=ORANGE, width=2)
     if gl > 0:
         m = (x + dx * ln * 0.7, y + dy * ln * 0.7); s = int(2 + gl * 3)
         d.line([m[0] - s, m[1], m[0] + s, m[1]], fill=(255,255,255)); d.line([m[0], m[1] - s, m[0], m[1] + s], fill=(255,255,255))
 
 # ---- the griffin ---------------------------------------------------------------------------------------------
 BRN, TAN, LT, CRM, BEAK, DK, RED = (116,74,40), (190,140,70), (228,186,108), (244,230,194), (250,198,40), (62,40,28), (200,40,40)
-def _tc(c, t): return c if t is None else tuple(int(a * .4 + b * .6) for a, b in zip(c, t))
+def _tc(c, t): return c if t is None else tuple(int(a * .5 + b * .5) for a, b in zip(c, t))
 
 def _wing(d, rx, ry, tx, ty, w, t=None):
     """A feathered wing from its root to its tip; the feathers hang w px to the lower side."""
@@ -225,25 +232,35 @@ def griffin_front(d, cx, cy, s=1.0, flap=0.0, fold=0.0, beak=False, t=None):
         d.point(P(ex, -9), fill=(30, 20, 10)); d.point(P(ex - (1 if ex < 0 else -1), -10), fill=INK)
 
 def griffin_side(d, x, y, lift=0.0, t=None):
-    """On the ground, facing left, at x (its middle) with its feet at y: lift 0 lying stunned .. 1 up on its legs, wings flared."""
-    L = lift; by = y - 8 - 4 * L
-    _wing(d, x - 6, by - 4, x - 32, by - 12 - 18 * L, 10, t)                      # the far wing, behind
-    d.line([x + 14, by, x + 24, y - 13 - 5 * L], fill=INK, width=3)
-    d.line([x + 14, by, x + 24, y - 13 - 5 * L], fill=_tc(BRN, t), width=1)        # the tail
-    d.ellipse([x + 22, y - 17 - 5 * L, x + 28, y - 11 - 5 * L], fill=_tc(DK, t), outline=INK)
-    for hx in (x + 6, x - 8):                                                      # legs
-        if L > .5: d.line([hx, by + 3, hx + 1, y], fill=INK, width=3); d.line([hx, by + 3, hx + 1, y], fill=_tc(TAN, t), width=1)
-    d.ellipse([x - 14, by - 7, x + 18, by + 7], fill=_tc(TAN, t), outline=INK)     # the body
-    d.ellipse([x - 12, by + 1, x + 2, by + 7], fill=_tc(LT, t))
-    if L <= .5: d.line([x - 12, y - 3, x - 21, y - 2], fill=INK, width=3); d.line([x - 12, y - 3, x - 21, y - 2], fill=_tc(TAN, t), width=1)
-    hx, hy = x - 20 - 2 * L, y - 15 - 11 * L                                       # head and neck, low when stunned
-    d.polygon([(x - 12, by - 4), (hx + 3, hy + 3), (hx + 3, hy + 8), (x - 8, by + 4)], fill=_tc(LT, t), outline=INK)
-    d.ellipse([hx - 5, hy - 5, hx + 5, hy + 5], fill=_tc(CRM, t), outline=INK)
-    d.polygon([(hx - 4, hy - 2), (hx - 4, hy + 3), (hx - 11, hy + 3)], fill=BEAK, outline=INK); d.point((hx - 11, hy + 4), fill=INK)
-    d.polygon([(hx + 2, hy - 4), (hx + 5, hy - 9), (hx + 6, hy - 3)], fill=_tc(BRN, t))
-    d.point((hx - 1, hy - 1), fill=(30, 20, 10)); d.line([hx - 3, hy - 3, hx + 1, hy - 2], fill=INK)
-    if L <= .5: d.line([hx - 2, hy - 1, hx, hy + 1], fill=INK); d.line([hx - 2, hy + 1, hx, hy - 1], fill=INK)   # dazed
-    _wing(d, x - 3, by - 6, x + 34, by - 8 - 24 * L, 11, t)                       # the near wing
+    """On the ground, facing left, at x (its middle) with its feet at y: lift 0 lying stunned .. 1 up on its legs, wings flared.
+    A heavy lion's body with four legs and a tufted tail, a short thick neck and the big cream eagle head."""
+    L = lift; by = y - 9 - 8 * L
+    _wing(d, x - 6, by - 5, x - 32, by - 12 - 18 * L, 10, t)                      # the far wing, behind
+    tx, ty = x + 25, by - 6 - 6 * L                                                # the lion tail, thick, with a tuft
+    d.line([x + 15, by + 1, x + 22, by + 2, tx, ty], fill=INK, width=4); d.line([x + 15, by + 1, x + 22, by + 2, tx, ty], fill=_tc(TAN, t), width=2)
+    d.ellipse([tx - 3, ty - 5, tx + 3, ty + 1], fill=_tc(BRN, t), outline=INK)
+    paw = lambda a, b: (d.line([a, b], fill=INK, width=5), d.line([a, b], fill=_tc(TAN, t), width=3))
+    if L > .4:                                                                     # four legs: rear paws and front talons
+        for lx, w in ((x + 11, 0), (x + 6, 0), (x - 8, 1), (x - 12, 1)):
+            paw((lx, by + 3), (lx + (0 if w else 1), y - 1))
+            d.point((lx - 2, y), fill=BEAK); d.point((lx + 2, y), fill=BEAK)
+    else:                                                                          # lying: legs tucked, front talons out
+        paw((x + 8, y - 4), (x + 14, y - 2)); paw((x - 8, y - 3), (x - 19, y - 2))
+        d.point((x - 21, y - 3), fill=BEAK); d.point((x - 21, y - 1), fill=BEAK)
+    d.ellipse([x - 15, by - 9, x + 19, by + 8], fill=_tc(TAN, t), outline=INK)     # the heavy body
+    d.ellipse([x - 12, by + 1, x + 4, by + 8], fill=_tc(LT, t))
+    d.arc([x + 6, by - 8, x + 18, by + 4], 200, 300, fill=_tc(BRN, t))             # the haunch
+    hx, hy = x - 18 - 2 * L, by - 8 - 3 * L                                        # the head, close to the shoulders
+    d.ellipse([hx + 2, hy + 1, hx + 12, hy + 13], fill=_tc(LT, t), outline=INK)    # the thick neck and its ruff
+    d.polygon([(hx + 1, hy - 3), (hx + 5, hy - 10), (hx + 7, hy - 3)], fill=_tc(BRN, t), outline=INK)   # the feather crest
+    d.polygon([(hx + 4, hy - 4), (hx + 10, hy - 8), (hx + 9, hy)], fill=_tc(BRN, t), outline=INK)
+    d.ellipse([hx - 6, hy - 6, hx + 6, hy + 6], fill=_tc(CRM, t), outline=INK)     # the head, as big as in the dive
+    d.polygon([(hx - 5, hy - 3), (hx - 13, hy + 1), (hx - 13, hy + 7), (hx - 10, hy + 4), (hx - 5, hy + 4)], fill=BEAK, outline=INK)   # the hooked beak
+    d.point((hx - 9, hy + 2), fill=INK)
+    d.ellipse([hx - 3, hy - 3, hx, hy], fill=(255,230,80), outline=INK); d.point((hx - 2, hy - 2), fill=INK)
+    d.line([hx - 5, hy - 5, hx + 1, hy - 3], fill=INK)
+    if L <= .4: d.line([hx - 3, hy - 3, hx, hy], fill=INK); d.line([hx - 3, hy, hx, hy - 3], fill=INK)   # dazed
+    _wing(d, x - 3, by - 7, x + 34, by - 9 - 24 * L, 11, t)                       # the near wing
 
 @fx('wi_grif')
 def _fx_grif(d, im, e, f):
@@ -320,39 +337,37 @@ def clip_grifo(f):
     if 72 <= f < 98: me = 'guard' if f % 12 < 6 else 'guard2'
     if 98 <= f < 118: me = 'aard'
     if 118 <= f < 140: me = 'guard'
-    if 140 <= f < 144: me = 'draw1'; bl = (BLADE['draw1'], (f - 140) * 3, 0)
-    if 144 <= f < 150: me = 'draw2'; bl = (BLADE['draw2'], 24, ez(1, 0, (f - 144) / 6))
-    if 150 <= f < 156: me = 'sword'; bl = (BLADE['sword'], 24, 0)
-    if 156 <= f < 178: me = 'igni'; bl = (BLADE['igni'], 24, 0)
+    if 140 <= f < 144: me = 'draw1'; bl = (BLADE['draw1'], (f - 140) * 5, 0)
+    if 144 <= f < 150: me = 'draw2'; bl = (BLADE['draw2'], BL, ez(1, 0, (f - 144) / 6))
+    if 150 <= f < 156: me = 'sword'; bl = (BLADE['sword'], BL, 0)
+    if 156 <= f < 178: me = 'igni'; bl = (BLADE['igni'], BL, 0)
     if 178 <= f < 186:
-        me = 'run1' if (f // 2) % 2 else 'run2'; x = _lerp(CX, 94, f, 178, 186); bl = (28, 24, 0)
+        me = 'run1' if (f // 2) % 2 else 'run2'; x = _lerp(CX, 94, f, 178, 186); bl = (28, BL, 0)
     if 186 <= f < 198:
-        me = 'spin1' if (f // 2) % 2 else 'spin2'; x = 94; flip = (f // 2) % 2 == 0; bl = (0, 24, 0)
-    if 198 <= f < 202: me = 'sword'; x = 94; bl = (-20, 24, 0)
+        me = 'spin1' if (f // 2) % 2 else 'spin2'; x = 94; flip = (f // 2) % 2 == 0; bl = (0, BL, 0)
+    if 198 <= f < 202: me = 'sword'; x = 94; bl = (-20, BL, 0)
     if 202 <= f < 224:
-        me = 'walk1' if (f // 4) % 2 else 'walk2'; x = _lerp(94, CX, f, 202, 224); flip = True; bl = (-35, 24, 0)
-    if 224 <= f < 232: me = 'sword'; bl = (BLADE['sword'], 24, 0)
-    if 232 <= f < 236: me = 'draw2'; bl = (BLADE['draw2'], 24 - (f - 232) * 3, 0)
-    if 236 <= f < 240: me = 'draw1'; bl = (BLADE['draw1'], max(0, 12 - (f - 236) * 4), 0)
+        me = 'walk1' if (f // 4) % 2 else 'walk2'; x = _lerp(94, CX, f, 202, 224); flip = True; bl = (-35, BL, 0)
+    if 224 <= f < 232: me = 'sword'; bl = (BLADE['sword'], BL, 0)
+    if 232 <= f < 236: me = 'draw2'; bl = (BLADE['draw2'], BL - (f - 232) * 5, 0)
+    if 236 <= f < 240: me = 'draw1'; bl = (BLADE['draw1'], max(0, 14 - (f - 236) * 5), 0)
     xi = int(round(x))
     s['actors'].append(put_on(build(me, **flags), xi, flip, CPAL))
     if bl:
         hx, hy = hand(me, xi, flip)
         s['fx'].append(('wi_blade', hx, hy, bl[0], bl[1], flip, bl[2]))
     # the griffin
-    t = (255, 255, 255) if (104 <= f < 108 or (160 <= f < 178 and f % 2)) else None
+    t = (170,215,255) if 104 <= f < 108 else ((255,120,30) if 160 <= f < 178 and f % 2 else None)
     if 74 <= f < 80: s['fx'].append(('wi_grif', 'front', 156, 8, .8, FLAP[f % 4], 0, True, t))
     if 80 <= f < 104:
         k = min(1, (f - 80) / 20)
         s['fx'].append(('wi_grif', 'front', _lerp(156, 96, f, 80, 100), _lerp(8, 32, f, 80, 100), lerp(.8, 1.15, k), FLAP[f % 4] * (1 - .6 * k), .3 * k, f < 92, t))
     if 74 <= f < 92 and f % 4 < 2: s['fx'].append(('caption', 'SKREEE!', {'box': (2, 2, 100, 20), 'color': (255,214,120), 'max_scale': 2}))
-    if 104 <= f < 120:
-        k = (f - 104) / 16
-        s['fx'].append(('wi_grif', 'front', _lerp(96, 150, f, 104, 120), _lerp(32, 10, f, 104, 120) - 6 * math.sin(math.pi * k), lerp(1.15, .8, k), 0, 1, False, t))
-    if 120 <= f < 134:
-        k = (f - 120) / 14; s['fx'].append(('wi_grif', 'front', lerp(150, GXL, k), lerp(10, GROUND - 14, k * k), .8, 0, 1, False, t))
+    if 104 <= f < 134:                                                        # Aard throws it back and down, an arc into the grass
+        k = (f - 104) / 30
+        s['fx'].append(('wi_grif', 'front', lerp(96, GXL, ease(k)), lerp(32, GROUND - 14, k * k) - 12 * math.sin(math.pi * k) * (1 - k), lerp(1.15, .9, k), 0, 1, False, t))
     if 134 <= f < 148: s['fx'].append(('wi_grif', 'side', GXL, GROUND, 0, None))
-    if 148 <= f < 192: s['fx'].append(('wi_grif', 'side', GXL, GROUND, ease((f - 148) / 18), t))
+    if 148 <= f < 194: s['fx'].append(('wi_grif', 'side', GXL, GROUND, ease((f - 148) / 18), t))
     # Aard, Igni, the crash, the kill
     if 100 <= f < 116: s['fx'].append(('wi_aard', *hand('aard', CX), f - 100))
     if 156 <= f < 178: s['fx'].append(('wi_igni', *hand('igni', CX, part='back_hand'), f - 156))
@@ -361,7 +376,7 @@ def clip_grifo(f):
         s['fx'].append(('wi_feather', GXL - 10, GROUND - 4, f - 134, 8))
         if f < 140: s['fx'] += [('dust', GXL - 20 + i * 10, GROUND - 1 - (f - 134) // 2 - i % 2) for i in range(5)]
     if 186 <= f < 194: s['fx'].append(('arc', x, GROUND - 14, 17, (f - 186) * 90 + 180, (f - 186) * 90 + 330, (255,255,255), 2))
-    if 192 <= f < 196: s['flash'] = 0.8 - (f - 192) * 0.2; s['fc'] = (GXL - 14, GROUND - 18)
+    if 192 <= f < 193: s['flash'] = 0.4 if f == 192 else 0; s['fc'] = (GXL - 14, GROUND - 18)
     if 192 <= f < 198: s['shake'] = rshake(2)
     if 192 <= f < 226: s['fx'].append(('wi_feather', GXL - 6, GROUND - 14, f - 192, 34))
     if 192 <= f < 196: s['fx'].append(('wi_spark', GXL - 12, GROUND - 16, f - 192))
