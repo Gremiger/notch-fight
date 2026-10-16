@@ -357,35 +357,46 @@ def _fx_ground(d, im, e, f):
 
 @fx('ea_apu')
 def _fx_apu(d, im, e, f):
-    """The Apu: a huge stone llama's head and neck in profile, blue glyph bands round the neck:
-    ('ea_apu', dx, dy, flare 0..1 (the eye), glyph 0..1[, bow 0..1: the snout tips down])."""
+    """The Apu: a huge stone llama, head and long neck in profile facing right, two banana ears, a slit eye, blue glyph
+    bands round the neck: ('ea_apu', dx, dy, flare 0..1 (the eye), glyph 0..1[, bow 0..1: the head tips forward and down])."""
     _, dx, dy, fl, gl, *b = e; bow = b[0] if b else 0
     lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
-    P = lambda pts: [(x + dx, y + dy) for x, y in pts]; OUTL = (40, 32, 46)
-    body = [(80, 72), (86, 42), (94, 26), (100, 20), (124, 14), (150, 24), (172, 30), (178, 36), (174, 42), (150, 44), (132, 49), (126, 72)]
-    ld.polygon(P(body), fill=STONE, outline=OUTL)
-    for ear in (((97, 22), (102, -3), (111, 18)), ((109, 18), (119, -5), (125, 16))):                               # two tall pointed ears
-        ld.polygon(P(ear), fill=(122, 108, 112), outline=OUTL)
-    ld.polygon(P([(104, 6), (102, -3), (108, 12)]), fill=(84, 74, 82))
-    ld.polygon(P([(100, 20), (124, 14), (150, 24), (172, 30), (166, 32), (150, 30), (124, 22), (104, 28)]), fill=(156, 132, 126))   # the lit top of the head
-    ld.polygon(P([(80, 72), (86, 42), (94, 26), (100, 28), (94, 44), (90, 72)]), fill=(72, 64, 78))                 # the neck's shadowed back
-    ld.polygon(P([(132, 49), (150, 44), (174, 42), (172, 39), (150, 38), (134, 43)]), fill=(84, 76, 86))            # under the jaw
-    ld.line(P([(152, 38), (176, 37)]), fill=(34, 28, 38)); ld.point(P([(172, 32)])[0], fill=(34, 28, 38))           # mouth, nostril
-    ld.line(P([(130, 23), (148, 20)]), fill=(64, 54, 66))                                                           # brow
+    sq = lambda y: y if y >= 40 else 40 - (40 - y) * 0.8                                                       # a shorter head over the long neck
+    P = lambda pts: [(x + dx, sq(y) + dy) for x, y in pts]; OUTL = (40, 32, 46)
+    SD, SM, SL, SLL = (78, 68, 82), (112, 98, 102), (164, 136, 124), (214, 172, 134)
+    L = lambda y: 90 - (y - 30) * 0.25; R = lambda y: 110 + (y - 30) * 0.3
+    ear = lambda pts, c: ld.polygon(P(pts), fill=c, outline=OUTL)
+    ear([(94, 18), (88, 8), (84, 0), (87, -1), (95, 5), (103, 15)], SD)                                            # far ear, banana, up and back
+    ear([(102, 16), (97, 6), (95, 0), (98, -1), (105, 5), (111, 14)], SM)                                         # near ear
+    ld.line(P([(97, 4), (101, 12)]), fill=SL)
+    ld.polygon(P([(86, 26), (L(70), 70), (R(70), 70), (114, 36)]), fill=SM, outline=OUTL)                         # the long neck
+    ld.polygon(P([(86, 26), (L(70), 70), (L(70) + 10, 70), (100, 30)]), fill=SD)                                  # shadowed left
+    ld.polygon(P([(110, 34), (R(70) - 8, 70), (R(70), 70), (114, 36)]), fill=SL)                                  # sunset-lit right edge
+    head = [(86, 26), (88, 17), (95, 13), (110, 12), (124, 17), (138, 23), (147, 28), (150, 33), (146, 38), (134, 39), (120, 37), (112, 35)]
+    ld.polygon(P(head), fill=SM, outline=OUTL)
+    ld.polygon(P([(88, 17), (95, 13), (110, 12), (124, 17), (138, 23), (147, 28), (140, 27), (124, 22), (110, 17), (96, 18)]), fill=SL)   # lit forehead and bridge
+    ld.polygon(P([(110, 12), (124, 17), (131, 20), (118, 17)]), fill=SLL)
+    ld.polygon(P([(86, 26), (88, 17), (96, 18), (100, 28), (112, 35), (100, 34)]), fill=SD)                      # dark back of the head
+    ld.polygon(P([(112, 35), (120, 37), (134, 39), (146, 38), (140, 36), (122, 34)]), fill=SD)                    # under the jaw
+    ld.line(P([(114, 31), (124, 33), (134, 30)]), fill=SD)                                                         # carved chevron cheek
+    ld.polygon(P([(143, 26), (147, 28), (150, 33), (147, 35), (144, 31)]), fill=SLL)                             # blunt muzzle, lit
+    ld.line(P([(139, 34), (148, 33)]), fill=(34, 28, 38)); ld.point(P([(145, 29)])[0], fill=(34, 28, 38))        # mouth, nostril
     gc = mix((90, 90, 104), mix((60, 120, 190), BLUE, 0.5 + 0.5 * math.sin(f * 0.5)), gl)
-    for y, xr in ((32, 118), (44, 130), (54, 129), (63, 128)):                                                       # the glyph bands round the neck
-        xl = int(94 - (y - 26) * 0.318)
-        ld.polygon(P([(xl, y), (xr, y), (xr, y + 5), (xl, y + 5)]), fill=mix((56, 52, 70), (40, 56, 110), gl))
-        for i, x in enumerate(range(xl + 3, xr - 4, 6)):
-            xx, yy = x + dx, y + dy
-            if (i + y) % 2: ld.line([(xx, yy + 4), (xx, yy + 2), (xx + 2, yy + 2), (xx + 2, yy), (xx + 4, yy)], fill=gc)   # a step-fret
-            else: ld.polygon([(xx + 2, yy), (xx + 4, yy + 2), (xx + 2, yy + 4), (xx, yy + 2)], outline=gc)                # a diamond
+    for k, y in enumerate((34, 41, 48, 55)):                                                                       # glyph bands round the neck
+        xl, xr = int(L(y)) + 1, int(R(y)) - 1
+        ld.polygon(P([(xl, y), (xr, y), (xr, y + 5), (xl, y + 5)]), fill=mix((56, 52, 70), (34, 48, 100), gl))
+        for i, x in enumerate(range(xl + 2, xr - 4, 6)):
+            xx, yy = x + dx, y + dy; t = (i + k) % 4
+            if t == 0: ld.line([(xx, yy + 4), (xx, yy + 2), (xx + 2, yy + 2), (xx + 2, yy), (xx + 4, yy)], fill=gc)      # step-fret
+            elif t == 1: ld.polygon([(xx + 2, yy), (xx + 4, yy + 2), (xx + 2, yy + 4), (xx, yy + 2)], outline=gc)         # diamond
+            elif t == 2: ld.line([(xx, yy + 4), (xx + 1, yy + 1), (xx + 2, yy + 4), (xx + 3, yy + 1), (xx + 4, yy + 4)], fill=gc)   # zigzag
+            else: ld.point([(xx + 2, yy), (xx + 2, yy + 1), (xx, yy + 2), (xx + 1, yy + 2), (xx + 2, yy + 2), (xx + 3, yy + 2), (xx + 4, yy + 2), (xx + 2, yy + 3), (xx + 2, yy + 4)], fill=gc)   # chakana cross
     ec = BLUE_L if fl > 0.5 else (130, 180, 240); w = 1 + int(2 * fl)
-    ld.polygon(P([(133, 29), (146, 22), (148, 24 + w // 2), (137, 31 + w // 2)]), fill=ec)                         # the narrow blue eye slit
-    piv = (100 + dx, 56 + dy); ang = -30 * bow
+    ld.polygon(P([(120, 20), (134, 24), (133, 26 + w // 2), (121, 22 + w // 2)]), fill=ec)                         # the narrow slanted blue eye
+    piv = (98 + dx, 52 + dy); ang = -30 * bow
     if bow: lay = lay.rotate(ang, resample=Image.NEAREST, center=piv)
     im.paste(lay, (0, 0), lay)
-    a = math.radians(ang); vx, vy = 141 + dx - piv[0], 26 + dy - piv[1]
+    a = math.radians(ang); vx, vy = 128 + dx - piv[0], sq(23) + dy - piv[1]
     ex, ey = piv[0] + vx * math.cos(a) + vy * math.sin(a), piv[1] - vx * math.sin(a) + vy * math.cos(a)
     glow(im, ex, ey, int(4 + 9 * fl), BLUE, 0.3 + 0.5 * fl)
 
@@ -397,22 +408,38 @@ def _fx_rock2(d, im, e, f):
 
 @fx('ea_ride')
 def _fx_ride(d, im, e, f):
-    """A rider on a long, low dirt bike with small wheels (a thin teal ring), tilted up the slope:
-    ('ea_ride', rider sprite or None, pal, x, y, ring 0..1)."""
-    _, spr, pal, x, y, ring = e
-    lay = Image.new('RGBA', (60, 40), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
-    rc = mix((70, 70, 80), TEAL, ring)
-    for wx in (9, 46):
-        ld.ellipse([wx - 5, 29, wx + 5, 39], fill=(34, 28, 36), outline=rc)
-        a = f * 0.9 + (wx > 20); ld.line([wx, 34, wx + math.cos(a) * 3, 34 + math.sin(a) * 3], fill=(170, 150, 140))
-    ld.line([9, 34, 20, 27], fill=(80, 56, 44), width=2); ld.polygon([(14, 26), (38, 22), (40, 27), (20, 30)], fill=(128, 88, 60))
-    ld.line([37, 23, 46, 34], fill=(70, 62, 70), width=2); ld.line([35, 19, 41, 19], fill=(60, 50, 52)); ld.rectangle([13, 24, 25, 26], fill=(48, 34, 40))
-    if spr:
-        r = sprite_img(shrink(spr, 0.8), pal); lay.paste(r, (15, 28 - r.height + 3), r)
+    """A rider seated on a long, low dirt bike (teal-ringed wheels), tilted up the slope; Cal (orange fringe, mustard tee)
+    or Pietro (navy hair, maroon jacket), told apart by the palette: ('ea_ride', unused, pal, x, y, ring 0..1)."""
+    _, _, pal, x, y, ring = e
+    lay = Image.new('RGBA', (64, 40), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+    rc = mix((70, 70, 80), TEAL, ring); FR, FRL = (52, 40, 44), (150, 116, 96)
+    for wx in (11, 46):
+        ld.ellipse([wx - 6, 26, wx + 5, 37], fill=(26, 22, 30)); ld.ellipse([wx - 4, 28, wx + 3, 35], outline=rc)
+        a = f * 0.9 + wx
+        for k in range(2): ld.point((wx - 0.5 + math.cos(a + k * math.pi) * 2.5, 31.5 + math.sin(a + k * math.pi) * 2.5), fill=TEAL_L if ring > 0.5 else (150, 150, 160))
+        ld.point((wx - 1, 31), fill=(190, 180, 170))
+    ld.arc([4, 22, 18, 36], 200, 330, fill=FR, width=2); ld.arc([39, 22, 53, 36], 200, 340, fill=FR, width=2)          # mudguards
+    ld.line([11, 31, 22, 28], fill=FR, width=2)                                                                         # swingarm
+    ld.polygon([(16, 25), (22, 23), (40, 23), (42, 27), (36, 29), (20, 29)], fill=FR); ld.line([20, 23, 40, 23], fill=FRL)   # long low body
+    ld.polygon([(12, 25), (28, 22), (28, 24), (14, 27)], fill=(24, 20, 26)); ld.line([13, 24, 27, 22], fill=(90, 80, 84))   # the long seat
+    ld.line([38, 24, 45, 31], fill=(120, 112, 118), width=2); ld.line([38, 25, 44, 31], fill=(40, 36, 44))              # the chunky fork
+    ld.line([37, 19, 40, 17], fill=(30, 26, 30), width=2); ld.line([38, 23, 37, 19], fill=(90, 82, 88))                 # the bars
+    cal_ = 'O' in pal; skin = pal['s']
+    pants, shirt = ((42, 42, 58), pal['j']) if cal_ else ((40, 36, 48), (178, 40, 58))
+    ld.line([19, 21, 28, 24], fill=pants, width=3); ld.line([28, 24, 23, 29], fill=pants, width=2); ld.rectangle([21, 29, 25, 30], fill=(20, 18, 24))   # thigh, shin, boot on the peg
+    ld.line([21, 21, 29, 13], fill=shirt, width=5)                                                                      # torso leaning forward
+    ld.line([28, 15, 38, 18], fill=shirt, width=2); ld.point((39, 18), fill=skin)                                         # arm to the bars
+    if not cal_: ld.line([22, 19, 27, 14], fill=(240, 196, 70))                                                         # gold stripe
+    else: ld.line([29, 12, 31, 11], fill=TEAL, width=1)                                                                 # choker
+    ld.ellipse([28, 6, 34, 12], fill=skin)
+    if cal_:
+        ld.polygon([(27, 8), (28, 4), (31, 3), (34, 5), (35, 8), (33, 7), (30, 7)], fill=ORANGE)                         # orange fringe
+    else:
+        ld.polygon([(26, 10), (27, 5), (31, 4), (35, 6), (34, 8), (30, 7), (28, 10)], fill=pal['n'])                     # navy hair
     lay = lay.rotate(8, resample=Image.NEAREST, expand=True)
-    im.paste(lay, (int(x - lay.width / 2), int(y - lay.height + 9)), lay)
+    im.paste(lay, (int(x - lay.width / 2), int(y - lay.height + 7)), lay)
     if ring > 0.5:
-        for k in range(3): d.point((x - 28 - k * 3, y - 1 - k % 2), fill=TEAL_L if k == 0 else TEAL)
+        for k in range(4): d.point((x - 32 - k * 3, y - 1 - k % 2 - k // 2), fill=TEAL_L if k == 0 else (240, 190, 130))   # dust behind the rear wheel
 
 # ---- the close-ups -----------------------------------------------------------------------------------------
 def _supay_face(im, d, t, f):
