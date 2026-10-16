@@ -357,7 +357,7 @@ def shade_fig(L,who,cx,base,h):
         d.pieslice([cx-hr-1,hy-hr-1*s,cx+hr+1,hy+hr],180,360,fill=hair)                # short neat hair
         d.rectangle([cx-7*s,top+11*s,cx+7*s,top+14*s],fill=(240,214,80,255)); d.rectangle([cx-3*s,top+11*s,cx-1*s,top+14*s],fill=(40,36,30,255))
     if who=='james':
-        for k in range(-2,3): d.line([cx+k*2*s,hy-hr+1*s,cx+k*2.6*s,hy-hr-4*s],fill=hair,width=max(1,int(2*s)))   # messy hair
+        for kx,kh in ((-4.5,2),(-2,3.5),(0.5,2),(3,3),(5,1.5)): d.ellipse([cx+(kx-2)*s,hy-hr-kh*s,cx+(kx+2)*s,hy-hr+3*s],fill=hair)   # a messy mop
         d.pieslice([cx-hr-1,hy-hr-1*s,cx+hr+1,hy+hr],180,360,fill=hair)
         for ex in (-2.4,2.4): d.ellipse([cx+(ex-1.8)*s,hy-1.5*s,cx+(ex+1.8)*s,hy+1.8*s],outline=line,width=1)   # round glasses
     if who=='lily': d.pieslice([cx-hr-1,hy-hr-1*s,cx+hr+1,hy+hr*0.4],180,360,fill=hair)
@@ -586,7 +586,7 @@ def closeup_patronus(t,f):
 
 def clip_patronus(f):
     if 112<=f<138: s=scene(f,THEME); s['image']=closeup_patronus((f-112)/26,f); return s
-    if f>=212: return neutral(f)
+    if f>=214: return neutral(f)
     s=scene(f,THEME); frozen=16<=f<176; mf=16 if frozen else f
     dark=ez(0,0.9,(f-16)/24) if f<176 else ez(0,0.9,1-(f-176)/34) if f<210 else 0
     if f<16: dark=0
@@ -719,14 +719,17 @@ def clip_horrocrux(f):
     s=scene(f,THEME)
     hpx,_=hand(HARRY,'stab',0); XS=int(round(DX-1-(hpx+math.cos(FANG_STAB)*10)))   # where Harry stands to stab it
     x=HX; pose='stand'; flip=False; fang=None
-    if 16<=f<54: x=lerp(HX,XS,ez(0,1,(f-16)/38)); pose='walk1' if (f//5)%2 else 'walk2'
-    if 54<=f<190: x=XS
+    if 16<=f<54: x=lerp(HX,70,ez(0,1,(f-16)/38)); pose='walk1' if (f//5)%2 else 'walk2'
+    XW=70
+    if 54<=f<178: x=XW
+    if 178<=f<188: x=lerp(XW,XS,ez(0,1,(f-178)/10))
+    if 188<=f<240: x=XS
     if 54<=f<76: pose='point'
     if 76<=f<154: pose='stand'
-    if 154<=f<188: pose='lift'; fang=(FANG_UP,10)
+    if 160<=f<188: pose='lift'; fang=(FANG_UP,10)
     if 188<=f<192: pose='swing'; fang=(FANG_SWING,10)
     if 192<=f<216: pose='stab'; fang=(FANG_STAB,10)
-    if 216<=f<240: x=XS; pose='stand'
+    if 216<=f<240: pose='stand'
     if 240<=f<282: x=lerp(XS,HX,ez(0,1,(f-240)/42)); pose='walk1' if (f//5)%2 else 'walk2'; flip=True
     if f>=282: x=HX; flip=False; pose='stand'
     s['actors']=[actor(build('harry',pose),x,flip=flip,pal=HPAL)]
@@ -739,7 +742,7 @@ def clip_horrocrux(f):
     if opened and f<260: s['fx'].append(('hp_diarylight',DX,DY,min(1,(f-60)/16)*(1 if f<198 else max(0,1-(f-198)/50))))
     if f>=196: s['fx'].append(('hp_ink',DX,DY-2,196,dfade))
     if 194<=f<198: s['shake']=rshake(2)
-    if 196<=f<199: s['flash']=0.4-(f-196)*0.12; s['fc']=(DX,DY); s['flashc']=(255,255,240)
+    if 196<=f<199: s['flash']=0.25-(f-196)*0.07; s['fc']=(DX,DY); s['flashc']=(255,255,240)
     finish(s,f)
     base=render(s,f)
     r=ez(0,1,(f-84)/44) if f<84+44 else 1.0
@@ -925,4 +928,4 @@ def clip_basilisco(f):
     if f>=232: return flash_to(s,f,(200,255,220),(f-232)/12) if f<244 else s
     return s
 
-CLIPS = [clip('priori', N_, clip_priori), clip('patronus', 288, clip_patronus), clip('horrocrux', 288, clip_horrocrux), clip('basilisco', 288, clip_basilisco)]
+CLIPS = [clip('priori', N_, clip_priori), clip('patronus', 240, clip_patronus), clip('horrocrux', 288, clip_horrocrux), clip('basilisco', 288, clip_basilisco)]
