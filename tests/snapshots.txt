@@ -68,6 +68,7 @@ jojo-diamond__kira 14d712e4043ab707
 jojo-golden__requiem aa0e09ec2456d305
 jojo-stone__heaven f6ba533809f3fa64
 jojo__theworld 1335396fcf5896d6
+kcd__cuman 912a3c5a98d50ccb
 kny__breath 09b1ee76b78e4f26
 lol-yasuo__flute 6941ad51a14440ae
 lol__valor d0cdde447e7e9a29
