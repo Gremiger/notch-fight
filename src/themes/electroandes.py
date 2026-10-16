@@ -398,7 +398,7 @@ def _fx_apu(d, im, e, f):
     im.paste(lay, (0, 0), lay)
     a = math.radians(ang); vx, vy = 128 + dx - piv[0], sq(23) + dy - piv[1]
     ex, ey = piv[0] + vx * math.cos(a) + vy * math.sin(a), piv[1] - vx * math.sin(a) + vy * math.cos(a)
-    glow(im, ex, ey, int(4 + 9 * fl), BLUE, 0.3 + 0.5 * fl)
+    glow(im, ex, ey, int(3 + 6 * fl), BLUE, 0.25 + 0.4 * fl)
 
 @fx('ea_rock')
 def _fx_rock2(d, im, e, f):
