@@ -50,7 +50,10 @@ ghibli-totoro__busstop 83003fb8ef44c082
 gta__grove b20e53b1ca980cd1
 haikyuu__quick 7e3d21af653bfe18
 hl__lambda 147824f8edd5fba9
-hp__priori 90b6f7ab37a8e7e9
+hp__basilisco 56a7afe1546abfbf
+hp__horrocrux dcccd2c140e70c82
+hp__patronus 76429999aca5b3af
+hp__priori 4768e9e300843089
 hxh__jajanken 898a05329a7e8e47
 inv__train 412cafd2ceffc99f
 jakelong__dragon c9bbdefa7bc95a8e
