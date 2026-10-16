@@ -158,13 +158,20 @@ def _gait(ph, stride, lift):
     if p < 0.6: return stride * (0.5 - p / 0.6), 0.0
     q = (p - 0.6) / 0.4; return stride * (-0.5 + q), lift * math.sin(math.pi * q)
 
-def _leg(d, P, sc, hu, hv, ph, stride, lift, l1, l2, wd, c, far=False):
+def _leg(d, P, sc, hu, hv, ph, stride, lift, l1, l2, wd, c, far=False, thigh=None, raise_=0.0, big=False):
+    """One leg by two-bone IK: thicker at the top (thigh), a dark joint at the knee and the ankle, a foot."""
     fu, fv = _gait(ph, stride, lift)
-    Hp, Fp = P(hu, hv), P(hu + fu, fv); Kp = _knee(*Hp, *Fp, l1 * sc, l2 * sc)
-    d.line([Hp, Kp, Fp], fill=c('cable', CABLE), width=wd + 1, joint='curve')
-    d.line([Hp, Kp], fill=c('leg', WSH if far else WHITE), width=wd)
-    d.line([Kp, Fp], fill=c('leg', GREY if far else WSH), width=max(1, wd - 1))
-    d.line([Fp[0] + 1, Fp[1], Fp[0] - 3 * sc, Fp[1]], fill=c('cable', DARK), width=2 if sc > 0.6 else 1)
+    Hp, Fp = P(hu, hv), P(hu + fu, fv + raise_); Kp = _knee(*Hp, *Fp, l1 * sc, l2 * sc)
+    th = thigh or wd
+    d.line([Hp, Kp, Fp], fill=c('cable', CABLE), width=th + 1, joint='curve')
+    d.line([Hp, Kp], fill=c('leg', WSH if far else WHITE), width=th)
+    d.line([Kp, Fp], fill=c('leg', GREY if far else WSH), width=max(1, wd - (0 if big else 1)))
+    r = max(1, th // 2); d.ellipse([Kp[0] - r, Kp[1] - r, Kp[0] + r, Kp[1] + r], fill=c('cable', DARK))
+    d.ellipse([Fp[0] - r + 0.5, Fp[1] - r, Fp[0] + r - 0.5, Fp[1] + r - 1], fill=c('cable', DARK))
+    if big:
+        d.polygon([(Fp[0] + 3, Fp[1] + 1), (Fp[0] - 9, Fp[1] + 1), (Fp[0] - 9, Fp[1] - 1), (Fp[0] - 3, Fp[1] - 4), (Fp[0] + 3, Fp[1] - 4)], fill=c('leg', WSH if far else WHITE), outline=c('cable', DARK))
+        for k in range(3): d.line([Fp[0] - 8 - (k == 1), Fp[1] + 1 - k, Fp[0] - 11, Fp[1] + 1 - k + (1 if k else 0)], fill=c('cable', DARK))
+    else: d.line([Fp[0] + 1, Fp[1], Fp[0] - 3 * sc, Fp[1]], fill=c('cable', DARK), width=2 if sc > 0.6 else 1)
 
 def _poly(d, P, pts, fill): d.polygon([P(u, v) for u, v in pts], fill=fill)
 def _rot(u, v, a): return u * math.cos(a) + v * math.sin(a), -u * math.sin(a) + v * math.cos(a)
@@ -180,61 +187,92 @@ def launcher(d, cx, cy, ang, sc=1.0, m=None, flash=0.0):
     for k in range(3):
         q = p(-4 + k * 3, -6); d.ellipse([q[0] - 1.5 * sc, q[1] - 1.5 * sc, q[0] + 1.5 * sc, q[1] + 1.5 * sc], fill=c('lau', mix(PURP, WHITE, 0.3 * k)))
 
+LAU_NEAR, LAU_FAR = (-0.3, 1.5), (-0.35, 1.25)
+
 def tj_launcher(x, gy, hh=22, near=True):
     """Screen position of a Thunderjaw's launcher (for the shots, the hit and the highlight)."""
-    return (x + 3, gy - hh - 19) if near else (x - 4, gy - hh - 20)
+    return (x + 2, gy - hh - 25) if near else (x - 9, gy - hh - 26)
 
-def draw_tj(d, x, gy, ph=0.0, m=None, jaw=0.0, hup=0.0, eye='hot', hh=22, lau=3, flash=0.0, stride=15, lift=6, recoil=0.0):
-    """A Thunderjaw facing left, feet at gy, hip height hh; ph the walk cycle, jaw 0..1, hup its head's lift (radians)."""
-    c = _col(m, flash); P = lambda u, v: (x + u, gy - v); hv = hh; eyec = LIGHT[eye]
-    for far, hu, off in ((True, -2, 0.5), (False, 5, 0.0)):
-        _leg(d, P, 1, hu, hv - 2, ph + off, stride, lift, 14, 14, 4, c, far)
-    _poly(d, P, [(12, hv + 8), (24, hv + 7), (38, hv + 2), (40, hv), (36, hv - 1), (22, hv - 2), (12, hv - 3)], c('cable', CABLE))
-    for k in range(4): _poly(d, P, [(15 + k * 6, hv + 7 - k), (20 + k * 6, hv + 6 - k), (19 + k * 6, hv + 1), (14 + k * 6, hv + 1)], c('plate', WHITE if k % 2 == 0 else WSH))
-    _poly(d, P, [(-14, hv + 13), (-4, hv + 17), (10, hv + 15), (17, hv + 8), (15, hv - 2), (2, hv - 5), (-10, hv - 3), (-16, hv + 3)], c('cable', CABLE))
-    _poly(d, P, [(-12, hv + 12), (-3, hv + 16), (10, hv + 14), (14, hv + 8), (3, hv + 5), (-10, hv + 6)], c('plate', WHITE))
-    _poly(d, P, [(-12, hv + 5), (3, hv + 3), (14, hv + 6), (14, hv + 1), (2, hv - 3), (-9, hv - 1)], c('plate', WSH))
-    for k in range(4): d.line([P(-8 + k * 5, hv + 14 - (k > 1)), P(-7 + k * 5, hv + 7)], fill=c('cable', DARK))
-    if lau & 2: launcher(d, *P(-4, hv + 20), -0.5, 1.0, m, flash)
-    d.line([P(-12, hv + 9), P(-20, hv + 15)], fill=c('cable', CABLE), width=6)
-    d.line([P(-12, hv + 11), P(-20, hv + 16)], fill=c('plate', WHITE), width=3)
-    hp = (-20, hv + 15)
+def draw_tj(d, x, gy, ph=0.0, m=None, jaw=0.0, hup=0.0, eye='hot', hh=22, lau=3, flash=0.0, stride=15, lift=6, recoil=0.0, dead=0.0, tilt=0.0):
+    """A heavy T-rex machine facing left, ~50 px tall: a boxy head with a lower jaw, a thick neck, a deep chest, two massive
+    clawed legs, small arms, a long tail, white plates over black cables, two drums on its back. dead: the legs kicked up."""
+    c = _col(m, flash); ca, sa = math.cos(tilt), math.sin(tilt)
+    P = lambda u, v: (x + u * ca - v * sa, gy - (u * sa + v * ca)); hv = hh; eyec = LIGHT[eye]
+    for far, hu, off in ((True, -3, 0.5), (False, 7, 0.0)):
+        _leg(d, P, 1, hu, hv - 3, ph + off, stride, lift, 15, 15, 5, c, far, thigh=7, raise_=dead * (hh * 0.9), big=True)
+    # tail: cable core with plates, tapering
+    _poly(d, P, [(12, hv + 12), (28, hv + 8), (46, hv + 1), (49, hv - 1), (45, hv - 2), (28, hv - 3), (12, hv - 5)], c('cable', CABLE))
+    for k in range(5):
+        a, b = 14 + k * 6.5, 19.5 + k * 6.5; hgt = 11 - k * 2
+        _poly(d, P, [(a, hv + 11 - k * 1.8), (b, hv + 10 - k * 1.8), (b - .5, hv + 11 - k * 1.8 - hgt * .6), (a, hv + 11 - k * 1.8 - hgt * .6)], c('plate', WHITE if k % 2 == 0 else WSH))
+    # body: black cable core, then plates with gaps
+    _poly(d, P, [(-21, hv + 17), (-8, hv + 24), (8, hv + 22), (19, hv + 14), (18, hv - 3), (2, hv - 8), (-12, hv - 7), (-23, hv + 2)], c('cable', CABLE))
+    for k, (a, b) in enumerate(((-18, -11), (-9.5, -2), (0, 7), (8.5, 15))):                    # back plates
+        _poly(d, P, [(a, hv + 18 - abs(k - 1.2)), (b, hv + 21 - abs(k - 1.2)), (b, hv + 12), (a, hv + 11)], c('plate', WHITE))
+    _poly(d, P, [(-20, hv + 9), (-8, hv + 9), (-6, hv - 3), (-18, hv - 1)], c('plate', WSH))      # chest
+    _poly(d, P, [(-4, hv + 8), (7, hv + 9), (9, hv - 3), (-4, hv - 5)], c('plate', WSH))          # flank
+    _poly(d, P, [(10, hv + 8), (17, hv + 11), (16, hv - 1), (10, hv - 3)], c('plate', WHITE))     # hip
+    # drums on the back
+    if lau & 2: launcher(d, *P(-9, hv + 26), -0.35, LAU_FAR[1], m, flash)
+    # thick neck and the boxy head
+    _poly(d, P, [(-17, hv + 22), (-27, hv + 26), (-30, hv + 14), (-19, hv + 8)], c('cable', CABLE))
+    _poly(d, P, [(-18, hv + 21), (-26, hv + 24), (-28, hv + 17), (-19, hv + 15)], c('plate', WHITE))
+    hp = (-27, hv + 22)
     def Hd(pts):
         out = []
         for u, v in pts: ru, rv = _rot(u - hp[0], v - hp[1], hup); out.append((hp[0] + ru, hp[1] + rv))
         return out
-    jv = jaw * 7
-    _poly(d, P, Hd([(-20, hv + 12 - jv * 0.3), (-33, hv + 11 - jv), (-38, hv + 12 - jv), (-36, hv + 9 - jv), (-21, hv + 8 - jv * 0.3)]), c('head', DARK))
-    _poly(d, P, Hd([(-18, hv + 21), (-30, hv + 19), (-38, hv + 15), (-37, hv + 12), (-31, hv + 12), (-19, hv + 12)]), c('head', WHITE))
-    _poly(d, P, Hd([(-18, hv + 21), (-26, hv + 20), (-24, hv + 17), (-18, hv + 17)]), c('plate', WSH))
-    for ex, ey in ((-29, hv + 16), (-25, hv + 15)):
-        ee = P(*Hd([(ex, ey)])[0]); d.rectangle([ee[0], ee[1], ee[0] + 1, ee[1] + 1], fill=c('eye', eyec)); d.point((ee[0], ee[1] - 1), fill=c('eye', mix(eyec, WHITE, 0.5)))
-    d.line([P(-12, hv + 1), P(-16, hv - 3)], fill=c('cable', DARK), width=2)
-    if lau & 1: launcher(d, *P(3 - recoil * 2, hv + 19 + recoil), -0.45, 1.15, m, flash)
+    jv = jaw * 11
+    _poly(d, P, Hd([(-27, hv + 16 - jv * .2), (-46, hv + 15 - jv), (-47, hv + 11 - jv), (-28, hv + 10 - jv * .3)]), c('head', WHITE))               # lower jaw
+    _poly(d, P, Hd([(-28, hv + 15), (-45, hv + 14), (-45, hv + 17), (-28, hv + 19)]), c('cable', DARK))                                            # mouth
+    _poly(d, P, Hd([(-26, hv + 30), (-40, hv + 29), (-48, hv + 23), (-47, hv + 17), (-30, hv + 17), (-25, hv + 20)]), c('head', WHITE))         # head block
+    _poly(d, P, Hd([(-26, hv + 30), (-34, hv + 30), (-33, hv + 25), (-26, hv + 25)]), c('plate', WSH))
+    d.line([P(*Hd([(-31, hv + 23)])[0]), P(*Hd([(-47, hv + 20)])[0])], fill=c('cable', DARK))                                                         # the gap along the snout
+    for k in range(4):
+        tp = Hd([(-44 + k * 4, hv + 17)])[0]; tq = P(*tp); d.point((tq[0], tq[1] + 1), fill=c('head', WHITE))
+    for ex, ey in ((-35, hv + 26), (-30, hv + 25)):
+        ee = P(*Hd([(ex, ey)])[0]); d.rectangle([ee[0], ee[1], ee[0] + 1, ee[1] + 2], fill=c('eye', eyec)); d.point((ee[0], ee[1] - 1), fill=c('eye', mix(eyec, WHITE, 0.5)))
+    # small arms
+    d.line([P(-18, hv + 5), P(-23, hv - 1), P(-26, hv + 1)], fill=c('cable', DARK), width=2); d.point(P(-27, hv + 1), fill=c('head', WHITE))
+    if lau & 1: launcher(d, *P(2 - recoil * 2, hv + 25 + recoil), -0.3, LAU_NEAR[1], m, flash)
+
+HL, TOP = 34, 90                                                    # a Tallneck's leg height and where its neck ends
+
+def neck_u(v):
+    """The neck's centre line (local u) at height v: rising slightly forward (to the left)."""
+    return -12 - 7 * (max(0.0, v - HL) / (TOP - HL)) ** 1.4
+
+def neck_hw(v): return 3.4 - 1.4 * (max(0.0, v - HL) / (TOP - HL))
 
 def draw_tn(d, x, gy, sc=1.0, ph=0.0, ring=0.0, light='calm', m=None, lights=1.0, holds=(), flash=0.0):
-    """A Tallneck facing left: four thin legs, a long neck, a saucer head with a turning ring of lights."""
-    c = _col(m, flash); P = lambda u, v: (x + u * sc, gy - v * sc); hl = 34; wd = max(1, round(1.4 * sc)); top = hl + 56
+    """A Tallneck facing left: a short deep plated torso, four long legs with knees and ankles (thick at the top), a very long
+    neck of stacked plate segments, a flat round saucer head with a ring of lights and a dark centre."""
+    c = _col(m, flash); P = lambda u, v: (x + u * sc, gy - v * sc); wd = max(1, round(1.5 * sc)); th = max(1, round(2.6 * sc)); hl = HL; top = TOP
     lc = LIGHT[light]
-    for far, hu, off in ((True, -6, 0.5), (True, 13, 0.0), (False, -11, 0.0), (False, 8, 0.5)):
-        _leg(d, P, sc, hu, hl, ph + off, 11, 6, 17, 18, wd, c, far)
-    _poly(d, P, [(-18, hl + 2), (-12, hl + 9), (8, hl + 8), (17, hl + 4), (15, hl - 2), (-12, hl - 3)], c('cable', CABLE))
-    _poly(d, P, [(-15, hl + 3), (-11, hl + 8), (8, hl + 7), (15, hl + 4), (4, hl + 1), (-12, hl + 1)], c('plate', WHITE))
-    _poly(d, P, [(-16, hl + 6), (-10, hl + 6), (-17, top), (-22, top)], c('plate', WSH))
-    _poly(d, P, [(-15, hl + 6), (-11, hl + 6), (-18, top), (-21, top)], c('cable', CABLE))
-    for v in range(hl + 10, top, 7): d.line([P(-15 - (v - hl) * 0.1, v), P(-11.5 - (v - hl) * 0.1, v)], fill=c('plate', WHITE), width=max(1, round(sc)))
-    for (u, v) in holds:
-        q = P(u, v); d.rectangle([q[0] - 1, q[1] - 1, q[0] + 1, q[1] + 1], fill=c('hold', YEL))
-    u0, v0 = -19.5, top + 3; R, r = 11, 2.6
+    for far, hu, off in ((True, -6, 0.5), (True, 9, 0.0), (False, -10, 0.0), (False, 6, 0.5)):
+        _leg(d, P, sc, hu, hl, ph + off, 11, 6, 18, 18, wd, c, far, thigh=th)
+    _poly(d, P, [(-15, hl + 3), (-12, hl + 12), (-2, hl + 15), (9, hl + 13), (14, hl + 6), (11, hl - 4), (-3, hl - 6), (-12, hl - 3)], c('cable', CABLE))
+    _poly(d, P, [(-12, hl + 4), (-10, hl + 11), (-2, hl + 13.5), (8, hl + 12), (12, hl + 6), (-1, hl + 4)], c('plate', WHITE))
+    _poly(d, P, [(-11, hl + 1), (-1, hl + 3), (10, hl + 3), (9, hl - 3), (-3, hl - 4)], c('plate', WSH))
+    for u in (-6, 0, 6): d.line([P(u, hl + 12), P(u + 0.5, hl + 4)], fill=c('cable', DARK))
+    v = hl + 8                                                                         # the neck: stacked segments with dark gaps
+    d.polygon([P(neck_u(v) - neck_hw(v), v), P(neck_u(v) + neck_hw(v), v), P(neck_u(top) + neck_hw(top), top), P(neck_u(top) - neck_hw(top), top)], fill=c('cable', CABLE))
+    while v < top - 1:
+        v2 = min(top, v + 5); a, b = neck_hw(v), neck_hw(v2)
+        _poly(d, P, [(neck_u(v) - a, v + .6), (neck_u(v) + a, v + .6), (neck_u(v2) + b, v2 - .6), (neck_u(v2) - b, v2 - .6)], c('plate', WHITE if int(v) % 10 < 5 else WSH))
+        v = v2
+    for (u, vv) in holds:
+        q = P(u, vv); d.rectangle([q[0] - 1, q[1] - 1, q[0] + 1, q[1] + 1], fill=c('hold', YEL))
+    u0, v0 = neck_u(top), top + 3; R, r = 11, 2.6
     d.polygon([P(u0 - R, v0), P(u0 - 5, v0 - 3.5), P(u0 + 5, v0 - 3.5), P(u0 + R, v0)], fill=c('head', WSH))
     a, b = P(u0 - R, v0 + r), P(u0 + R, v0 - r); d.ellipse([a[0], a[1], b[0], b[1]], fill=c('head', WHITE), outline=c('cable', DARK))
-    a, b = P(u0 - R * 0.55, v0 + r * 0.5), P(u0 + R * 0.55, v0 - r * 0.5); d.ellipse([a[0], a[1], b[0], b[1]], fill=c('cable', DARK))
+    a, b = P(u0 - R * 0.45, v0 + r * 0.45), P(u0 + R * 0.45, v0 - r * 0.45); d.ellipse([a[0], a[1], b[0], b[1]], fill=c('cable', DARK))
     e = 1 if sc > 0.6 else 0
     for k in range(8):
         ang = 2 * math.pi * (k / 8 + ring); front = math.sin(ang) > 0
         px, py = P(u0 + (R - 0.5) * math.cos(ang), v0 - (r - 0.3) * math.sin(ang))
         d.rectangle([px - e, py, px + e, py + e], fill=c('ring', mix(DARK, lc, lights if front else lights * 0.55)))
-    cp = P(u0, v0 + 3.5); rr = max(1, round(2 * sc))
+    cp = P(u0, v0 + 3.5); rr = max(1, round(1.6 * sc))
     d.ellipse([cp[0] - rr, cp[1] - rr, cp[0] + rr, cp[1] + rr], fill=c('core', mix(lc, WHITE, 0.5 * lights)))
 
 def draw_watcher(d, x, gy, ph=0.0, eye='calm', m=None, tilt=0.0, hh=10, flash=0.0, still=False, lights=1.0):
@@ -369,9 +407,25 @@ def _heft(im, d, t, f):
     if 0.3 < t < 0.6:
         for i in range(5): d.point((58 + i * 5, 56 - (f + i * 3) % 5), fill=(190,160,110))
 
+def tuck(k):
+    """Three hand-drawn poses of Aloy tucked into a roll (hair, tunic, knees and boots, a hand): the ball turns by a third each time."""
+    g = blank(14, 14); a0 = (-2.1, 0.0, 2.1)[k]
+    for y in range(14):
+        for x in range(14):
+            if math.hypot(x - 6.5, y - 7) < 5.2: g[y][x] = 'j'
+    def blob(a, r, ch, n=1):
+        bx, by = round(6.5 + math.cos(a) * r), round(7 + math.sin(a) * r)
+        for dx in range(-n, n + 1):
+            for dy in range(-n, n + 1): put(g, bx + dx, by + dy, ch)
+        return bx, by
+    blob(a0 + 3.14, 4.6, 'p', 1); blob(a0 + 3.14, 6, 'k', 1)               # knees and boots on one side
+    blob(a0, 4.2, 'O', 1); blob(a0 + .4, 5.4, 'o', 0); blob(a0 - .5, 5.6, 'O', 0)   # her hair on the other
+    blob(a0 + 1.7, 4.6, 's', 0); blob(a0 - 1.5, 3.5, 'u', 0)
+    return to_sprite(g)
+
 def clip_thunderjaw(f):
     s = wide(f)
-    tx, ph, jaw, hup, eye, hh, lau, flash, alpha, rec = 260, 0.0, 0.0, 0.0, 'hot', 22, 3, 0.0, 1.0, 0.0
+    tx, ph, jaw, hup, eye, hh, lau, flash, alpha, rec, dead, tilt = 260, 0.0, 0.0, 0.0, 'hot', 22, 3, 0.0, 1.0, 0.0, 0.0, 0.0
     show = 12 <= f < 236
     if 12 <= f < 46: tx = ez(250, 142, (f - 12) / 34); ph = (250 - tx) / 18.0
     elif f >= 46: tx = 142
@@ -385,17 +439,19 @@ def clip_thunderjaw(f):
         if 0 <= g < 3: flash = 0.5 * (1 - g / 2) if g < 2 else 0.0
         if f >= t0 + 4: tx += 1.5
         if 0 <= g < 3: s['shake'] = rshake(1)
-    if f >= 211:
-        c = ease((f - 211) / 14); hh = 22 - 14 * c; hup = -0.3 * c; ph = 0.0
-        if f >= 213: eye = 'off'
-    if f >= 222: alpha = max(0.0, 1 - (f - 222) / 14)
+    if f >= 207:                                                     # the legs buckle, the body drops, it tips over
+        ph = 0.0; hh = 22 - 10 * ease((f - 207) / 9) - 5 * ease((f - 216) / 8)
+        hup = -0.3 * ease((f - 207) / 9); tilt = 0.3 * ease((f - 216) / 8); dead = ease((f - 216) / 8)
+        if f >= 209: eye = 'off'
+    if f >= 228: alpha = max(0.0, 1 - (f - 228) / 8)
     if 14 <= f < 50 and f % 7 < 2: s['shake'] = (0, 1 if f % 7 == 0 else -1)
-    if 46 <= f < 58 or 137 <= f < 142 or 211 <= f < 219: s['shake'] = rshake(1)
+    if 46 <= f < 58 or 137 <= f < 142 or 207 <= f < 211: s['shake'] = rshake(1)
+    if 222 <= f < 230: s['shake'] = (0, 2 if f % 2 == 0 else -1)                  # it hits the ground
     jx = tx
     def tj(d, im, f, m=None):
-        if m is not None: draw_tj(d, jx, GROUND, ph, m, jaw, hup, eye, hh, lau, 0.0)
-        elif alpha < 1: layer_paste(im, lambda dd: draw_tj(dd, jx, GROUND, ph, None, jaw, hup, eye, hh, lau, flash, recoil=rec), alpha)
-        else: draw_tj(d, jx, GROUND, ph, None, jaw, hup, eye, hh, lau, flash, recoil=rec)
+        if m is not None: draw_tj(d, jx, GROUND, ph, m, jaw, hup, eye, hh, lau, 0.0, dead=dead, tilt=tilt)
+        elif alpha < 1: layer_paste(im, lambda dd: draw_tj(dd, jx, GROUND, ph, None, jaw, hup, eye, hh, lau, flash, recoil=rec, dead=dead, tilt=tilt), alpha)
+        else: draw_tj(d, jx, GROUND, ph, None, jaw, hup, eye, hh, lau, flash, recoil=rec, dead=dead, tilt=tilt)
     if show:
         s['under'].append(('ho_do', tj))
         if 14 <= f < 54: s['fx'].append(('ho_do', lambda d, im, f: [dust(d, jx + dx, GROUND, (f * 2 + dx) % 8) for dx in (-6, 0, 8, 14)]))
@@ -407,7 +463,7 @@ def clip_thunderjaw(f):
         pose = 'focus'; focus_k = ease((f - 62) / 4) if f < 90 else 1 - ease((f - 90) / 5)
     if 96 <= f < 104: pose = 'guard'
     if 104 <= f < 116:
-        ax = CX + 18 * ease((f - 104) / 12); spr = rotate90(shrink(build('crouch'), 0.72), (f - 104) // 2)
+        ax = CX + 18 * ease((f - 104) / 12); spr = tuck(((f - 104) // 2) % 3)
     if f >= 116: ax = CX + 18
     if 116 <= f < 124: pose = 'crouch'
     if 124 <= f < 142: pose = 'aim'
@@ -425,12 +481,14 @@ def clip_thunderjaw(f):
     if focus_k > 0:
         def fview(d, im, f):
             focus_view(im, focus_k, lambda dd, m: draw_tj(dd, jx, GROUND, ph, m, jaw, hup, eye, hh, lau, 0.0),
-                       lambda dd: [launcher(dd, *tj_launcher(jx, GROUND, hh), -0.45, 1.15, {'lau': 255}), launcher(dd, *tj_launcher(jx, GROUND, hh, False), -0.5, 1.0, {'lau': 255})], f)
+                       lambda dd: [launcher(dd, *tj_launcher(jx, GROUND, hh), LAU_NEAR[0], LAU_NEAR[1], {'lau': 255}), launcher(dd, *tj_launcher(jx, GROUND, hh, False), LAU_FAR[0], LAU_FAR[1], {'lau': 255})], f)
             kk = (f - 62) / 28; r = int(lerp(2, 120, kk))
             if kk < 1: d.ellipse([ax - r, ay - 14 - r // 3, ax + r, ay - 14 + r // 3], outline=(150,230,255))
         s['fx'].append(('ho_do', fview))
     aloy(s, pose, ax, ay, False, spr)
-    if spr is not None: s['actors'][-1]['y'] = ay + 1
+    if spr is not None:
+        s['actors'][-1]['y'] = ay + 1
+        s['fx'].append(('ho_do', lambda d, im, f: [dust(d, ax - 8 + dx, ay + 1, (f * 2 + dx) % 7) for dx in (-6, -1, 4)]))
     if 98 <= f < 122:                                                 # the disc, aimed at her chest
         dx_ = 145 - 8 * (f - 98); dy_ = 17 + (145 - dx_) * 0.2
         def disc(d, im, f):
@@ -444,13 +502,16 @@ def clip_thunderjaw(f):
         def bow(d, im, f):
             d.line([hx + 2, hy - 8, hx + 4, hy, hx + 2, hy + 8], fill=(160,106,56), width=1)
             d.line([hx + 2, hy - 8, bx, by, hx + 2, hy + 8], fill=(236,230,210))
-            if f < 133: d.line([bx, by, hx + 6, hy], fill=(255,255,255))
+            if f < 132: d.line([bx, by, hx + 6, hy], fill=(255,255,255))
         s['fx'].append(('ho_do', bow))
-        if 133 <= f < 137:                                            # the arrow flies to the launcher
-            lx, ly = tj_launcher(jx, GROUND); k = (f - 133) / 3; ex, ey = lerp(hx + 6, lx, k), lerp(hy, ly, k)
+        if 132 <= f < 137:                                            # the arrow flies to the launcher, a white trail behind it
+            lx, ly = tj_launcher(jx, GROUND); k = (f - 132) / 4; ex, ey = lerp(hx + 6, lx, k), lerp(hy, ly, k)
             vx, vy = lx - hx, ly - hy; n = math.hypot(vx, vy)
-            s['fx'].append(('ho_do', lambda d, im, f: d.line([ex - vx / n * 10, ey - vy / n * 10, ex, ey], fill=(255,255,255), width=1)))
-    if 137 <= f < 146: s['fx'].append(('ho_spark', *tj_launcher(jx, GROUND), f - 137))
+            def arrow(d, im, f):
+                d.line([ex - vx / n * 26, ey - vy / n * 26, ex - vx / n * 12, ey - vy / n * 12], fill=(190,196,220), width=1)
+                d.line([ex - vx / n * 14, ey - vy / n * 14, ex, ey], fill=(255,255,255), width=1); d.point((ex, ey), fill=(255,230,150))
+            s['fx'].append(('ho_do', arrow))
+    if 137 <= f < 142: s['fx'].append(('ho_spark', *tj_launcher(jx, GROUND), 3 if f < 141 else 2))
     if 137 <= f < C0:                                                 # the launcher flies off its back and lands
         k = min(1.0, (f - 137) / 14); lx0, ly0 = tj_launcher(142, GROUND)
         lx, ly = lerp(lx0, REST[0], k), lerp(ly0, REST[1], k * k) - 16 * math.sin(math.pi * k)
@@ -468,13 +529,14 @@ def clip_thunderjaw(f):
                                                                            d.ellipse([px - 1, py - 1, px + 1, py + 1], fill=(255,255,255)), d.line([px - 9, py + 1, px - 3, py], fill=(255,210,120)))))
             if 4 <= f - t0 < 15:
                 s['fx'].append(('ho_do', lambda d, im, f, ty_=ty_, k=f - t0 - 4, i=i: blast(d, jx - 8 + (i % 2) * 4, ty_, k, 1.0 + i * 0.12)))
-    if f >= 211 and f < 228: s['fx'].append(('ho_do', lambda d, im, f: blue_burst(d, jx - 4, GROUND - 14, f - 211 if f < 218 else f - 218, 26, 20)))
+    if 218 <= f < 234: s['fx'].append(('ho_do', lambda d, im, f: [dust(d, jx + dx, GROUND, (f - 218 + abs(dx)) % 12) for dx in (-40, -30, -18, -6, 8, 20, 32)]))
+    if 224 <= f < 238: s['fx'].append(('ho_do', lambda d, im, f: blue_burst(d, jx - 8, GROUND - 10, f - 224 if f < 231 else f - 231 + 7, 30, 24)))
     return s
 
 
 # ---- tallneck: a tall scene with a camera that climbs (cam: how far up it is) ---------------------------------------
-TN_X, HL, TOP = 100, 34, 90                                         # where it stops; its leg height and neck top
-U0, V0 = -19.5, TOP + 3                                             # the head's centre (local)
+TN_X = 100                                                          # where it stops
+U0, V0 = neck_u(TOP), TOP + 3                                       # the head's centre (local)
 STUB = 24                                                           # the ruin Aloy stands on, its height
 _far_img = []
 
@@ -489,7 +551,8 @@ def tn_bg(cam):
 
 def u_edge(v):
     """The left edge of its leg and neck at height v."""
-    return -11 if v <= 28 else (lerp(-11, -16.5, (v - 28) / 14) if v < 42 else -16.5 - (v - 42) * 0.12)
+    e = lambda w: neck_u(w) - neck_hw(w)
+    return -10 if v <= 24 else (lerp(-10, e(HL + 8), (v - 24) / 18) if v < HL + 8 else e(v))
 
 def holo(im, f, cx, cy, r, k):
     """The blue wave: a ring spreading from (cx, cy); inside it a wireframe map, a few points."""
@@ -565,8 +628,11 @@ def clip_tallneck(f):
     """The wide neutral dissolves into the tall scene and back out of it."""
     if f < 12 or f >= 236: return neutral(f)
     im = _tallneck_frame(f)
-    if f < 26: im = Image.blend(render(neutral(f), f), im, ease((f - 12) / 14))
-    if f >= 226: im = Image.blend(im, render(neutral(f), f), ease((f - 226) / 10))
+    white = Image.new('RGB', (W, H), (235,245,255))                  # a flash cut, so no second Aloy ghosts in
+    if f < 16: im = Image.blend(render(neutral(f), f), white, (f - 11) / 5)
+    elif f < 22: im = Image.blend(im, white, 1 - (f - 15) / 6)
+    elif 226 <= f < 230: im = Image.blend(im, white, (f - 225) / 5)
+    elif 230 <= f: im = Image.blend(render(neutral(f), f), white, 1 - (f - 229) / 7)
     return {'image': im}
 
 
